@@ -20,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/home" element={<Homepage />} />
+          <Route path="/auth" element={<Index />} />
           <Route path="/waiting-area" element={<WaitingArea />} />
           <Route path="/showcase" element={<ShowcaseScreen />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
