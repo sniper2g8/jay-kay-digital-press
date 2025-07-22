@@ -11,6 +11,7 @@ import { ShowcaseScreen } from "./pages/ShowcaseScreen";
 import { AuthPage } from "./components/auth/AuthPage";
 import { LoginPage } from "./components/auth/LoginPage";
 import { RegisterPage } from "./components/auth/RegisterPage";
+import { InvoiceViewPage } from "./components/admin/InvoiceViewPage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/waiting-area" element={<WaitingArea />} />
           <Route path="/showcase" element={<ShowcaseScreen />} />
+          <Route path="/invoice/:invoiceId" element={<InvoiceViewPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
