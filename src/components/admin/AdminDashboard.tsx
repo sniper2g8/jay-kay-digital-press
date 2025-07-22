@@ -13,6 +13,7 @@ import { QuoteManagement } from "./QuoteManagement";
 import { InvoiceManagement } from "./InvoiceManagement";
 import { CompanySettings } from "./CompanySettings";
 import { DisplayScreenManagement } from "./DisplayScreenManagement";
+import { JobProgressDashboard } from "./JobProgressDashboard";
 
 interface AdminDashboardProps {
   user: User;
@@ -31,6 +32,12 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         description: "Failed to sign out",
         variant: "destructive",
       });
+    } else {
+      toast({
+        title: "Success",
+        description: "Signed out successfully",
+      });
+      // The auth state change will automatically redirect to login
     }
   };
 
@@ -138,65 +145,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("analytics")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Analytics Dashboard</h3>
-              <p className="text-muted-foreground">View business insights and performance metrics</p>
-            </div>
-
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("jobs")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Jobs Management</h3>
-              <p className="text-muted-foreground">Create, edit, and track all printing jobs</p>
-            </div>
-            
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("customers")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Customer Management</h3>
-              <p className="text-muted-foreground">Manage customer accounts and information</p>
-            </div>
-            
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("services")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Services & Options</h3>
-              <p className="text-muted-foreground">Configure printing services and options</p>
-            </div>
-            
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("invoices")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Financials</h3>
-              <p className="text-muted-foreground">View invoices, quotes, and payments</p>
-            </div>
-            
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("displays")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Display Screens</h3>
-              <p className="text-muted-foreground">Control waiting area displays</p>
-            </div>
-            
-            <div 
-              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setActiveTab("settings")}
-            >
-              <h3 className="text-lg font-semibold mb-2">Settings</h3>
-              <p className="text-muted-foreground">Company info, themes, and configuration</p>
-            </div>
-          </div>
-        )}
+        {activeTab === "overview" && <JobProgressDashboard />}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
         {activeTab === "jobs" && <JobManagement />}

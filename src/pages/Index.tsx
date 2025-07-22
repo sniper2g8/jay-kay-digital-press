@@ -95,7 +95,7 @@ const Index = () => {
   }
 
   if (!user || !session) {
-    return <Homepage />;
+    return <AuthPage />;
   }
 
   console.log('Index render:', { loading, hasUser: !!user, hasSession: !!session, userRole });

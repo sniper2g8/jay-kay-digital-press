@@ -68,7 +68,8 @@ export const JobManagement = () => {
         created_at,
         quoted_price,
         final_price,
-        customers (
+        customer_uuid,
+        customers!jobs_customer_uuid_fkey (
           name,
           customer_display_id
         ),

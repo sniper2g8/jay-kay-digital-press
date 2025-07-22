@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Receipt, Search, Plus, Eye, Download, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { InvoiceCreationDialog } from "./InvoiceCreationDialog";
 
 type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
@@ -33,6 +34,7 @@ export const InvoiceManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -144,7 +146,7 @@ export const InvoiceManagement = () => {
               <CardTitle>Invoice Management</CardTitle>
               <CardDescription>Create, send, and track customer invoices</CardDescription>
             </div>
-            <Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Invoice
             </Button>
@@ -251,6 +253,12 @@ export const InvoiceManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      <InvoiceCreationDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onInvoiceCreated={fetchInvoices}
+      />
     </div>
   );
 };
