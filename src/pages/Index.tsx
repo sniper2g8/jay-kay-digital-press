@@ -18,41 +18,46 @@ const Index = () => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state change:', { event, hasSession: !!session, userId: session?.user?.id });
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Defer role fetching to avoid deadlock
         if (session?.user) {
-          console.log('Fetching user role for:', session.user.id);
-          // Fetch user role
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('role_id, roles(name)')
-            .eq('id', session.user.id)
-            .single();
-          
-          console.log('Profile query result:', { profile, error });
-          
-          if (error) {
-            console.error('Error fetching profile:', error);
-            // If error, set as customer by default
-            setUserRole('Customer');
-          } else if (profile?.roles) {
-            console.log('Setting user role to:', profile.roles.name);
-            setUserRole(profile.roles.name);
-          } else {
-            console.log('No profile roles found, setting as Customer');
-            // If no profile exists, set as customer by default
-            setUserRole('Customer');
-          }
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
         } else {
           console.log('No session, clearing user role');
           setUserRole(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
+
+    const fetchUserRole = async (userId: string) => {
+      console.log('Fetching user role for:', userId);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role_id, roles(name)')
+        .eq('id', userId)
+        .single();
+      
+      console.log('Profile query result:', { profile, error });
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setUserRole('Customer');
+      } else if (profile?.roles) {
+        console.log('Setting user role to:', profile.roles.name);
+        setUserRole(profile.roles.name);
+      } else {
+        console.log('No profile roles found, setting as Customer');
+        setUserRole('Customer');
+      }
+      setLoading(false);
+    };
 
     // Check for existing session and wait for role fetch
     const checkSession = async () => {
@@ -63,28 +68,10 @@ const Index = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        console.log('Fetching role for existing session:', session.user.id);
-        // Fetch user role for existing session
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role_id, roles(name)')
-          .eq('id', session.user.id)
-          .single();
-        
-        console.log('Existing session profile query:', { profile, error });
-        
-        if (error) {
-          console.error('Error fetching profile for existing session:', error);
-          setUserRole('Customer');
-        } else if (profile?.roles) {
-          console.log('Setting existing session user role to:', profile.roles.name);
-          setUserRole(profile.roles.name);
-        } else {
-          console.log('No existing session profile roles found, setting as Customer');
-          setUserRole('Customer');
-        }
+        await fetchUserRole(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     checkSession();

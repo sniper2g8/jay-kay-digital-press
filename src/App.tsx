@@ -9,6 +9,8 @@ import { Homepage } from "./pages/Homepage";
 import { WaitingArea } from "./pages/WaitingArea";
 import { ShowcaseScreen } from "./pages/ShowcaseScreen";
 import { AuthPage } from "./components/auth/AuthPage";
+import { LoginPage } from "./components/auth/LoginPage";
+import { RegisterPage } from "./components/auth/RegisterPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/home" element={<Homepage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/waiting-area" element={<WaitingArea />} />
           <Route path="/showcase" element={<ShowcaseScreen />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
