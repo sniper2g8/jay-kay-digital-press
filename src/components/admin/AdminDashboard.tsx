@@ -72,6 +72,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             Overview
           </Button>
           <Button
+            variant={activeTab === "job-progress" ? "default" : "ghost"}
+            onClick={() => setActiveTab("job-progress")}
+            className="px-3 sm:px-6 text-xs sm:text-sm"
+          >
+            Job Progress
+          </Button>
+          <Button
             variant={activeTab === "analytics" ? "default" : "ghost"}
             onClick={() => setActiveTab("analytics")}
             className="px-3 sm:px-6 text-xs sm:text-sm"
