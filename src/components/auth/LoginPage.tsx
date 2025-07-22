@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -41,6 +42,12 @@ export const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-start mb-4">
+            <Link to="/" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Home
+            </Link>
+          </div>
           <CardTitle className="text-2xl font-bold">JAY KAY DIGITAL PRESS</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
