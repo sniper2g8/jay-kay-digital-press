@@ -25,6 +25,7 @@ const Index = () => {
         
         // Defer role fetching to avoid deadlock
         if (session?.user) {
+          console.log('User logged in, fetching role...');
           setTimeout(() => {
             fetchUserRole(session.user.id);
           }, 0);
@@ -38,25 +39,31 @@ const Index = () => {
 
     const fetchUserRole = async (userId: string) => {
       console.log('Fetching user role for:', userId);
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role_id, roles(name)')
-        .eq('id', userId)
-        .single();
-      
-      console.log('Profile query result:', { profile, error });
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role_id, roles(name)')
+          .eq('id', userId)
+          .single();
+        
+        console.log('Profile query result:', { profile, error });
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setUserRole('Customer');
+        } else if (profile?.roles) {
+          console.log('Setting user role to:', profile.roles.name);
+          setUserRole(profile.roles.name);
+        } else {
+          console.log('No profile roles found, setting as Customer');
+          setUserRole('Customer');
+        }
+      } catch (err) {
+        console.error('Failed to fetch user role:', err);
         setUserRole('Customer');
-      } else if (profile?.roles) {
-        console.log('Setting user role to:', profile.roles.name);
-        setUserRole(profile.roles.name);
-      } else {
-        console.log('No profile roles found, setting as Customer');
-        setUserRole('Customer');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     // Check for existing session and wait for role fetch

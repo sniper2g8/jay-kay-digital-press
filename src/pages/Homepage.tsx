@@ -103,10 +103,10 @@ export const Homepage = () => {
             <p className="text-primary-foreground/80">Bringing Your Prints to Life</p>
           </div>
           <div className="flex gap-4">
-            <Link to="/auth">
+            <Link to="/login">
               <Button variant="secondary">Login</Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/register">
               <Button variant="outline" className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary">
                 Get Started
               </Button>
@@ -132,7 +132,7 @@ export const Homepage = () => {
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
             Professional digital printing services with cutting-edge technology and personalized customer care
           </p>
-          <Link to="/auth">
+          <Link to="/register">
             <Button size="lg" className="px-12 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 animate-scale-in">
               Start Your Print Job
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -261,7 +261,7 @@ export const Homepage = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/auth">
+            <Link to="/register">
               <Button size="lg" className="px-8">
                 Get Started Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -323,13 +323,13 @@ export const Homepage = () => {
             <h4 className="text-2xl font-bold mb-4">JAY KAY DIGITAL PRESS</h4>
             <p className="text-primary-foreground/80 mb-6 text-lg">Your trusted printing partner since 2020</p>
             <div className="flex justify-center gap-6 mb-6">
-              <Link to="/auth" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+              <Link to="/login" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
                 Services
               </Link>
               <Link to="/showcase" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
                 Portfolio
               </Link>
-              <Link to="/auth" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+              <Link to="/login" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
                 Contact
               </Link>
             </div>

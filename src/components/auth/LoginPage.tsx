@@ -32,6 +32,7 @@ export const LoginPage = () => {
         title: "Welcome back!",
         description: "You have been signed in successfully.",
       });
+      // Don't need to redirect manually - Index.tsx will handle it
     }
     setLoading(false);
   };
