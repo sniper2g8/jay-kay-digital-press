@@ -127,11 +127,19 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
         .from("jobs")
         .insert({
           customer_id: customer.id,
+          customer_uuid: customer.id,
           service_id: parseInt(formData.service_id),
           current_status: 1, // Pending status
           delivery_method: "Pickup",
           width: formData.width_mm,
           length: formData.height_mm,
+          title: formData.title,
+          description: formData.description,
+          quantity: formData.quantity,
+          service_subtype: formData.service_subtype,
+          paper_type: formData.paper_type,
+          paper_weight: formData.paper_weight,
+          finishing_options: JSON.stringify(formData.finishing_options || []),
         })
         .select()
         .single();
@@ -157,7 +165,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
 
       toast({
         title: "Success!",
-        description: `Job has been submitted successfully. Job ID: ${job.id}`,
+        description: `Job has been submitted successfully. Tracking Code: ${job.tracking_code}`,
       });
 
       reset();

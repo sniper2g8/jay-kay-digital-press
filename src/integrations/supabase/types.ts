@@ -1621,6 +1621,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_job_tracking_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_unified_customer_id: {
         Args: Record<PropertyKey, never>
         Returns: string
