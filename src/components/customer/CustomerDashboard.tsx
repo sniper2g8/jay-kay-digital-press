@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
+import { QuoteRequest } from "./QuoteRequest";
+import { InvoiceView } from "./InvoiceView";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface CustomerDashboardProps {
@@ -15,6 +17,7 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
+  const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -61,6 +64,20 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
           >
             My Jobs
           </Button>
+          <Button
+            variant={activeTab === "quotes" ? "default" : "ghost"}
+            onClick={() => setActiveTab("quotes")}
+            className="px-6"
+          >
+            Quotes
+          </Button>
+          <Button
+            variant={activeTab === "invoices" ? "default" : "ghost"}
+            onClick={() => setActiveTab("invoices")}
+            className="px-6"
+          >
+            Invoices
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -94,17 +111,30 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
               <p className="text-muted-foreground">View your past orders and invoices</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
-              <h3 className="text-lg font-semibold mb-2">Request Quote</h3>
-              <p className="text-muted-foreground">Get pricing for custom print jobs</p>
-            </div>
+            <Dialog open={isQuoteFormOpen} onOpenChange={setIsQuoteFormOpen}>
+              <DialogTrigger asChild>
+                <div className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow">
+                  <h3 className="text-lg font-semibold mb-2">Request Quote</h3>
+                  <p className="text-muted-foreground">Get pricing for custom print jobs</p>
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Request Quote</DialogTitle>
+                </DialogHeader>
+                <QuoteRequest onSuccess={() => setIsQuoteFormOpen(false)} />
+              </DialogContent>
+            </Dialog>
             
             <div className="bg-card p-6 rounded-lg border">
               <h3 className="text-lg font-semibold mb-2">My Profile</h3>
               <p className="text-muted-foreground">Update your account information</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("invoices")}
+            >
               <h3 className="text-lg font-semibold mb-2">Invoices</h3>
               <p className="text-muted-foreground">View and pay outstanding invoices</p>
             </div>
@@ -113,6 +143,14 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
 
         {activeTab === "jobs" && (
           <JobTracker userId={user.id} />
+        )}
+
+        {activeTab === "quotes" && (
+          <QuoteRequest />
+        )}
+
+        {activeTab === "invoices" && (
+          <InvoiceView userId={user.id} />
         )}
       </main>
     </div>

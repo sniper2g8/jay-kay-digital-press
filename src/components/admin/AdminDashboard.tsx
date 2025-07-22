@@ -7,6 +7,9 @@ import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
 import { AnalyticsDashboard } from "./AnalyticsDashboard";
+import { CustomerManagement } from "./CustomerManagement";
+import { QuoteManagement } from "./QuoteManagement";
+import { InvoiceManagement } from "./InvoiceManagement";
 
 interface AdminDashboardProps {
   user: User;
@@ -83,6 +86,27 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           >
             Notifications
           </Button>
+          <Button
+            variant={activeTab === "customers" ? "default" : "ghost"}
+            onClick={() => setActiveTab("customers")}
+            className="px-6"
+          >
+            Customers
+          </Button>
+          <Button
+            variant={activeTab === "quotes" ? "default" : "ghost"}
+            onClick={() => setActiveTab("quotes")}
+            className="px-6"
+          >
+            Quotes
+          </Button>
+          <Button
+            variant={activeTab === "invoices" ? "default" : "ghost"}
+            onClick={() => setActiveTab("invoices")}
+            className="px-6"
+          >
+            Invoices
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -104,7 +128,10 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
               <p className="text-muted-foreground">Create, edit, and track all printing jobs</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("customers")}
+            >
               <h3 className="text-lg font-semibold mb-2">Customer Management</h3>
               <p className="text-muted-foreground">Manage customer accounts and information</p>
             </div>
@@ -117,7 +144,10 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
               <p className="text-muted-foreground">Configure printing services and options</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("invoices")}
+            >
               <h3 className="text-lg font-semibold mb-2">Financials</h3>
               <p className="text-muted-foreground">View invoices, quotes, and payments</p>
             </div>
@@ -138,6 +168,9 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "jobs" && <JobManagement />}
         {activeTab === "services" && <ServiceManagement />}
         {activeTab === "notifications" && <NotificationLogs />}
+        {activeTab === "customers" && <CustomerManagement />}
+        {activeTab === "quotes" && <QuoteManagement />}
+        {activeTab === "invoices" && <InvoiceManagement />}
       </main>
     </div>
   );
