@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { Homepage } from "./pages/Homepage";
+import { WaitingArea } from "./pages/WaitingArea";
+import { ShowcaseScreen } from "./pages/ShowcaseScreen";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +19,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/home" element={<Homepage />} />
+          <Route path="/waiting-area" element={<WaitingArea />} />
+          <Route path="/showcase" element={<ShowcaseScreen />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

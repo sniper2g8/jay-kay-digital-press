@@ -5,6 +5,7 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { CustomerDashboard } from "@/components/customer/CustomerDashboard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Homepage } from "./Homepage";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -56,7 +57,7 @@ const Index = () => {
   }
 
   if (!user || !session) {
-    return <AuthPage />;
+    return <Homepage />;
   }
 
   // Route based on user role
