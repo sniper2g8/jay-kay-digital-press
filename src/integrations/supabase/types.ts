@@ -753,10 +753,23 @@ export type Database = {
           customer_uuid: string | null
           delivery_address: string | null
           delivery_method: string
+          description: string | null
+          due_date: string | null
           estimated_completion: string | null
+          files: Json | null
+          final_price: number | null
+          finishing_options: Json | null
           id: number
           length: number | null
+          paper_type: string | null
+          paper_weight: string | null
+          quantity: number | null
+          quoted_price: number | null
           service_id: number
+          service_subtype: string | null
+          status: string | null
+          title: string | null
+          tracking_code: string | null
           updated_at: string | null
           width: number | null
         }
@@ -770,10 +783,23 @@ export type Database = {
           customer_uuid?: string | null
           delivery_address?: string | null
           delivery_method: string
+          description?: string | null
+          due_date?: string | null
           estimated_completion?: string | null
+          files?: Json | null
+          final_price?: number | null
+          finishing_options?: Json | null
           id?: number
           length?: number | null
+          paper_type?: string | null
+          paper_weight?: string | null
+          quantity?: number | null
+          quoted_price?: number | null
           service_id: number
+          service_subtype?: string | null
+          status?: string | null
+          title?: string | null
+          tracking_code?: string | null
           updated_at?: string | null
           width?: number | null
         }
@@ -787,10 +813,23 @@ export type Database = {
           customer_uuid?: string | null
           delivery_address?: string | null
           delivery_method?: string
+          description?: string | null
+          due_date?: string | null
           estimated_completion?: string | null
+          files?: Json | null
+          final_price?: number | null
+          finishing_options?: Json | null
           id?: number
           length?: number | null
+          paper_type?: string | null
+          paper_weight?: string | null
+          quantity?: number | null
+          quoted_price?: number | null
           service_id?: number
+          service_subtype?: string | null
+          status?: string | null
+          title?: string | null
+          tracking_code?: string | null
           updated_at?: string | null
           width?: number | null
         }
@@ -1374,30 +1413,51 @@ export type Database = {
       }
       services: {
         Row: {
+          available_finishes: Json | null
+          available_paper_types: Json | null
+          available_paper_weights: Json | null
+          available_subtypes: Json | null
           base_price: number | null
           created_at: string | null
           description: string | null
           id: number
           image_url: string | null
+          is_active: boolean | null
           name: string
+          requires_dimensions: boolean | null
+          service_type: string | null
           updated_at: string | null
         }
         Insert: {
+          available_finishes?: Json | null
+          available_paper_types?: Json | null
+          available_paper_weights?: Json | null
+          available_subtypes?: Json | null
           base_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: number
           image_url?: string | null
+          is_active?: boolean | null
           name: string
+          requires_dimensions?: boolean | null
+          service_type?: string | null
           updated_at?: string | null
         }
         Update: {
+          available_finishes?: Json | null
+          available_paper_types?: Json | null
+          available_paper_weights?: Json | null
+          available_subtypes?: Json | null
           base_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: number
           image_url?: string | null
+          is_active?: boolean | null
           name?: string
+          requires_dimensions?: boolean | null
+          service_type?: string | null
           updated_at?: string | null
         }
         Relationships: []
