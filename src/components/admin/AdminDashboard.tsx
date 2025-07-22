@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
+import { NotificationManagement } from "./NotificationManagement";
 import { AnalyticsDashboard } from "./AnalyticsDashboard";
 import { CustomerManagement } from "./CustomerManagement";
 import { QuoteManagement } from "./QuoteManagement";
@@ -85,6 +86,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             className="px-6"
           >
             Notifications
+          </Button>
+          <Button
+            variant={activeTab === "notification-logs" ? "default" : "ghost"}
+            onClick={() => setActiveTab("notification-logs")}
+            className="px-6"
+          >
+            Logs
           </Button>
           <Button
             variant={activeTab === "customers" ? "default" : "ghost"}
@@ -167,7 +175,8 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "analytics" && <AnalyticsDashboard />}
         {activeTab === "jobs" && <JobManagement />}
         {activeTab === "services" && <ServiceManagement />}
-        {activeTab === "notifications" && <NotificationLogs />}
+        {activeTab === "notifications" && <NotificationManagement />}
+        {activeTab === "notification-logs" && <NotificationLogs />}
         {activeTab === "customers" && <CustomerManagement />}
         {activeTab === "quotes" && <QuoteManagement />}
         {activeTab === "invoices" && <InvoiceManagement />}

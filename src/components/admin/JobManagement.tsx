@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Eye, Edit, Trash2, Package, Filter } from "lucide-react";
 
 interface Job {

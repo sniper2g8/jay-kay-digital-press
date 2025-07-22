@@ -7,6 +7,7 @@ import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
 import { InvoiceView } from "./InvoiceView";
+import { NotificationPreferences } from "./NotificationPreferences";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface CustomerDashboardProps {
@@ -77,6 +78,13 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
             className="px-6"
           >
             Invoices
+          </Button>
+          <Button
+            variant={activeTab === "notifications" ? "default" : "ghost"}
+            onClick={() => setActiveTab("notifications")}
+            className="px-6"
+          >
+            Settings
           </Button>
         </div>
 
@@ -152,6 +160,8 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
         {activeTab === "invoices" && (
           <InvoiceView userId={user.id} />
         )}
+
+        {activeTab === "notifications" && <NotificationPreferences />}
       </main>
     </div>
   );
