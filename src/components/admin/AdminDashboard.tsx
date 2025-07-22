@@ -153,6 +153,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
 
         {/* Tab Content */}
         {activeTab === "overview" && <JobProgressDashboard />}
+        {activeTab === "job-progress" && <JobProgressDashboard />}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
         {activeTab === "jobs" && <JobManagement />}
