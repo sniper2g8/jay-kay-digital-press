@@ -144,7 +144,6 @@ export const InvoiceCreationDialog = ({ isOpen, onClose, onInvoiceCreated }: Inv
           tax_rate: taxRate,
           tax_amount: taxAmount,
           total_amount: totalAmount,
-          balance_due: totalAmount,
           due_date: dueDate || null,
           notes,
           status: 'draft' as const
