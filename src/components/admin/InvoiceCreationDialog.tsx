@@ -22,6 +22,7 @@ interface Job {
   customer_uuid: string;
   final_price: number | null;
   quoted_price: number | null;
+  tracking_code: string | null;
 }
 
 interface InvoiceItem {
@@ -90,12 +91,14 @@ export const InvoiceCreationDialog = ({ isOpen, onClose, onInvoiceCreated }: Inv
   const fetchCustomerJobs = async (customerId: string) => {
     const { data, error } = await supabase
       .from('jobs')
-      .select('id, title, customer_uuid, final_price, quoted_price')
+      .select('id, title, customer_uuid, final_price, quoted_price, tracking_code')
       .eq('customer_uuid', customerId)
-      .eq('status', 'Completed');
+      .order('created_at', { ascending: false });
     
     if (!error && data) {
       setJobs(data);
+    } else if (error) {
+      console.error('Error fetching jobs:', error);
     }
   };
 
@@ -227,7 +230,7 @@ export const InvoiceCreationDialog = ({ isOpen, onClose, onInvoiceCreated }: Inv
                 <SelectContent>
                   {jobs.map((job) => (
                     <SelectItem key={job.id} value={job.id.toString()}>
-                      {job.title || `Job #${job.id}`}
+                      {job.title || `Job #${job.id}`} - {job.tracking_code || `ID: ${job.id}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

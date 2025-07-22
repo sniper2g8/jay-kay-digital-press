@@ -90,6 +90,34 @@ export const InvoiceManagement = () => {
     }
   };
 
+  const handleViewInvoice = (invoiceId: string) => {
+    // Open invoice in a new tab/window for viewing
+    window.open(`/invoice/${invoiceId}`, '_blank');
+  };
+
+  const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
+    try {
+      // For now, show a message that download functionality needs to be implemented
+      toast({
+        title: "Download Invoice",
+        description: `Download functionality for ${invoiceNumber} will be implemented soon`,
+      });
+      
+      // TODO: Implement actual PDF generation and download
+      // This would typically involve:
+      // 1. Fetching full invoice data including items
+      // 2. Generating PDF using a library like jsPDF or react-pdf
+      // 3. Triggering download
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: InvoiceStatus) => {
     switch (status) {
       case 'draft': return 'secondary';
@@ -223,10 +251,20 @@ export const InvoiceManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleViewInvoice(invoice.id)}
+                        title="View Invoice"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
+                        title="Download Invoice"
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                       {invoice.status === 'draft' && (
@@ -234,6 +272,7 @@ export const InvoiceManagement = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                          title="Send Invoice"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
