@@ -50,7 +50,8 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
 
       <main className="container mx-auto px-4 py-8">
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-muted p-1 rounded-lg mb-8 w-fit">
+        <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-8 w-full overflow-x-auto">
+          <div className="flex space-x-1 min-w-max">
           <Button
             variant={activeTab === "overview" ? "default" : "ghost"}
             onClick={() => setActiveTab("overview")}
@@ -86,6 +87,7 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
           >
             Settings
           </Button>
+          </div>
         </div>
 
         {/* Tab Content */}

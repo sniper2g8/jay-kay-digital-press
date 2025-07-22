@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
+import { JobEditDialog } from "./JobEditDialog";
 import { Eye, Edit, Trash2, Package, Filter } from "lucide-react";
 
 interface Job {
@@ -44,6 +45,8 @@ export const JobManagement = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [editingJobId, setEditingJobId] = useState<number | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const { sendStatusUpdateNotification } = useNotifications();
   const { trackJobCompleted } = useAnalytics();
@@ -317,7 +320,14 @@ export const JobManagement = () => {
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingJobId(job.id);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -336,6 +346,16 @@ export const JobManagement = () => {
           )}
         </CardContent>
       </Card>
+      
+      <JobEditDialog
+        jobId={editingJobId}
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingJobId(null);
+        }}
+        onJobUpdated={fetchJobs}
+      />
     </div>
   );
 };

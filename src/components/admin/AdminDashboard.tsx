@@ -11,6 +11,8 @@ import { AnalyticsDashboard } from "./AnalyticsDashboard";
 import { CustomerManagement } from "./CustomerManagement";
 import { QuoteManagement } from "./QuoteManagement";
 import { InvoiceManagement } from "./InvoiceManagement";
+import { CompanySettings } from "./CompanySettings";
+import { DisplayScreenManagement } from "./DisplayScreenManagement";
 
 interface AdminDashboardProps {
   user: User;
@@ -51,7 +53,8 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
 
       <main className="container mx-auto px-4 py-8">
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-muted p-1 rounded-lg mb-8 w-fit">
+        <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-8 w-full overflow-x-auto">
+          <div className="flex space-x-1 min-w-max">
           <Button
             variant={activeTab === "overview" ? "default" : "ghost"}
             onClick={() => setActiveTab("overview")}
@@ -115,6 +118,21 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           >
             Invoices
           </Button>
+          <Button
+            variant={activeTab === "settings" ? "default" : "ghost"}
+            onClick={() => setActiveTab("settings")}
+            className="px-6"
+          >
+            Settings
+          </Button>
+          <Button
+            variant={activeTab === "displays" ? "default" : "ghost"}
+            onClick={() => setActiveTab("displays")}
+            className="px-6"
+          >
+            Displays
+          </Button>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -160,12 +178,18 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
               <p className="text-muted-foreground">View invoices, quotes, and payments</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("displays")}
+            >
               <h3 className="text-lg font-semibold mb-2">Display Screens</h3>
               <p className="text-muted-foreground">Control waiting area displays</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("settings")}
+            >
               <h3 className="text-lg font-semibold mb-2">Settings</h3>
               <p className="text-muted-foreground">Company info, themes, and configuration</p>
             </div>
@@ -180,6 +204,8 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "customers" && <CustomerManagement />}
         {activeTab === "quotes" && <QuoteManagement />}
         {activeTab === "invoices" && <InvoiceManagement />}
+        {activeTab === "settings" && <CompanySettings />}
+        {activeTab === "displays" && <DisplayScreenManagement />}
       </main>
     </div>
   );
