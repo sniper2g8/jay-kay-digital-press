@@ -19,14 +19,14 @@ interface Job {
   created_at: string;
   quoted_price: number | null;
   final_price: number | null;
-  customers: {
+  customers?: {
     name: string;
     customer_display_id: string;
-  };
-  services: {
+  } | null;
+  services?: {
     name: string;
     service_type: string;
-  };
+  } | null;
 }
 
 const STATUS_OPTIONS = [
@@ -255,17 +255,19 @@ export const JobManagement = () => {
                     <TableCell className="font-medium">{job.title}</TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{job.customers.name}</p>
+                        <p className="font-medium">
+                          {job.customers?.name || 'Unknown Customer'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {job.customers.customer_display_id}
+                          {job.customers?.customer_display_id || 'N/A'}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p>{job.services.name}</p>
+                        <p>{job.services?.name || 'Unknown Service'}</p>
                         <p className="text-xs text-muted-foreground">
-                          {job.services.service_type}
+                          {job.services?.service_type || 'N/A'}
                         </p>
                       </div>
                     </TableCell>
