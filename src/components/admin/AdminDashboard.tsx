@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
+import { AnalyticsDashboard } from "./AnalyticsDashboard";
 
 interface AdminDashboardProps {
   user: User;
@@ -55,6 +56,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             Overview
           </Button>
           <Button
+            variant={activeTab === "analytics" ? "default" : "ghost"}
+            onClick={() => setActiveTab("analytics")}
+            className="px-6"
+          >
+            Analytics
+          </Button>
+          <Button
             variant={activeTab === "jobs" ? "default" : "ghost"}
             onClick={() => setActiveTab("jobs")}
             className="px-6"
@@ -80,6 +88,14 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {/* Tab Content */}
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("analytics")}
+            >
+              <h3 className="text-lg font-semibold mb-2">Analytics Dashboard</h3>
+              <p className="text-muted-foreground">View business insights and performance metrics</p>
+            </div>
+
             <div 
               className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => setActiveTab("jobs")}
@@ -118,6 +134,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           </div>
         )}
 
+        {activeTab === "analytics" && <AnalyticsDashboard />}
         {activeTab === "jobs" && <JobManagement />}
         {activeTab === "services" && <ServiceManagement />}
         {activeTab === "notifications" && <NotificationLogs />}

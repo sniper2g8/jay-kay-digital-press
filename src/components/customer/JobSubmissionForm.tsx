@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Upload, X } from "lucide-react";
 
 interface Service {
@@ -48,6 +49,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { sendJobSubmittedNotification } = useNotifications();
+  const { trackJobCreated } = useAnalytics();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>();
 
   const serviceId = watch("service_id");
@@ -145,11 +147,12 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
         console.log("Files uploaded:", fileUrls);
       }
 
-      // Send notification
+      // Send notification and track analytics
       try {
         await sendJobSubmittedNotification(customer.id, job.id, formData.title);
+        await trackJobCreated(job.id, customer.id);
       } catch (notificationError) {
-        console.warn('Notification failed but job was created:', notificationError);
+        console.warn('Notification or analytics failed but job was created:', notificationError);
       }
 
       toast({

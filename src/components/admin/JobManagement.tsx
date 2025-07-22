@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Eye, Edit, Trash2, Package, Filter } from "lucide-react";
 
 interface Job {
@@ -45,6 +46,7 @@ export const JobManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
   const { sendStatusUpdateNotification } = useNotifications();
+  const { trackJobCompleted } = useAnalytics();
 
   useEffect(() => {
     fetchJobs();
@@ -88,10 +90,10 @@ export const JobManagement = () => {
 
   const updateJobStatus = async (jobId: number, newStatus: string) => {
     try {
-      // Get job details for notification
+      // Get job details for notification and analytics
       const { data: job } = await supabase
         .from("jobs")
-        .select("customer_uuid, title")
+        .select("customer_uuid, title, final_price")
         .eq("id", jobId)
         .single();
 
@@ -102,12 +104,17 @@ export const JobManagement = () => {
 
       if (error) throw error;
 
-      // Send status update notification
+      // Send status update notification and track analytics
       if (job?.customer_uuid && job?.title) {
         try {
           await sendStatusUpdateNotification(job.customer_uuid, jobId, job.title, newStatus);
+          
+          // Track completion if job is completed
+          if (newStatus === 'Completed' && job.final_price) {
+            await trackJobCompleted(jobId, Number(job.final_price));
+          }
         } catch (notificationError) {
-          console.warn('Notification failed:', notificationError);
+          console.warn('Notification or analytics failed:', notificationError);
         }
       }
 

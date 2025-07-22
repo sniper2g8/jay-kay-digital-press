@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      analytics_summary: {
+        Row: {
+          created_at: string
+          id: string
+          metric_name: string
+          metric_value: number | null
+          period_end: string
+          period_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_name: string
+          metric_value?: number | null
+          period_end: string
+          period_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number | null
+          period_end?: string
+          period_start?: string
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           address: string | null
