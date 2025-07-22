@@ -79,7 +79,9 @@ export const Homepage = () => {
             <Link to="/auth">
               <Button size="lg" className="px-8">Submit a Job</Button>
             </Link>
-            <Button size="lg" variant="outline" className="px-8">View Portfolio</Button>
+            <Link to="/showcase">
+              <Button size="lg" variant="outline" className="px-8">View Portfolio</Button>
+            </Link>
           </div>
         </div>
       </section>
