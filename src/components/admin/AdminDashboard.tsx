@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
+import { NotificationLogs } from "./NotificationLogs";
 
 interface AdminDashboardProps {
   user: User;
@@ -67,6 +68,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           >
             Services
           </Button>
+          <Button
+            variant={activeTab === "notifications" ? "default" : "ghost"}
+            onClick={() => setActiveTab("notifications")}
+            className="px-6"
+          >
+            Notifications
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -112,6 +120,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
 
         {activeTab === "jobs" && <JobManagement />}
         {activeTab === "services" && <ServiceManagement />}
+        {activeTab === "notifications" && <NotificationLogs />}
       </main>
     </div>
   );

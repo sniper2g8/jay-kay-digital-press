@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Eye, Edit, Trash2, Package, Filter } from "lucide-react";
 
 interface Job {
@@ -43,6 +44,7 @@ export const JobManagement = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
+  const { sendStatusUpdateNotification } = useNotifications();
 
   useEffect(() => {
     fetchJobs();
@@ -85,23 +87,42 @@ export const JobManagement = () => {
   };
 
   const updateJobStatus = async (jobId: number, newStatus: string) => {
-    const { error } = await supabase
-      .from("jobs")
-      .update({ status: newStatus })
-      .eq("id", jobId);
+    try {
+      // Get job details for notification
+      const { data: job } = await supabase
+        .from("jobs")
+        .select("customer_uuid, title")
+        .eq("id", jobId)
+        .single();
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update job status",
-        variant: "destructive",
-      });
-    } else {
+      const { error } = await supabase
+        .from("jobs")
+        .update({ status: newStatus })
+        .eq("id", jobId);
+
+      if (error) throw error;
+
+      // Send status update notification
+      if (job?.customer_uuid && job?.title) {
+        try {
+          await sendStatusUpdateNotification(job.customer_uuid, jobId, job.title, newStatus);
+        } catch (notificationError) {
+          console.warn('Notification failed:', notificationError);
+        }
+      }
+
       toast({
         title: "Success",
         description: "Job status updated successfully",
       });
+
       fetchJobs(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update job status",
+        variant: "destructive",
+      });
     }
   };
 

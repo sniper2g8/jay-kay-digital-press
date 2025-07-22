@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Upload, X } from "lucide-react";
 
 interface Service {
@@ -46,6 +47,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { sendJobSubmittedNotification } = useNotifications();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>();
 
   const serviceId = watch("service_id");
@@ -141,6 +143,13 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
         
         // Update job with file URLs - note: this would need job_files table
         console.log("Files uploaded:", fileUrls);
+      }
+
+      // Send notification
+      try {
+        await sendJobSubmittedNotification(customer.id, job.id, formData.title);
+      } catch (notificationError) {
+        console.warn('Notification failed but job was created:', notificationError);
       }
 
       toast({

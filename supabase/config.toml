@@ -1,1 +1,8 @@
 project_id = "zmsfjbvmlsyxrzqvxofx"
+
+[auth]
+enabled = true
+enable_signup = true
+
+[functions.send-notification]
+verify_jwt = false
