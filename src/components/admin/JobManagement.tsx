@@ -300,11 +300,11 @@ export const JobManagement = () => {
                     <TableCell>
                       {job.final_price ? (
                         <span className="font-medium">
-                          ${job.final_price.toFixed(2)}
+                          Le {job.final_price.toFixed(2)}
                         </span>
                       ) : job.quoted_price ? (
                         <span className="text-muted-foreground">
-                          ~${job.quoted_price.toFixed(2)}
+                          ~Le {job.quoted_price.toFixed(2)}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>

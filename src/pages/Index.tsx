@@ -30,6 +30,9 @@ const Index = () => {
           
           if (profile?.roles) {
             setUserRole(profile.roles.name);
+          } else {
+            // If no profile exists, set as customer by default
+            setUserRole('Customer');
           }
         } else {
           setUserRole(null);

@@ -475,7 +475,7 @@ export const ServiceManagement = () => {
                     <TableCell>
                       <Badge variant="outline">{service.service_type}</Badge>
                     </TableCell>
-                    <TableCell>${service.base_price.toFixed(2)}</TableCell>
+                    <TableCell>Le {service.base_price.toFixed(2)}</TableCell>
                     <TableCell>
                       {service.requires_dimensions ? (
                         <Badge variant="secondary">Required</Badge>
