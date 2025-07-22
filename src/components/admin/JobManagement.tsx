@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
 import { JobEditDialog } from "./JobEditDialog";
-import { Eye, Edit, Trash2, Package, Filter } from "lucide-react";
+import { JobCreationDialog } from "./JobCreationDialog";
+import { Eye, Edit, Trash2, Package, Filter, Plus } from "lucide-react";
 
 interface Job {
   id: number;
@@ -47,6 +48,7 @@ export const JobManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
   const { sendStatusUpdateNotification } = useNotifications();
   const { trackJobCompleted } = useAnalytics();
@@ -203,6 +205,10 @@ export const JobManagement = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Job Management</h2>
         <div className="flex items-center gap-2">
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Job
+          </Button>
           <Filter className="h-4 w-4" />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
@@ -356,6 +362,12 @@ export const JobManagement = () => {
           setEditingJobId(null);
         }}
         onJobUpdated={fetchJobs}
+      />
+      
+      <JobCreationDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onJobCreated={fetchJobs}
       />
     </div>
   );
