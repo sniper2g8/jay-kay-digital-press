@@ -12,7 +12,7 @@ interface NotificationRequest {
   customer_id: string;
   job_id?: number;
   delivery_schedule_id?: string;
-  event: 'job_submitted' | 'status_updated' | 'delivery_scheduled' | 'delivery_completed';
+  event: 'job_submitted' | 'status_updated' | 'delivery_scheduled' | 'delivery_completed' | 'admin_job_submitted';
   subject?: string;
   message: string;
   custom_data?: any;
@@ -135,6 +135,47 @@ serve(async (req: Request) => {
     }: NotificationRequest = await req.json();
 
     console.log('Processing notification:', { type, customer_id, event });
+
+    // Handle admin notifications differently
+    if (customer_id === 'admin') {
+      // Get admin users for notifications
+      const { data: adminUsers, error: adminError } = await supabase
+        .from('internal_users')
+        .select('email, name')
+        .eq('role_id', 1); // Admin role ID
+
+      if (adminError) {
+        console.error('Error fetching admin users:', adminError);
+        return Response.json({ success: false, errors: ['Failed to fetch admin users'] }, { headers: corsHeaders });
+      }
+
+      // Send notification to all admins
+      const adminPromises = (adminUsers || []).map(async (admin) => {
+        const emailResult = await sendEmail(admin.email, subject, message);
+        await logNotification(
+          'admin',
+          'email',
+          event,
+          admin.email,
+          undefined,
+          subject,
+          message,
+          'sent',
+          emailResult?.data?.id || null,
+          undefined,
+          job_id,
+          delivery_schedule_id
+        );
+        return emailResult;
+      });
+
+      const results = await Promise.all(adminPromises);
+      return Response.json({ 
+        success: true, 
+        email_sent: results.length > 0,
+        admin_notifications_sent: results.length
+      }, { headers: corsHeaders });
+    }
 
     // Get customer info and preferences
     const { data: customer, error: customerError } = await supabase

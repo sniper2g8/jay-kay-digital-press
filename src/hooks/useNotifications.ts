@@ -90,11 +90,22 @@ export const useNotifications = () => {
     });
   };
 
+  const sendAdminJobNotification = async (customerId: string, jobId: number, jobTitle: string, customerName: string) => {
+    return sendNotification({
+      customer_id: 'admin',
+      job_id: jobId,
+      event: 'admin_job_submitted',
+      subject: `New Job Submitted - ${jobTitle}`,
+      message: `A new print job "${jobTitle}" has been submitted by ${customerName} (Customer ID: ${customerId}).`,
+    });
+  };
+
   return {
     sendNotification,
     sendJobSubmittedNotification,
     sendStatusUpdateNotification,
     sendDeliveryNotification,
+    sendAdminJobNotification,
     loading,
   };
 };

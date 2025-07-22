@@ -48,7 +48,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { sendJobSubmittedNotification } = useNotifications();
+  const { sendJobSubmittedNotification, sendAdminJobNotification } = useNotifications();
   const { trackJobCreated } = useAnalytics();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>();
 
@@ -155,9 +155,17 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
         console.log("Files uploaded:", fileUrls);
       }
 
+      // Get customer name for admin notification
+      const { data: customerProfile } = await supabase
+        .from("customers")
+        .select("name")
+        .eq("id", customer.id)
+        .single();
+
       // Send notification and track analytics
       try {
         await sendJobSubmittedNotification(customer.id, job.id, formData.title);
+        await sendAdminJobNotification(customer.id, job.id, formData.title, customerProfile?.name || 'Unknown');
         await trackJobCreated(job.id, customer.id);
       } catch (notificationError) {
         console.warn('Notification or analytics failed but job was created:', notificationError);
