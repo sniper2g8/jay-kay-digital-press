@@ -3,8 +3,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Mail, MapPin, Printer, Package, Palette } from "lucide-react";
+import { 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Printer, 
+  Package, 
+  Palette,
+  CreditCard,
+  FileImage,
+  Eye,
+  Image,
+  Wrench,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Users,
+  Truck,
+  Upload,
+  MessageSquareQuote,
+  ShoppingCart,
+  Star,
+  ArrowRight,
+  Play
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import useEmblaCarousel from 'embla-carousel-react';
+import heroImage from "@/assets/hero-bg.jpg";
 
 interface Service {
   id: number;
@@ -18,6 +43,7 @@ interface Service {
 export const Homepage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [emblaRef] = useEmblaCarousel({ loop: true });
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -36,22 +62,45 @@ export const Homepage = () => {
     fetchServices();
   }, []);
 
-  const getServiceIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'printing': return <Printer className="h-6 w-6" />;
-      case 'packaging': return <Package className="h-6 w-6" />;
-      default: return <Palette className="h-6 w-6" />;
-    }
-  };
+  const keyServices = [
+    { icon: CreditCard, title: "Business Cards", description: "Professional business cards that make lasting impressions" },
+    { icon: Image, title: "Banners", description: "PVC, Canvas & Vinyl banners for indoor and outdoor use" },
+    { icon: Eye, title: "SAV", description: "Reflective, Transparent & One-way Vision signage" },
+    { icon: FileImage, title: "Posters & Flyers", description: "High-quality marketing materials for any event" },
+    { icon: Palette, title: "Custom Prints", description: "Personalized printing solutions for unique projects" },
+    { icon: Package, title: "Packaging", description: "Custom packaging and branded materials" }
+  ];
+
+  const whyChooseUs = [
+    { icon: Star, title: "High-Quality Prints", description: "Premium materials and latest printing technology" },
+    { icon: Clock, title: "Fast Turnaround", description: "Quick delivery without compromising quality" },
+    { icon: DollarSign, title: "Competitive Pricing", description: "Best value for professional printing services" },
+    { icon: Users, title: "Expert Staff", description: "Experienced team dedicated to your success" },
+    { icon: Truck, title: "Nationwide Delivery", description: "Reliable delivery across Sierra Leone" }
+  ];
+
+  const howItWorks = [
+    { step: 1, icon: ShoppingCart, title: "Choose Service", description: "Select from our wide range of printing services" },
+    { step: 2, icon: Upload, title: "Upload Files & Details", description: "Submit your designs and specifications" },
+    { step: 3, icon: MessageSquareQuote, title: "Get a Quote", description: "Receive instant pricing for your project" },
+    { step: 4, icon: Truck, title: "Receive & Track", description: "Track your order and receive premium prints" }
+  ];
+
+  const showcaseImages = [
+    "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400",
+    "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400", 
+    "https://images.unsplash.com/photo-1607703703520-bb638e84caf2?w=400",
+    "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400"
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-primary text-primary-foreground">
+      <header className="bg-primary text-primary-foreground sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">JAY KAY DIGITAL PRESS</h1>
-            <p className="text-primary-foreground/80">Professional Printing Services</p>
+            <p className="text-primary-foreground/80">Bringing Your Prints to Life</p>
           </div>
           <div className="flex gap-4">
             <Link to="/auth">
@@ -67,114 +116,200 @@ export const Homepage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 to-secondary/10 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Premium Digital Printing Solutions
+      <section 
+        className="relative min-h-screen flex items-center justify-center text-center text-white"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="container mx-auto px-4 z-10">
+          <h2 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
+            Bringing Your Prints to Life
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            From business cards to large format banners, we deliver exceptional quality printing services with cutting-edge technology and personalized customer care.
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
+            Professional digital printing services with cutting-edge technology and personalized customer care
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link to="/auth">
-              <Button size="lg" className="px-8">Submit a Job</Button>
-            </Link>
+          <Link to="/auth">
+            <Button size="lg" className="px-12 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 animate-scale-in">
+              Start Your Print Job
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Our Services */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold mb-4">Our Services</h3>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Professional printing solutions for all your business and personal needs
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {keyServices.map((service, index) => (
+              <Card key={index} className="hover:shadow-xl transition-all duration-300 hover-scale group">
+                <CardHeader className="text-center">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                    <service.icon className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{service.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <CardDescription className="text-base">{service.description}</CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-20 bg-muted">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold mb-4">Why Choose Us?</h3>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              We deliver exceptional value through quality, speed, and service excellence
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {whyChooseUs.map((item, index) => (
+              <div key={index} className="flex flex-col items-center text-center group">
+                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <item.icon className="h-10 w-10 text-primary-foreground" />
+                </div>
+                <h4 className="text-xl font-semibold mb-2">{item.title}</h4>
+                <p className="text-muted-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Gallery */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold mb-4">Showcase Gallery</h3>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              See our recent work and quality in action
+            </p>
+          </div>
+
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex">
+              {showcaseImages.map((image, index) => (
+                <div key={index} className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.333%] px-4">
+                  <div className="relative group cursor-pointer">
+                    <img 
+                      src={image} 
+                      alt={`Showcase ${index + 1}`}
+                      className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
+                      <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
             <Link to="/showcase">
-              <Button size="lg" variant="outline" className="px-8">View Portfolio</Button>
+              <Button variant="outline" size="lg">
+                View Full Portfolio
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Services Showcase */}
-      <section className="py-16">
+      {/* How It Works */}
+      <section className="py-20 bg-muted">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Our Services</h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive printing solutions for all your business and personal needs
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold mb-4">How It Works</h3>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Simple steps to get your professional prints delivered
             </p>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-6 bg-muted rounded mb-2"></div>
-                    <div className="h-4 bg-muted rounded w-2/3"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-4 bg-muted rounded mb-2"></div>
-                    <div className="h-4 bg-muted rounded w-1/2"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services.map((service) => (
-                <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      {getServiceIcon(service.service_type)}
-                      <Badge variant="secondary">{service.service_type}</Badge>
-                    </div>
-                    <CardTitle>{service.name}</CardTitle>
-                    <CardDescription>{service.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Starting from</span>
-                      <span className="font-bold text-primary">Le {service.base_price}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {howItWorks.map((step, index) => (
+              <div key={index} className="text-center group">
+                <div className="relative mb-6">
+                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                    <step.icon className="h-10 w-10 text-primary-foreground" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-sm font-bold text-secondary-foreground">
+                    {step.step}
+                  </div>
+                </div>
+                <h4 className="text-xl font-semibold mb-2">{step.title}</h4>
+                <p className="text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link to="/auth">
+              <Button size="lg" className="px-8">
+                Get Started Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section className="bg-muted py-16">
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Get In Touch</h3>
-            <p className="text-muted-foreground">Ready to start your project? Contact us today!</p>
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold mb-4">Get In Touch</h3>
+            <p className="text-xl text-muted-foreground">Ready to start your project? Contact us today!</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
-                <Phone className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle>Call Us</CardTitle>
+                <Phone className="h-12 w-12 text-primary mx-auto mb-4" />
+                <CardTitle className="text-xl">Call Us</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="font-semibold">+232 76 123 456</p>
-                <p className="text-sm text-muted-foreground">Mon - Fri, 8AM - 6PM</p>
+                <p className="font-semibold text-lg">+232 76 123 456</p>
+                <p className="text-muted-foreground">Mon - Fri, 8AM - 6PM</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
-                <Mail className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle>Email Us</CardTitle>
+                <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
+                <CardTitle className="text-xl">Email Us</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="font-semibold">info@jaykaypress.com</p>
-                <p className="text-sm text-muted-foreground">Quick response guaranteed</p>
+                <p className="font-semibold text-lg">info@jaykaypress.com</p>
+                <p className="text-muted-foreground">Quick response guaranteed</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
-                <MapPin className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle>Visit Us</CardTitle>
+                <MapPin className="h-12 w-12 text-primary mx-auto mb-4" />
+                <CardTitle className="text-xl">Visit Us</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="font-semibold">123 Business Street</p>
-                <p className="text-sm text-muted-foreground">Freetown, Sierra Leone</p>
+                <p className="font-semibold text-lg">123 Business Street</p>
+                <p className="text-muted-foreground">Freetown, Sierra Leone</p>
               </CardContent>
             </Card>
           </div>
@@ -182,13 +317,26 @@ export const Homepage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary text-primary-foreground py-8">
-        <div className="container mx-auto px-4 text-center">
-          <h4 className="text-xl font-bold mb-2">JAY KAY DIGITAL PRESS</h4>
-          <p className="text-primary-foreground/80 mb-4">Your trusted printing partner since 2020</p>
-          <p className="text-sm text-primary-foreground/60">
-            © 2024 Jay Kay Digital Press. All rights reserved.
-          </p>
+      <footer className="bg-primary text-primary-foreground py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h4 className="text-2xl font-bold mb-4">JAY KAY DIGITAL PRESS</h4>
+            <p className="text-primary-foreground/80 mb-6 text-lg">Your trusted printing partner since 2020</p>
+            <div className="flex justify-center gap-6 mb-6">
+              <Link to="/auth" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+                Services
+              </Link>
+              <Link to="/showcase" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+                Portfolio
+              </Link>
+              <Link to="/auth" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+                Contact
+              </Link>
+            </div>
+            <p className="text-sm text-primary-foreground/60">
+              © 2024 Jay Kay Digital Press. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
