@@ -29,6 +29,12 @@ export const AuthPage = () => {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      toast({
+        title: "Welcome back!",
+        description: "You have been signed in successfully.",
+      });
+      // The Index component will handle routing based on user role
     }
     setLoading(false);
   };

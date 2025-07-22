@@ -22,13 +22,17 @@ const Index = () => {
         
         if (session?.user) {
           // Fetch user role
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('role_id, roles(name)')
             .eq('id', session.user.id)
             .single();
           
-          if (profile?.roles) {
+          if (error) {
+            console.error('Error fetching profile:', error);
+            // If error, set as customer by default
+            setUserRole('Customer');
+          } else if (profile?.roles) {
             setUserRole(profile.roles.name);
           } else {
             // If no profile exists, set as customer by default
@@ -41,12 +45,33 @@ const Index = () => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check for existing session and wait for role fetch
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Fetch user role for existing session
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role_id, roles(name)')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setUserRole('Customer');
+        } else if (profile?.roles) {
+          setUserRole(profile.roles.name);
+        } else {
+          setUserRole('Customer');
+        }
+      }
       setLoading(false);
-    });
+    };
+    
+    checkSession();
 
     return () => subscription.unsubscribe();
   }, []);
