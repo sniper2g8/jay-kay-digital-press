@@ -34,16 +34,18 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">JAY KAY DIGITAL PRESS</h1>
-            <p className="text-muted-foreground">Customer Portal</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm">Welcome, {user.email}</span>
-            <Button variant="outline" onClick={handleSignOut}>
-              Sign Out
-            </Button>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">JAY KAY DIGITAL PRESS</h1>
+              <p className="text-muted-foreground text-sm">Customer Portal</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs sm:text-sm">Welcome, {user.email}</span>
+              <Button variant="outline" onClick={handleSignOut} size="sm">
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -51,39 +53,39 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
       <main className="container mx-auto px-4 py-8">
         {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-8 w-full overflow-x-auto">
-          <div className="flex space-x-1 min-w-max">
+          <div className="flex space-x-1 min-w-max pb-1">
           <Button
             variant={activeTab === "overview" ? "default" : "ghost"}
             onClick={() => setActiveTab("overview")}
-            className="px-6"
+            className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             Overview
           </Button>
           <Button
             variant={activeTab === "jobs" ? "default" : "ghost"}
             onClick={() => setActiveTab("jobs")}
-            className="px-6"
+            className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             My Jobs
           </Button>
           <Button
             variant={activeTab === "quotes" ? "default" : "ghost"}
             onClick={() => setActiveTab("quotes")}
-            className="px-6"
+            className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             Quotes
           </Button>
           <Button
             variant={activeTab === "invoices" ? "default" : "ghost"}
             onClick={() => setActiveTab("invoices")}
-            className="px-6"
+            className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             Invoices
           </Button>
           <Button
             variant={activeTab === "notifications" ? "default" : "ghost"}
             onClick={() => setActiveTab("notifications")}
-            className="px-6"
+            className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             Settings
           </Button>
