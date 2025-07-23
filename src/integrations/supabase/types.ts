@@ -784,13 +784,6 @@ export type Database = {
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "job_history_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_status"
-            referencedColumns: ["id"]
-          },
         ]
       }
       jobs: {
@@ -897,13 +890,6 @@ export type Database = {
             columns: ["created_by_user"]
             isOneToOne: false
             referencedRelation: "internal_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jobs_current_status_fkey"
-            columns: ["current_status"]
-            isOneToOne: false
-            referencedRelation: "workflow_status"
             referencedColumns: ["id"]
           },
           {
@@ -1588,19 +1574,34 @@ export type Database = {
       }
       workflow_status: {
         Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
           id: number
+          is_active: boolean | null
           name: string
-          sequence: number
+          order_index: number | null
+          updated_at: string | null
         }
         Insert: {
-          id: number
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          is_active?: boolean | null
           name: string
-          sequence: number
+          order_index?: number | null
+          updated_at?: string | null
         }
         Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
           id?: number
+          is_active?: boolean | null
           name?: string
-          sequence?: number
+          order_index?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }

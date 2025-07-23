@@ -7,11 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Settings } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Edit, Trash2, Settings, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  SERVICE_TYPES, 
+  SAV_TYPES, 
+  BANNER_TYPES, 
+  PAPER_TYPES, 
+  PAPER_WEIGHTS,
+  FINISHING_OPTIONS,
+  DEFAULT_SERVICES,
+  type ServiceType 
+} from '@/constants/services';
 
 interface Service {
   id: number;
@@ -39,29 +50,13 @@ interface ServiceFormData {
   available_finishes: string[];
 }
 
-const SERVICE_TYPES = [
-  "SAV",
-  "Banner", 
-  "Business Cards",
-  "Flyers",
-  "Posters",
-  "Brochures",
-  "Stickers",
-  "Other"
-];
-
-const SAV_SUBTYPES = ["Reflective", "Transparent", "One Way Vision", "Normal SAV"];
-const BANNER_SUBTYPES = ["PVC", "Canvas", "Normal Banner"];
-const PAPER_TYPES = ["Glossy", "Matte", "Textured", "Premium Vinyl", "Standard Vinyl", "Outdoor Vinyl", "PVC Material", "Canvas Material", "Fabric", "Photo Paper", "Recycled"];
-const PAPER_WEIGHTS = ["80gsm", "100gsm", "120gsm", "150gsm", "200gsm", "250gsm", "300gsm"];
-const FINISHES = ["None", "Lamination", "Binding", "Cutting", "Folding", "Perforation"];
+// Use constants from the centralized services file
 
 export const ServiceManagement = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<ServiceFormData>();
 
   const serviceType = watch("service_type");
@@ -73,10 +68,10 @@ export const ServiceManagement = () => {
   useEffect(() => {
     // Auto-populate subtypes based on service type
     if (serviceType === "SAV") {
-      setValue("available_subtypes", SAV_SUBTYPES);
+      setValue("available_subtypes", [...SAV_TYPES]);
       setValue("requires_dimensions", true);
     } else if (serviceType === "Banner") {
-      setValue("available_subtypes", BANNER_SUBTYPES);
+      setValue("available_subtypes", [...BANNER_TYPES]);
       setValue("requires_dimensions", true);
     } else {
       setValue("available_subtypes", []);
@@ -92,11 +87,7 @@ export const ServiceManagement = () => {
       .order("name");
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load services",
-        variant: "destructive",
-      });
+      toast.error("Failed to load services");
     } else {
       setServices(data || []);
     }
@@ -126,10 +117,7 @@ export const ServiceManagement = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "Service updated successfully",
-        });
+        toast.success("Service updated successfully");
       } else {
         const { error } = await supabase
           .from("services")
@@ -137,10 +125,7 @@ export const ServiceManagement = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "Service created successfully",
-        });
+        toast.success("Service created successfully");
       }
 
       reset();
@@ -148,11 +133,7 @@ export const ServiceManagement = () => {
       setIsDialogOpen(false);
       fetchServices();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save service",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to save service");
     }
   };
 
@@ -163,16 +144,9 @@ export const ServiceManagement = () => {
       .eq("id", serviceId);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update service status",
-        variant: "destructive",
-      });
+      toast.error("Failed to update service status");
     } else {
-      toast({
-        title: "Success",
-        description: `Service ${!isActive ? "activated" : "deactivated"} successfully`,
-      });
+      toast.success(`Service ${!isActive ? "activated" : "deactivated"} successfully`);
       fetchServices();
     }
   };
@@ -186,16 +160,9 @@ export const ServiceManagement = () => {
       .eq("id", serviceId);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete service",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete service");
     } else {
-      toast({
-        title: "Success",
-        description: "Service deleted successfully",
-      });
+      toast.success("Service deleted successfully");
       fetchServices();
     }
   };
@@ -288,7 +255,7 @@ export const ServiceManagement = () => {
                     <SelectValue placeholder="Select service type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SERVICE_TYPES.map((type) => (
+                    {Object.values(SERVICE_TYPES).map((type) => (
                       <SelectItem key={type} value={type}>
                         {type}
                       </SelectItem>
@@ -315,7 +282,7 @@ export const ServiceManagement = () => {
                 <div>
                   <Label>Available Subtypes</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    {(serviceType === "SAV" ? SAV_SUBTYPES : BANNER_SUBTYPES).map((subtype) => (
+                    {(serviceType === "SAV" ? SAV_TYPES : BANNER_TYPES).map((subtype) => (
                       <label key={subtype} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
@@ -392,22 +359,22 @@ export const ServiceManagement = () => {
               <div>
                 <Label>Available Finishes</Label>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  {FINISHES.map((finish) => (
-                    <label key={finish} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        value={finish}
-                        onChange={(e) => {
-                          const current = watch("available_finishes") || [];
-                          if (e.target.checked) {
-                            setValue("available_finishes", [...current, finish]);
-                          } else {
-                            setValue("available_finishes", current.filter(f => f !== finish));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm">{finish}</span>
+                  {FINISHING_OPTIONS.map((finish) => (
+                    <label key={finish.id} className="flex items-center space-x-2">
+                       <input
+                         type="checkbox"
+                         value={finish.id}
+                         onChange={(e) => {
+                           const current = watch("available_finishes") || [];
+                           if (e.target.checked) {
+                             setValue("available_finishes", [...current, finish.id]);
+                           } else {
+                             setValue("available_finishes", current.filter(f => f !== finish.id));
+                           }
+                         }}
+                         className="rounded"
+                       />
+                       <span className="text-sm">{finish.name} (+Le {finish.price.toFixed(2)})</span>
                     </label>
                   ))}
                 </div>
