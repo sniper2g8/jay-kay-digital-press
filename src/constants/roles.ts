@@ -45,8 +45,9 @@ export const ROLE_PERMISSIONS = {
 } as const;
 
 export const hasPermission = (userRole: string, permission: string): boolean => {
-  const permissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS];
-  return permissions?.includes(permission as any) ?? false;
+  const roleKey = userRole as keyof typeof ROLE_PERMISSIONS;
+  const permissions = ROLE_PERMISSIONS[roleKey];
+  return permissions ? permissions.includes(permission as Permission) : false;
 };
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
