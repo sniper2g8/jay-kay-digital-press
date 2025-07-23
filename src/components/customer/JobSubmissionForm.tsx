@@ -157,8 +157,25 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
       if (uploadedFiles.length > 0) {
         fileUrls = await uploadFiles(job.id.toString());
         
-        // Update job with file URLs - note: this would need job_files table
-        console.log("Files uploaded:", fileUrls);
+        // Create records in job_files table for each uploaded file
+        for (let i = 0; i < fileUrls.length; i++) {
+          const filePath = fileUrls[i];
+          const originalFile = uploadedFiles[i];
+          
+          const { error: fileRecordError } = await supabase
+            .from('job_files')
+            .insert({
+              job_id: job.id,
+              file_path: filePath,
+              description: originalFile.name
+            });
+            
+          if (fileRecordError) {
+            console.error('Error creating file record:', fileRecordError);
+          }
+        }
+        
+        console.log("Files uploaded and recorded:", fileUrls);
       }
 
       // Get customer name for admin notification
