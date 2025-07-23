@@ -14,6 +14,8 @@ interface CompanySettings {
   email?: string;
   address?: string;
   country?: string;
+  business_hours?: string;
+  website?: string;
 }
 
 export const useCompanySettings = () => {

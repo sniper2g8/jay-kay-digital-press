@@ -97,17 +97,62 @@ export const InvoiceManagement = () => {
 
   const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
     try {
-      // For now, show a message that download functionality needs to be implemented
-      toast({
-        title: "Download Invoice",
-        description: `Download functionality for ${invoiceNumber} will be implemented soon`,
-      });
+      // Fetch full invoice data including items and customer details
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          customers (
+            name,
+            email,
+            phone,
+            address,
+            customer_display_id
+          ),
+          invoice_items (
+            description,
+            quantity,
+            unit_price,
+            total_price
+          )
+        `)
+        .eq('id', invoiceId)
+        .single();
+
+      if (invoiceError || !invoiceData) {
+        throw new Error('Failed to fetch invoice data');
+      }
+
+      // Fetch company settings
+      const { data: companySettings } = await supabase
+        .from('company_settings')
+        .select('*')
+        .single();
+
+      if (!companySettings) {
+        throw new Error('Company settings not found');
+      }
+
+      // Dynamically import the PDF generator to reduce bundle size
+      const { generateInvoicePDF } = await import('@/utils/pdfGenerator');
       
-      // TODO: Implement actual PDF generation and download
-      // This would typically involve:
-      // 1. Fetching full invoice data including items
-      // 2. Generating PDF using a library like jsPDF or react-pdf
-      // 3. Triggering download
+      // Generate PDF
+      const pdfBlob = await generateInvoicePDF(invoiceData, companySettings);
+      
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: `Invoice ${invoiceNumber} downloaded successfully`,
+      });
     } catch (error) {
       console.error('Error downloading invoice:', error);
       toast({

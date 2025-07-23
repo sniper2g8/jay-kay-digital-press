@@ -15,6 +15,9 @@ import { ShowcaseScreen } from "./pages/ShowcaseScreen";
 import { AuthPage } from "./components/auth/AuthPage";
 import { Unauthorized } from "./pages/Unauthorized";
 import { InvoiceViewPage } from "./components/admin/InvoiceViewPage";
+import { JobTrackingPage } from "./pages/JobTrackingPage";
+import { DisplayJobsScreen } from "./pages/DisplayJobsScreen";
+import { DisplayShowcaseScreen } from "./pages/DisplayShowcaseScreen";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +54,13 @@ const AppContent = () => {
               </ProtectedRoute>
             } 
           />
+
+          {/* Job Tracking Routes */}
+          <Route path="/track/:trackingCode" element={<JobTrackingPage />} />
+          
+          {/* Display Routes */}
+          <Route path="/display/jobs" element={<DisplayJobsScreen />} />
+          <Route path="/display/showcase" element={<DisplayShowcaseScreen />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
