@@ -71,7 +71,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   } = useForm<JobFormData>({
     defaultValues: {
       quantity: 1,
-      delivery_method: "pickup"
+      delivery_method: "Collection"
     }
   });
 
@@ -362,13 +362,15 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="delivery_method">Delivery Method</Label>
-              <Select onValueChange={(value) => setValue("delivery_method", value)} defaultValue="pickup">
+              <Select onValueChange={(value) => setValue("delivery_method", value)} defaultValue="Collection">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pickup">Pickup</SelectItem>
-                  <SelectItem value="delivery">Delivery</SelectItem>
+                  <SelectItem value="Collection">Collection</SelectItem>
+                  <SelectItem value="Local Delivery">Local Delivery</SelectItem>
+                  <SelectItem value="Nationwide Delivery">Nationwide Delivery</SelectItem>
+                  <SelectItem value="Express Delivery">Express Delivery</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -383,7 +385,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             </div>
           </div>
 
-          {watchedDeliveryMethod === "delivery" && (
+          {(watchedDeliveryMethod === "Local Delivery" || watchedDeliveryMethod === "Nationwide Delivery" || watchedDeliveryMethod === "Express Delivery") && (
             <div>
               <Label htmlFor="delivery_address">Delivery Address</Label>
               <Textarea
