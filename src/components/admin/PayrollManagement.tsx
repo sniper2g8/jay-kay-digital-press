@@ -25,11 +25,16 @@ interface Payroll {
 
 interface Employee {
   id: string;
+  employee_number: string;
   name: string;
   email: string;
+  phone: string;
+  role: string;
   salary: number;
   allowances: number;
   deductions: number;
+  hire_date: string;
+  is_active: boolean;
 }
 
 interface PayrollPayment {
@@ -77,23 +82,88 @@ export const PayrollManagement = () => {
 
   const fetchEmployees = async () => {
     try {
+      // First fetch all employees
       const { data: employeesData, error } = await supabase
         .from("employees")
-        .select("id, name, email, salary, allowances, deductions, role")
-        .eq("is_active", true);
+        .select("*");
 
       if (error) throw error;
 
-      const formattedEmployees = (employeesData || []).map(emp => ({
-        id: emp.id,
-        name: emp.name,
-        email: emp.email,
-        salary: Number(emp.salary || 0),
-        allowances: Number(emp.allowances || 0),
-        deductions: Number(emp.deductions || 0)
-      }));
+      console.log("Raw employees data:", employeesData);
 
-      console.log("Fetched employees:", formattedEmployees);
+      // Get unique internal user IDs and non-system staff IDs
+      const internalUserIds = employeesData?.filter(emp => emp.internal_user_id).map(emp => emp.internal_user_id) || [];
+      const nonSystemStaffIds = employeesData?.filter(emp => emp.non_system_staff_id).map(emp => emp.non_system_staff_id) || [];
+
+      // Fetch internal users data
+      let internalUsersData: any[] = [];
+      if (internalUserIds.length > 0) {
+        const { data, error: internalError } = await supabase
+          .from("internal_users")
+          .select("id, name, email, phone, roles(name)")
+          .in("id", internalUserIds);
+        
+        if (!internalError) {
+          internalUsersData = data || [];
+        }
+      }
+
+      // Fetch non-system staff data
+      let nonSystemStaffData: any[] = [];
+      if (nonSystemStaffIds.length > 0) {
+        const { data, error: staffError } = await supabase
+          .from("non_system_staff")
+          .select("id, name, email, phone, position")
+          .in("id", nonSystemStaffIds);
+        
+        if (!staffError) {
+          nonSystemStaffData = data || [];
+        }
+      }
+
+      // Create lookup maps
+      const internalUsersMap = new Map(internalUsersData.map(user => [user.id, user]));
+      const nonSystemStaffMap = new Map(nonSystemStaffData.map(staff => [staff.id, staff]));
+
+      const formattedEmployees = (employeesData || []).map(emp => {
+        let name, email, phone, role;
+        
+        if (emp.internal_user_id && internalUsersMap.has(emp.internal_user_id)) {
+          const internalUser = internalUsersMap.get(emp.internal_user_id);
+          name = internalUser.name;
+          email = internalUser.email;
+          phone = internalUser.phone;
+          role = internalUser.roles?.name || 'System User';
+        } else if (emp.non_system_staff_id && nonSystemStaffMap.has(emp.non_system_staff_id)) {
+          const staffUser = nonSystemStaffMap.get(emp.non_system_staff_id);
+          name = staffUser.name;
+          email = staffUser.email;
+          phone = staffUser.phone;
+          role = staffUser.position || 'Non-System Staff';
+        } else {
+          // Fallback to employee table data
+          name = emp.name || 'Unknown Employee';
+          email = emp.email || '';
+          phone = emp.phone || '';
+          role = emp.role || 'Staff';
+        }
+
+        return {
+          id: emp.id,
+          employee_number: emp.employee_number || 'Not assigned',
+          name: name,
+          email: email,
+          phone: phone,
+          role: role,
+          salary: Number(emp.salary || 0),
+          allowances: Number(emp.allowances || 0),
+          deductions: Number(emp.deductions || 0),
+          hire_date: emp.hire_date || emp.created_at,
+          is_active: emp.is_active !== false
+        };
+      });
+
+      console.log("Formatted employees:", formattedEmployees);
       setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -137,9 +207,9 @@ export const PayrollManagement = () => {
           status: "draft"
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (payrollError) throw payrollError;
+      if (payrollError || !payroll) throw payrollError || new Error('Failed to create payroll');
 
       // Create payroll payments for all employees
       const payrollPayments = employees.map(emp => ({
@@ -287,6 +357,75 @@ export const PayrollManagement = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Staff and Salary Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff and Salaries</CardTitle>
+          <CardDescription>
+            View all staff members and their compensation details
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {employees.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No staff records found. Add employees to get started.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee #</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Base Salary</TableHead>
+                  <TableHead>Allowances</TableHead>
+                  <TableHead>Deductions</TableHead>
+                  <TableHead>Net Salary</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employees.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell className="font-mono text-xs">
+                      {employee.employee_number}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {employee.name}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{employee.role}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {employee.email || 'Not provided'}
+                    </TableCell>
+                    <TableCell className="font-mono">
+                      Le {employee.salary.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-mono text-success">
+                      +Le {employee.allowances.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-mono text-destructive">
+                      -Le {employee.deductions.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-mono font-bold">
+                      Le {(employee.salary + employee.allowances - employee.deductions).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={employee.is_active ? "default" : "secondary"}>
+                        {employee.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Payrolls Table */}
       <Card>
