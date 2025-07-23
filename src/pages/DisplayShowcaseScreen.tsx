@@ -114,7 +114,7 @@ export const DisplayShowcaseScreen = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20" />
         <div className="relative z-10 text-center py-12">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
-            {settings?.company_name || "JAY KAY DIGITAL PRESS"}
+            {settings?.company_name || "Loading..."}
           </h1>
           <p className="text-2xl text-blue-200 mb-6">
             Professional Printing & Design Services in Sierra Leone

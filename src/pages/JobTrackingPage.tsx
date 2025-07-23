@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Package, Clock, CheckCircle, TruckIcon, MapPin, Phone, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface Job {
   id: number;
@@ -38,6 +39,7 @@ export const JobTrackingPage = () => {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     if (trackingCode) {
@@ -212,7 +214,7 @@ export const JobTrackingPage = () => {
               Back to Home
             </Button>
             <div>
-              <h1 className="text-xl font-bold">JAY KAY DIGITAL PRESS</h1>
+              <h1 className="text-xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-sm text-muted-foreground">Job Tracking</p>
             </div>
           </div>

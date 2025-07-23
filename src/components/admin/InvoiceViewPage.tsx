@@ -7,6 +7,7 @@ import { ArrowLeft, Download, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface InvoiceItem {
   id: string;
@@ -43,6 +44,7 @@ export const InvoiceViewPage = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     if (invoiceId) {
@@ -199,11 +201,10 @@ export const InvoiceViewPage = () => {
                 <div>
                   <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">From</h3>
                   <div className="space-y-1">
-                    <p className="text-xl font-bold text-foreground">JAY KAY DIGITAL PRESS</p>
-                    <p className="text-muted-foreground">123 Business Street</p>
-                    <p className="text-muted-foreground">Freetown, Sierra Leone</p>
-                    <p className="text-muted-foreground">info@jaykaypress.com</p>
-                    <p className="text-muted-foreground">+232 76 123 456</p>
+                    <p className="text-xl font-bold text-foreground">{settings?.company_name || 'Loading...'}</p>
+                    <p className="text-muted-foreground">{settings?.address || ''}</p>
+                    <p className="text-muted-foreground">{settings?.email || ''}</p>
+                    <p className="text-muted-foreground">{settings?.phone || ''}</p>
                   </div>
                 </div>
                 <div>
@@ -307,11 +308,11 @@ export const InvoiceViewPage = () => {
                   Thank you for your business! For any questions regarding this invoice, please contact us.
                 </p>
                 <div className="flex justify-center items-center gap-4 mt-4 text-xs text-muted-foreground">
-                  <span>info@jaykaypress.com</span>
+                  <span>{settings?.email || ''}</span>
                   <span>•</span>
-                  <span>+232 76 123 456</span>
+                  <span>{settings?.phone || ''}</span>
                   <span>•</span>
-                  <span>www.jaykaypress.com</span>
+                  <span>{settings?.website || ''}</span>
                 </div>
               </div>
             </div>

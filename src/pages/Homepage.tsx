@@ -120,7 +120,7 @@ export const Homepage = () => {
       <header className="bg-primary text-primary-foreground sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">{companySettings?.company_name || 'JAY KAY DIGITAL PRESS'}</h1>
+            <h1 className="text-2xl font-bold">{companySettings?.company_name || 'Loading...'}</h1>
             <p className="text-primary-foreground/80">Bringing Your Prints to Life</p>
           </div>
           <div className="flex gap-4">
@@ -349,7 +349,7 @@ export const Homepage = () => {
                 <CardTitle className="text-xl">Call Us</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="font-semibold text-lg">{companySettings?.phone || '+232 76 123 456'}</p>
+                <p className="font-semibold text-lg">{companySettings?.phone || 'Contact us'}</p>
                 <p className="text-muted-foreground">Mon - Fri, 8AM - 6PM</p>
               </CardContent>
             </Card>
@@ -360,7 +360,7 @@ export const Homepage = () => {
                 <CardTitle className="text-xl">Email Us</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="font-semibold text-lg">{companySettings?.email || 'info@jaykaypress.com'}</p>
+                <p className="font-semibold text-lg">{companySettings?.email || 'Contact us'}</p>
                 <p className="text-muted-foreground">Quick response guaranteed</p>
               </CardContent>
             </Card>
@@ -383,7 +383,7 @@ export const Homepage = () => {
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h4 className="text-2xl font-bold mb-4">{companySettings?.company_name || 'JAY KAY DIGITAL PRESS'}</h4>
+            <h4 className="text-2xl font-bold mb-4">{companySettings?.company_name || 'Loading...'}</h4>
             <p className="text-primary-foreground/80 mb-6 text-lg">Your trusted printing partner since 2020</p>
             <div className="flex justify-center gap-6 mb-6">
               <Link to="/login" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
@@ -397,7 +397,7 @@ export const Homepage = () => {
               </Link>
             </div>
             <p className="text-sm text-primary-foreground/60">
-              © 2024 Jay Kay Digital Press. All rights reserved.
+              © 2024 {companySettings?.company_name || 'Print Shop'}. All rights reserved.
             </p>
           </div>
         </div>

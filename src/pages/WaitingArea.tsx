@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, AlertCircle, Package } from "lucide-react";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface Job {
   id: number;
@@ -23,6 +24,7 @@ export const WaitingArea = () => {
   const [activeJobs, setActiveJobs] = useState<Job[]>([]);
   const [completedJobs, setCompletedJobs] = useState<Job[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -107,7 +109,7 @@ export const WaitingArea = () => {
       <header className="bg-card border-b">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-primary">JAY KAY DIGITAL PRESS</h1>
+            <h1 className="text-2xl font-bold text-primary">{settings?.company_name || 'Loading...'}</h1>
             <p className="text-muted-foreground">Live Job Progress</p>
           </div>
           <div className="text-right">

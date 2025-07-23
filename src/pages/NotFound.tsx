@@ -2,8 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, ArrowLeft } from "lucide-react";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const NotFound = () => {
+  const { settings } = useCompanySettings();
+  
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md text-center">
@@ -36,8 +39,8 @@ const NotFound = () => {
           
           <div className="pt-4 text-sm text-muted-foreground">
             <p>Need help? Contact us:</p>
-            <p>📞 +232 76 123 456</p>
-            <p>✉️ info@jaykaypress.com</p>
+            <p>📞 {settings?.phone || 'Contact us'}</p>
+            <p>✉️ {settings?.email || 'Contact us'}</p>
           </div>
         </CardContent>
       </Card>

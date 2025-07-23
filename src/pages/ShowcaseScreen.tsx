@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Star, Award, Clock, Palette } from "lucide-react";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface Slide {
   id: number;
@@ -23,6 +24,7 @@ export const ShowcaseScreen = () => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -56,7 +58,7 @@ export const ShowcaseScreen = () => {
     "🎯 New Customer? Get 10% off your first order!",
     "⚡ Same-day printing available for urgent orders",
     "🏆 Award-winning quality since 2020",
-    "📞 Call us now: +232 76 123 456",
+    `📞 Call us now: ${settings?.phone || 'Contact us'}`,
     "🎨 Custom designs available - speak to our team!"
   ];
 
@@ -76,7 +78,7 @@ export const ShowcaseScreen = () => {
         <div className="container mx-auto px-6 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">JAY KAY DIGITAL PRESS</h1>
+              <h1 className="text-3xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-primary-foreground/90">Premium Printing & Design Solutions</p>
             </div>
             <div className="text-right">
@@ -186,10 +188,10 @@ export const ShowcaseScreen = () => {
           <p className="text-lg mb-6">Contact us today for a free quote on your printing project</p>
           <div className="flex flex-col md:flex-row justify-center items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">📞 +232 76 123 456</span>
+              <span className="font-semibold">📞 {settings?.phone || 'Contact us'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">✉️ info@jaykaypress.com</span>
+              <span className="font-semibold">✉️ {settings?.email || 'Contact us'}</span>
             </div>
           </div>
         </Card>
@@ -199,7 +201,7 @@ export const ShowcaseScreen = () => {
       <footer className="bg-muted py-6 mt-12">
         <div className="container mx-auto px-6 text-center">
           <p className="text-muted-foreground">
-            © 2024 Jay Kay Digital Press • Your Trusted Printing Partner
+            © 2024 {settings?.company_name || 'Print Shop'} • Your Trusted Printing Partner
           </p>
         </div>
       </footer>

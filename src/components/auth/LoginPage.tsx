@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { settings } = useCompanySettings();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ export const LoginPage = () => {
               Back to Home
             </Link>
           </div>
-          <CardTitle className="text-2xl font-bold">JAY KAY DIGITAL PRESS</CardTitle>
+          <CardTitle className="text-2xl font-bold">{settings?.company_name || 'Loading...'}</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>

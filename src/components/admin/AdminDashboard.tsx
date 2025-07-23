@@ -3,6 +3,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
@@ -25,6 +26,7 @@ interface AdminDashboardProps {
 export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const { settings } = useCompanySettings();
 
   const handleSignOut = async () => {
     try {
@@ -41,7 +43,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">JAY KAY DIGITAL PRESS</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-muted-foreground text-sm">Admin Dashboard - {userRole}</p>
             </div>
             <div className="flex items-center gap-4">

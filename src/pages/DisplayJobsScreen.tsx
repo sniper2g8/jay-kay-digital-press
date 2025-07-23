@@ -126,7 +126,7 @@ export const DisplayJobsScreen = () => {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
-          {settings?.company_name || "JAY KAY DIGITAL PRESS"}
+          {settings?.company_name || "Loading..."}
         </h1>
         <p className="text-xl text-gray-600 mb-4">Live Job Progress Display</p>
         <div className="flex justify-center items-center gap-4 text-lg text-gray-700">

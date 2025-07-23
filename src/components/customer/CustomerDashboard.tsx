@@ -3,6 +3,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
@@ -19,6 +20,7 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
+  const { settings } = useCompanySettings();
 
   const handleSignOut = async () => {
     try {
@@ -35,7 +37,7 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">JAY KAY DIGITAL PRESS</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-muted-foreground text-sm">Customer Portal</p>
             </div>
             <div className="flex items-center gap-4">
