@@ -25,9 +25,11 @@ import {
   ShoppingCart,
   Star,
   ArrowRight,
-  Play
+  Play,
+  Search,
+  Package2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useEmblaCarousel from 'embla-carousel-react';
 import heroImage from "@/assets/hero-bg.jpg";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
@@ -36,6 +38,8 @@ import {
   DEFAULT_SERVICES,
   type ServiceType 
 } from '@/constants/services';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Service {
   id: number;
@@ -51,6 +55,12 @@ export const Homepage = () => {
   const [loading, setLoading] = useState(true);
   const [emblaRef] = useEmblaCarousel({ loop: true });
   const { settings: companySettings } = useCompanySettings();
+  
+  // Tracking functionality
+  const [trackingCode, setTrackingCode] = useState("");
+  const [trackingJob, setTrackingJob] = useState<any>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -68,6 +78,62 @@ export const Homepage = () => {
 
     fetchServices();
   }, []);
+
+  const navigate = useNavigate();
+
+  const handleTrackJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trackingCode.trim()) {
+      setTrackingError("Please enter a tracking code");
+      return;
+    }
+
+    setTrackingLoading(true);
+    setTrackingError("");
+    
+    try {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select(`
+          id,
+          title,
+          description,
+          quantity,
+          status,
+          tracking_code,
+          created_at,
+          estimated_completion,
+          delivery_method,
+          delivery_address,
+          services (
+            name,
+            service_type
+          ),
+          customers (
+            name,
+            email,
+            phone
+          )
+        `)
+        .eq("tracking_code", trackingCode.trim())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        setTrackingError("No job found with this tracking code");
+        return;
+      }
+
+      // Navigate to tracking page
+      navigate(`/track/${trackingCode.trim()}`);
+    } catch (error) {
+      console.error("Error tracking job:", error);
+      setTrackingError("Failed to track job. Please try again.");
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   // Generate service icons based on service type
   const getServiceIcon = (serviceType: string) => {
@@ -159,6 +225,61 @@ export const Homepage = () => {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* Job Tracking Section */}
+      <section className="py-20 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h3 className="text-4xl font-bold mb-4">Track Your Order</h3>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Enter your tracking code to see the current status of your print job
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <Card className="p-6">
+              <form onSubmit={handleTrackJob} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="trackingCode" className="text-base font-medium">
+                    Tracking Code
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="trackingCode"
+                      type="text"
+                      placeholder="Enter your tracking code (e.g., JKDP-0001)"
+                      value={trackingCode}
+                      onChange={(e) => setTrackingCode(e.target.value)}
+                      className="pl-10"
+                    />
+                    <Package2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {trackingError && (
+                    <p className="text-sm text-destructive">{trackingError}</p>
+                  )}
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={trackingLoading}
+                >
+                  {trackingLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Tracking...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      Track Order
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Card>
+          </div>
         </div>
       </section>
 

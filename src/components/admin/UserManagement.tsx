@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Plus, Mail, Shield, Trash2, UserPlus } from "lucide-react";
+import { Users, Plus, Mail, Shield, Trash2, UserPlus, Edit, RotateCcw, Key } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,10 +32,18 @@ export const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [invitePhone, setInvitePhone] = useState("");
+  const [editUserData, setEditUserData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -293,6 +301,91 @@ export const UserManagement = () => {
     }
   };
 
+  const editUser = (user: User) => {
+    setSelectedUser(user);
+    setEditUserData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role
+    });
+    setEditUserDialogOpen(true);
+  };
+
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const roleData = roles.find(r => r.name === editUserData.role);
+      if (!roleData && editUserData.role !== 'Customer') {
+        throw new Error("Invalid role selected");
+      }
+
+      if (selectedUser.user_type === 'customer') {
+        const { error } = await supabase
+          .from("customers")
+          .update({
+            name: editUserData.name,
+            email: editUserData.email,
+            phone: editUserData.phone || null,
+          })
+          .eq("auth_user_id", selectedUser.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("internal_users")
+          .update({
+            name: editUserData.name,
+            email: editUserData.email,
+            phone: editUserData.phone || null,
+            role_id: roleData?.id
+          })
+          .eq("auth_user_id", selectedUser.id);
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+
+      setEditUserDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetUserPassword = async (userEmail: string) => {
+    if (!confirm(`Are you sure you want to send a password reset email to ${userEmail}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset Sent",
+        description: `Password reset email has been sent to ${userEmail}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -495,14 +588,31 @@ export const UserManagement = () => {
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteUser(user.id, user.user_type)}
-                        disabled={user.role === 'Admin'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => editUser(user)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => resetUserPassword(user.email)}
+                          disabled={user.user_type === 'internal' && !user.email.includes('@')}
+                        >
+                          <Key className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUser(user.id, user.user_type)}
+                          disabled={user.role === 'Admin'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -511,6 +621,74 @@ export const UserManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editUserDialogOpen} onOpenChange={setEditUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and role.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                value={editUserData.name}
+                onChange={(e) => setEditUserData({...editUserData, name: e.target.value})}
+                placeholder="Enter full name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editUserData.email}
+                onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={editUserData.phone}
+                onChange={(e) => setEditUserData({...editUserData, phone: e.target.value})}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-role">Role</Label>
+              <Select 
+                value={editUserData.role} 
+                onValueChange={(value) => setEditUserData({...editUserData, role: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setEditUserDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditUser}>
+                Update User
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
