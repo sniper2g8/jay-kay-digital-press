@@ -17,7 +17,7 @@ import { InvoiceManagement } from "./InvoiceManagement";
 import { InvoiceTemplateSettings } from "./InvoiceTemplateSettings";
 import { CompanySettings } from "./CompanySettings";
 import { DisplayScreenManagement } from "./DisplayScreenManagement";
-import { AddUser } from "./AddUser";
+
 import { OverviewDashboard } from "./OverviewDashboard";
 import { UserManagement } from "./UserManagement";
 import { PayrollManagement } from "./PayrollManagement";
@@ -138,134 +138,166 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-8 w-full overflow-x-auto">
-          <div className="flex space-x-1 min-w-max pb-1">
-          <Button
-            variant={activeTab === "overview" ? "default" : "ghost"}
-            onClick={() => setActiveTab("overview")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Overview
-          </Button>
-          <Button
-            variant={activeTab === "add-user" ? "default" : "ghost"}
-            onClick={() => setActiveTab("add-user")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Add User
-          </Button>
-          <Button
-            variant={activeTab === "analytics" ? "default" : "ghost"}
-            onClick={() => setActiveTab("analytics")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Analytics
-          </Button>
-          <Button
-            variant={activeTab === "jobs" ? "default" : "ghost"}
-            onClick={() => setActiveTab("jobs")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Jobs
-          </Button>
-          <Button
-            variant={activeTab === "services" ? "default" : "ghost"}
-            onClick={() => setActiveTab("services")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Services
-          </Button>
-          <Button
-            variant={activeTab === "notifications" ? "default" : "ghost"}
-            onClick={() => setActiveTab("notifications")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Notifications
-          </Button>
-          <Button
-            variant={activeTab === "notification-logs" ? "default" : "ghost"}
-            onClick={() => setActiveTab("notification-logs")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Logs
-          </Button>
-          <Button
-            variant={activeTab === "users" ? "default" : "ghost"}
-            onClick={() => setActiveTab("users")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Users
-          </Button>
-          <Button
-            variant={activeTab === "customers" ? "default" : "ghost"}
-            onClick={() => setActiveTab("customers")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Customers
-          </Button>
-          <Button
-            variant={activeTab === "quotes" ? "default" : "ghost"}
-            onClick={() => setActiveTab("quotes")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Quotes
-          </Button>
-          <Button
-            variant={activeTab === "invoices" ? "default" : "ghost"}
-            onClick={() => setActiveTab("invoices")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Invoices
-          </Button>
-          <Button
-            variant={activeTab === "settings" ? "default" : "ghost"}
-            onClick={() => setActiveTab("settings")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Settings
-          </Button>
-          <Button
-            variant={activeTab === "displays" ? "default" : "ghost"}
-            onClick={() => setActiveTab("displays")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Displays
-          </Button>
-          <Button
-            variant={activeTab === "invoice-templates" ? "default" : "ghost"}
-            onClick={() => setActiveTab("invoice-templates")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Invoice Templates
-          </Button>
-          <Button
-            variant={activeTab === "payroll" ? "default" : "ghost"}
-            onClick={() => setActiveTab("payroll")}
-            className="px-3 sm:px-6 text-xs sm:text-sm"
-          >
-            Payroll
-          </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:col-span-1">
+            <div className="bg-card rounded-lg border shadow-sm p-4 sticky top-4">
+              <h3 className="font-semibold text-lg mb-4">Admin Portal</h3>
+              <nav className="space-y-2">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Dashboard</h4>
+                  <button
+                    onClick={() => setActiveTab("overview")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "overview" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("analytics")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "analytics" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Analytics
+                  </button>
+                </div>
+                
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 mt-4">People</h4>
+                  <button
+                    onClick={() => setActiveTab("users")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "users" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    User Management
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("customers")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "customers" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Customers
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("payroll")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "payroll" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Payroll & HR
+                  </button>
+                </div>
+                
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 mt-4">Operations</h4>
+                  <button
+                    onClick={() => setActiveTab("jobs")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "jobs" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Jobs
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("quotes")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "quotes" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Quotes
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("invoices")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "invoices" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Invoices
+                  </button>
+                </div>
+                
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 mt-4">Communications</h4>
+                  <button
+                    onClick={() => setActiveTab("notifications")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "notifications" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Notifications
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("notification-logs")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "notification-logs" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Logs
+                  </button>
+                </div>
+                
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 mt-4">Configuration</h4>
+                  <button
+                    onClick={() => setActiveTab("services")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "services" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Services
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("displays")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "displays" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Display Screens
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("settings")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "settings" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Company Settings
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("invoice-templates")}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      activeTab === "invoice-templates" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                    }`}
+                  >
+                    Invoice Templates
+                  </button>
+                </div>
+              </nav>
+            </div>
+          </div>
+          
+          {/* Main Content */}
+          <div className="lg:col-span-3">{/* Tab Content */}
+
+            {activeTab === "overview" && <OverviewDashboard />}
+            {activeTab === "analytics" && <AnalyticsDashboard />}
+            {activeTab === "jobs" && <JobManagement />}
+            {activeTab === "services" && <ServiceManagement />}
+            {activeTab === "notifications" && <NotificationManagement />}
+            {activeTab === "notification-logs" && <NotificationLogs />}
+            {activeTab === "users" && <UserManagement />}
+            {activeTab === "customers" && <CustomerManagement />}
+            {activeTab === "quotes" && <QuoteManagement />}
+            {activeTab === "invoices" && <InvoiceManagement />}
+            {activeTab === "settings" && <CompanySettings />}
+            {activeTab === "displays" && <DisplayScreenManagement />}
+            {activeTab === "invoice-templates" && <InvoiceTemplateSettings />}
+            {activeTab === "payroll" && <PayrollManagement />}
           </div>
         </div>
-
-        {/* Tab Content */}
-        {activeTab === "overview" && <OverviewDashboard />}
-        {activeTab === "add-user" && <AddUser />}
-
-        {activeTab === "analytics" && <AnalyticsDashboard />}
-        {activeTab === "jobs" && <JobManagement />}
-        {activeTab === "services" && <ServiceManagement />}
-        {activeTab === "notifications" && <NotificationManagement />}
-        {activeTab === "notification-logs" && <NotificationLogs />}
-        {activeTab === "users" && <UserManagement />}
-        {activeTab === "customers" && <CustomerManagement />}
-        {activeTab === "quotes" && <QuoteManagement />}
-        {activeTab === "invoices" && <InvoiceManagement />}
-        {activeTab === "settings" && <CompanySettings />}
-        {activeTab === "displays" && <DisplayScreenManagement />}
-        {activeTab === "invoice-templates" && <InvoiceTemplateSettings />}
-        {activeTab === "payroll" && <PayrollManagement />}
       </main>
     </div>
   );

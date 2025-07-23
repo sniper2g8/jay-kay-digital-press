@@ -77,13 +77,39 @@ export const PayrollManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, name, email, salary, allowances, deductions")
-        .eq("is_active", true);
+      // Fetch both system employees and non-system staff
+      const [employeesResponse, staffResponse] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("id, name, email, salary, allowances, deductions")
+          .eq("is_active", true),
+        supabase
+          .from("non_system_staff")
+          .select("id, name, email, position")
+          .eq("is_active", true)
+      ]);
 
-      if (error) throw error;
-      setEmployees(data || []);
+      if (employeesResponse.error) throw employeesResponse.error;
+      if (staffResponse.error) throw staffResponse.error;
+
+      const combinedEmployees = [
+        ...(employeesResponse.data || []).map(emp => ({
+          ...emp,
+          salary: emp.salary || 0,
+          allowances: emp.allowances || 0,
+          deductions: emp.deductions || 0
+        })),
+        ...(staffResponse.data || []).map(staff => ({
+          id: staff.id,
+          name: staff.name,
+          email: staff.email || `${staff.name.toLowerCase().replace(/\s+/g, '.')}@company.com`,
+          salary: 50000, // Default salary for non-system staff
+          allowances: 0,
+          deductions: 0
+        }))
+      ];
+
+      setEmployees(combinedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       toast.error("Failed to fetch employees");
@@ -121,7 +147,7 @@ export const PayrollManagement = () => {
       const { data: payroll, error: payrollError } = await supabase
         .from("payrolls")
         .insert({
-          month: newPayrollMonth,
+          month: newPayrollMonth + "-01", // Convert YYYY-MM to YYYY-MM-DD
           total_amount: totalAmount,
           status: "draft"
         })
@@ -227,6 +253,8 @@ export const PayrollManagement = () => {
                   type="month"
                   value={newPayrollMonth}
                   onChange={(e) => setNewPayrollMonth(e.target.value)}
+                  min="2024-01"
+                  max="2030-12"
                 />
               </div>
               <div className="flex justify-end space-x-2">
