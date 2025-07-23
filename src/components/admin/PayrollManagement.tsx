@@ -59,6 +59,25 @@ export const PayrollManagement = () => {
   const [newPayrollMonth, setNewPayrollMonth] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
+  const [isEditSalaryDialogOpen, setIsEditSalaryDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  
+  const [newStaff, setNewStaff] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+    salary: '',
+    allowances: '',
+    deductions: ''
+  });
+
+  const [editSalary, setEditSalary] = useState({
+    salary: 0,
+    allowances: 0,
+    deductions: 0
+  });
 
   useEffect(() => {
     fetchPayrolls();
@@ -262,6 +281,103 @@ export const PayrollManagement = () => {
     }
   };
 
+  const addStaff = async () => {
+    if (!newStaff.name || !newStaff.salary) {
+      toast.error("Please fill in required fields (name and salary)");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // First create the non-system staff record
+      const { data: staffData, error: staffError } = await supabase
+        .from("non_system_staff")
+        .insert({
+          name: newStaff.name,
+          email: newStaff.email || null,
+          phone: newStaff.phone || null,
+          position: newStaff.position || 'Staff'
+        })
+        .select()
+        .maybeSingle();
+
+      if (staffError || !staffData) throw staffError || new Error('Failed to create staff record');
+
+      // Then create the employee record with salary information
+      const { error: employeeError } = await supabase
+        .from("employees")
+        .insert({
+          name: newStaff.name,
+          email: newStaff.email || null,
+          phone: newStaff.phone || null,
+          role: 'NonSystemStaff',
+          non_system_staff_id: staffData.id,
+          salary: parseFloat(newStaff.salary),
+          allowances: parseFloat(newStaff.allowances) || 0,
+          deductions: parseFloat(newStaff.deductions) || 0,
+          is_active: true
+        } as any);
+
+      if (employeeError) throw employeeError;
+
+      toast.success("Staff member added successfully");
+      setIsAddStaffDialogOpen(false);
+      setNewStaff({
+        name: '',
+        email: '',
+        phone: '',
+        position: '',
+        salary: '',
+        allowances: '',
+        deductions: ''
+      });
+      fetchEmployees();
+    } catch (error: any) {
+      console.error("Error adding staff:", error);
+      toast.error("Failed to add staff member");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const editEmployeeSalary = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setEditSalary({
+      salary: employee.salary,
+      allowances: employee.allowances,
+      deductions: employee.deductions
+    });
+    setIsEditSalaryDialogOpen(true);
+  };
+
+  const updateEmployeeSalary = async () => {
+    if (!selectedEmployee) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("employees")
+        .update({
+          salary: editSalary.salary,
+          allowances: editSalary.allowances,
+          deductions: editSalary.deductions
+        })
+        .eq("id", selectedEmployee.id);
+
+      if (error) throw error;
+
+      toast.success("Salary updated successfully");
+      setIsEditSalaryDialogOpen(false);
+      setSelectedEmployee(null);
+      fetchEmployees();
+    } catch (error: any) {
+      console.error("Error updating salary:", error);
+      toast.error("Failed to update salary");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const viewPayrollDetails = (payroll: Payroll) => {
     setSelectedPayroll(payroll);
     fetchPayrollPayments(payroll.id);
@@ -318,6 +434,109 @@ export const PayrollManagement = () => {
                 </Button>
                 <Button onClick={createPayroll} disabled={isLoading}>
                   {isLoading ? "Creating..." : "Create Payroll"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isAddStaffDialogOpen} onOpenChange={setIsAddStaffDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Add Staff
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+              <DialogDescription>
+                Add a new staff member to the payroll system.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="staff-name">Full Name *</Label>
+                  <Input
+                    id="staff-name"
+                    value={newStaff.name}
+                    onChange={(e) => setNewStaff({...newStaff, name: e.target.value})}
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="staff-position">Position</Label>
+                  <Input
+                    id="staff-position"
+                    value={newStaff.position}
+                    onChange={(e) => setNewStaff({...newStaff, position: e.target.value})}
+                    placeholder="e.g. Delivery Staff, Cleaner"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="staff-email">Email</Label>
+                  <Input
+                    id="staff-email"
+                    type="email"
+                    value={newStaff.email}
+                    onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="staff-phone">Phone</Label>
+                  <Input
+                    id="staff-phone"
+                    value={newStaff.phone}
+                    onChange={(e) => setNewStaff({...newStaff, phone: e.target.value})}
+                    placeholder="+232 XX XXX XXXX"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="staff-salary">Base Salary *</Label>
+                  <Input
+                    id="staff-salary"
+                    type="number"
+                    value={newStaff.salary}
+                    onChange={(e) => setNewStaff({...newStaff, salary: e.target.value})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="staff-allowances">Allowances</Label>
+                  <Input
+                    id="staff-allowances"
+                    type="number"
+                    value={newStaff.allowances}
+                    onChange={(e) => setNewStaff({...newStaff, allowances: e.target.value})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="staff-deductions">Deductions</Label>
+                  <Input
+                    id="staff-deductions"
+                    type="number"
+                    value={newStaff.deductions}
+                    onChange={(e) => setNewStaff({...newStaff, deductions: e.target.value})}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsAddStaffDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={addStaff} disabled={isLoading}>
+                  {isLoading ? "Adding..." : "Add Staff"}
                 </Button>
               </div>
             </div>
@@ -385,6 +604,7 @@ export const PayrollManagement = () => {
                   <TableHead>Deductions</TableHead>
                   <TableHead>Net Salary</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -418,6 +638,15 @@ export const PayrollManagement = () => {
                       <Badge variant={employee.is_active ? "default" : "secondary"}>
                         {employee.is_active ? "Active" : "Inactive"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => editEmployeeSalary(employee)}
+                      >
+                        Edit Salary
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -530,6 +759,67 @@ export const PayrollManagement = () => {
                 })}
               </TableBody>
             </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Salary Dialog */}
+      <Dialog open={isEditSalaryDialogOpen} onOpenChange={setIsEditSalaryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Employee Salary</DialogTitle>
+            <DialogDescription>
+              Update salary and compensation details for {selectedEmployee?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit-salary">Base Salary</Label>
+                <Input
+                  id="edit-salary"
+                  type="number"
+                  value={editSalary.salary}
+                  onChange={(e) => setEditSalary({...editSalary, salary: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-allowances">Allowances</Label>
+                <Input
+                  id="edit-allowances"
+                  type="number"
+                  value={editSalary.allowances}
+                  onChange={(e) => setEditSalary({...editSalary, allowances: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-deductions">Deductions</Label>
+                <Input
+                  id="edit-deductions"
+                  type="number"
+                  value={editSalary.deductions}
+                  onChange={(e) => setEditSalary({...editSalary, deductions: Number(e.target.value)})}
+                />
+              </div>
+            </div>
+            
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Net Salary:</span>
+                <span className="text-lg font-bold">
+                  Le {(editSalary.salary + editSalary.allowances - editSalary.deductions).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditSalaryDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={updateEmployeeSalary} disabled={isLoading}>
+                {isLoading ? "Updating..." : "Update Salary"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
