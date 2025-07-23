@@ -130,7 +130,7 @@ export const DeliveryManagement = () => {
   };
 
   const loadAvailableJobs = async () => {
-    let query = supabase
+    const { data, error } = await supabase
       .from('jobs')
       .select(`
         id,
@@ -139,14 +139,6 @@ export const DeliveryManagement = () => {
       `)
       .eq('delivery_method', 'delivery')
       .order('created_at', { ascending: false });
-    
-    // Only filter out jobs that already have deliveries if there are any
-    const scheduledJobIds = deliveries.map(d => d.job_id).filter(Boolean);
-    if (scheduledJobIds.length > 0) {
-      query = query.not('id', 'in', `(${scheduledJobIds.join(',')})`);
-    }
-    
-    const { data, error } = await query;
     
     if (error) {
       console.error('Error loading jobs:', error);
