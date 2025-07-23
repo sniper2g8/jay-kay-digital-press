@@ -11,7 +11,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { JobEditDialog } from "./JobEditDialog";
 import { JobCreationDialog } from "./JobCreationDialog";
 import { JobViewDialog } from "./JobViewDialog";
-import { Eye, Edit, Trash2, Package, Filter, Plus } from "lucide-react";
+import { Eye, Edit, Trash2, Package, Filter, Plus, Paperclip } from "lucide-react";
 
 interface Job {
   id: number;
@@ -30,6 +30,7 @@ interface Job {
     name: string;
     service_type: string;
   } | null;
+  file_count?: number;
 }
 
 const STATUS_OPTIONS = [
@@ -82,6 +83,9 @@ export const JobManagement = () => {
           services (
             name,
             service_type
+          ),
+          job_files!job_files_job_id_fkey (
+            count
           )
         `)
         .order("created_at", { ascending: false });
@@ -96,7 +100,12 @@ export const JobManagement = () => {
         setJobs([]);
       } else {
         console.log('Jobs fetched successfully:', data);
-        setJobs(data || []);
+        // Add file count to each job
+        const jobsWithFileCount = (data || []).map(job => ({
+          ...job,
+          file_count: job.job_files?.length || 0
+        }));
+        setJobs(jobsWithFileCount);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -269,6 +278,7 @@ export const JobManagement = () => {
                   <TableHead>Customer</TableHead>
                   <TableHead>Service</TableHead>
                   <TableHead>Quantity</TableHead>
+                  <TableHead>Files</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Tracking Code</TableHead>
                   <TableHead>Created</TableHead>
@@ -300,7 +310,13 @@ export const JobManagement = () => {
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>{job.quantity}</TableCell>
+                     <TableCell>{job.quantity}</TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-1">
+                         <Paperclip className="h-4 w-4 text-muted-foreground" />
+                         <span className="text-sm">{job.file_count || 0}</span>
+                       </div>
+                     </TableCell>
                     <TableCell>
                       <Select
                         value={job.status}
