@@ -27,7 +27,7 @@ const NotFound = () => {
             <Button 
               variant="outline" 
               className="w-full" 
-              onClick={() => window.history.back()}
+              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/'}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
