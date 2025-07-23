@@ -8,6 +8,7 @@ import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
 import { InvoiceView } from "./InvoiceView";
+import { CustomerStatement } from "./CustomerStatement";
 import { NotificationPreferences } from "./NotificationPreferences";
 import { CustomerProfile } from "./CustomerProfile";
 import { OrderHistory } from "./OrderHistory";
@@ -83,6 +84,13 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
             className="px-3 sm:px-6 text-xs sm:text-sm"
           >
             Invoices
+          </Button>
+          <Button
+            variant={activeTab === "statements" ? "default" : "ghost"}
+            onClick={() => setActiveTab("statements")}
+            className="px-3 sm:px-6 text-xs sm:text-sm"
+          >
+            Statements
           </Button>
           <Button
             variant={activeTab === "notifications" ? "default" : "ghost"}
@@ -171,6 +179,10 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
 
         {activeTab === "invoices" && (
           <InvoiceView userId={user.id} />
+        )}
+
+        {activeTab === "statements" && (
+          <CustomerStatement userId={user.id} />
         )}
 
         {activeTab === "notifications" && <NotificationPreferences />}

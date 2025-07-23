@@ -83,6 +83,7 @@ import {
 import { SlideManager } from '@/components/admin/SlideManager';
 import { NotificationSender } from '@/components/admin/NotificationSender';
 import { ServiceManager } from '@/components/admin/ServiceManager';
+import { CustomerStatements } from '@/components/admin/CustomerStatements';
 import { DeliveryScheduleForm } from '@/components/delivery/DeliveryScheduleForm';
 import { DeliveryScheduleList } from '@/components/delivery/DeliveryScheduleList';
 import { useDeliverySchedules } from '@/hooks/useDeliverySchedules';
@@ -95,6 +96,7 @@ const navigationItems = [
   { id: "delivery", label: "Delivery Management", icon: Truck },
   { id: "invoices", label: "Invoices & Quotes", icon: FileText },
   { id: "customers", label: "Customers", icon: Users },
+  { id: "statements", label: "Customer Statements", icon: FileText },
   { id: "staff", label: "Staff & Users", icon: Shield },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
@@ -809,6 +811,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             {activeView === "overview" && <OverviewContent />}
             {activeView === "jobs" && <JobsContent />}
             {activeView === "customers" && <CustomersContent />}
+            {activeView === "statements" && <CustomerStatements />}
             {/* Add other views here */}
             {activeView === "services" && <ServiceManager />}
             {activeView === "delivery" && <DeliveryScheduleList />}
