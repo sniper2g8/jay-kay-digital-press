@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Plus, Mail, Shield, Trash2, UserPlus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +31,7 @@ export const UserManagement = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [inviteName, setInviteName] = useState("");
@@ -46,8 +47,7 @@ export const UserManagement = () => {
     try {
       const { data, error } = await supabase
         .from("roles")
-        .select("id, name")
-        .neq("name", "Customer");
+        .select("id, name");
 
       if (error) throw error;
       setRoles(data || []);
@@ -184,6 +184,67 @@ export const UserManagement = () => {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!inviteEmail || !selectedRole || !inviteName) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const roleData = roles.find(r => r.name === selectedRole);
+      if (!roleData) {
+        throw new Error("Invalid role selected");
+      }
+
+      // Create user directly in appropriate table
+      if (selectedRole === "Customer") {
+        const { error } = await supabase
+          .from("customers")
+          .insert({
+            name: inviteName,
+            email: inviteEmail,
+            phone: invitePhone,
+          });
+        if (error) throw error;
+      } else {
+        // Create internal user - requires auth_user_id, using placeholder
+        const { error } = await supabase
+          .from("internal_users")
+          .insert({
+            name: inviteName,
+            email: inviteEmail,
+            phone: invitePhone,
+            role_id: roleData.id,
+            auth_user_id: '00000000-0000-0000-0000-000000000000', // Placeholder for direct creation
+          });
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "User has been added successfully",
+      });
+
+      setAddUserDialogOpen(false);
+      setInviteEmail("");
+      setSelectedRole("");
+      setInviteName("");
+      setInvitePhone("");
+      fetchUsers();
+    } catch (error) {
+      console.error("Error adding user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add user",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteUser = async (userId: string, userType: 'customer' | 'internal') => {
     if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       return;
@@ -249,73 +310,148 @@ export const UserManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">User Management</h2>
-        <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Invite User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invite New User</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="inviteName">Full Name</Label>
-                <Input
-                  id="inviteName"
-                  value={inviteName}
-                  onChange={(e) => setInviteName(e.target.value)}
-                  placeholder="Enter full name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="inviteEmail">Email Address</Label>
-                <Input
-                  id="inviteEmail"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="Enter email address"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="invitePhone">Phone Number (Optional)</Label>
-                <Input
-                  id="invitePhone"
-                  type="tel"
-                  value={invitePhone}
-                  onChange={(e) => setInvitePhone(e.target.value)}
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.name}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button onClick={handleInviteUser} className="w-full">
-                <Mail className="h-4 w-4 mr-2" />
-                Generate Invite Link
+        <div className="flex gap-2">
+          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite User
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite New User</DialogTitle>
+                <DialogDescription>
+                  Generate an invitation link for a new user to join the system.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inviteName">Full Name</Label>
+                  <Input
+                    id="inviteName"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    placeholder="Enter full name"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="inviteEmail">Email Address</Label>
+                  <Input
+                    id="inviteEmail"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="invitePhone">Phone Number (Optional)</Label>
+                  <Input
+                    id="invitePhone"
+                    type="tel"
+                    value={invitePhone}
+                    onChange={(e) => setInvitePhone(e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button onClick={handleInviteUser} className="w-full">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Generate Invite Link
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add User Directly
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add User Directly</DialogTitle>
+                <DialogDescription>
+                  Create a new user account directly in the system.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="add-name">Full Name</Label>
+                  <Input
+                    id="add-name"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="add-email">Email</Label>
+                  <Input
+                    id="add-email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="add-phone">Phone</Label>
+                  <Input
+                    id="add-phone"
+                    value={invitePhone}
+                    onChange={(e) => setInvitePhone(e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="add-role">Role</Label>
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddUser}>
+                    Add User
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -363,7 +499,7 @@ export const UserManagement = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteUser(user.id, user.user_type)}
-                        disabled={user.role === 'Admin'} // Prevent deletion of admin users
+                        disabled={user.role === 'Admin'}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

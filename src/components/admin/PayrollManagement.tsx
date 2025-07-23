@@ -77,39 +77,24 @@ export const PayrollManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      // Fetch both system employees and non-system staff
-      const [employeesResponse, staffResponse] = await Promise.all([
-        supabase
-          .from("employees")
-          .select("id, name, email, salary, allowances, deductions")
-          .eq("is_active", true),
-        supabase
-          .from("non_system_staff")
-          .select("id, name, email, position")
-          .eq("is_active", true)
-      ]);
+      const { data: employeesData, error } = await supabase
+        .from("employees")
+        .select("id, name, email, salary, allowances, deductions, role")
+        .eq("is_active", true);
 
-      if (employeesResponse.error) throw employeesResponse.error;
-      if (staffResponse.error) throw staffResponse.error;
+      if (error) throw error;
 
-      const combinedEmployees = [
-        ...(employeesResponse.data || []).map(emp => ({
-          ...emp,
-          salary: emp.salary || 0,
-          allowances: emp.allowances || 0,
-          deductions: emp.deductions || 0
-        })),
-        ...(staffResponse.data || []).map(staff => ({
-          id: staff.id,
-          name: staff.name,
-          email: staff.email || `${staff.name.toLowerCase().replace(/\s+/g, '.')}@company.com`,
-          salary: 50000, // Default salary for non-system staff
-          allowances: 0,
-          deductions: 0
-        }))
-      ];
+      const formattedEmployees = (employeesData || []).map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        salary: Number(emp.salary || 0),
+        allowances: Number(emp.allowances || 0),
+        deductions: Number(emp.deductions || 0)
+      }));
 
-      setEmployees(combinedEmployees);
+      console.log("Fetched employees:", formattedEmployees);
+      setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       toast.error("Failed to fetch employees");
