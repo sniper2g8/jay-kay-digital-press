@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowLeft, Package, Clock, CheckCircle, TruckIcon, MapPin, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Package, Clock, CheckCircle, TruckIcon, MapPin, Phone, Mail, Paperclip } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 
@@ -31,6 +31,12 @@ interface Job {
     email: string;
     phone: string;
   };
+  job_files: Array<{
+    id: number;
+    file_path: string;
+    description: string | null;
+    uploaded_at: string;
+  }>;
 }
 
 export const JobTrackingPage = () => {
@@ -73,6 +79,12 @@ export const JobTrackingPage = () => {
             name,
             email,
             phone
+          ),
+          job_files (
+            id,
+            file_path,
+            description,
+            uploaded_at
           )
         `)
         .eq("tracking_code", trackingCode)
@@ -362,6 +374,38 @@ export const JobTrackingPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Job Files */}
+          {job.job_files && job.job_files.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Paperclip className="h-5 w-5" />
+                  Submitted Files ({job.job_files.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {job.job_files.map((file) => (
+                    <div key={file.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">
+                          {file.file_path.split('/').pop() || 'Unknown file'}
+                        </p>
+                        {file.description && (
+                          <p className="text-xs text-muted-foreground">{file.description}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded: {new Date(file.uploaded_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Job Description */}
           {job.description && (
