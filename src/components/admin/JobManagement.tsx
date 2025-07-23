@@ -10,6 +10,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
 import { JobEditDialog } from "./JobEditDialog";
 import { JobCreationDialog } from "./JobCreationDialog";
+import { JobViewDialog } from "./JobViewDialog";
 import { Eye, Edit, Trash2, Package, Filter, Plus } from "lucide-react";
 
 interface Job {
@@ -47,7 +48,9 @@ export const JobManagement = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
+  const [viewingJobId, setViewingJobId] = useState<number | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
   const { sendStatusUpdateNotification } = useNotifications();
@@ -340,9 +343,17 @@ export const JobManagement = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                         <Button 
+                           variant="ghost" 
+                           size="sm"
+                           onClick={() => {
+                             setViewingJobId(job.id);
+                             setIsViewDialogOpen(true);
+                           }}
+                           title="View Job Details"
+                         >
+                           <Eye className="h-4 w-4" />
+                         </Button>
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -369,6 +380,15 @@ export const JobManagement = () => {
           )}
         </CardContent>
       </Card>
+      
+      <JobViewDialog
+        jobId={viewingJobId}
+        isOpen={isViewDialogOpen}
+        onClose={() => {
+          setIsViewDialogOpen(false);
+          setViewingJobId(null);
+        }}
+      />
       
       <JobEditDialog
         jobId={editingJobId}
