@@ -130,7 +130,7 @@ export const DeliveryManagement = () => {
   };
 
   const loadAvailableJobs = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('jobs')
       .select(`
         id,
@@ -138,8 +138,15 @@ export const DeliveryManagement = () => {
         customers(name)
       `)
       .eq('delivery_method', 'delivery')
-      .not('id', 'in', `(${deliveries.map(d => d.job_id).join(',') || '0'})`)
       .order('created_at', { ascending: false });
+    
+    // Only filter out jobs that already have deliveries if there are any
+    const scheduledJobIds = deliveries.map(d => d.job_id).filter(Boolean);
+    if (scheduledJobIds.length > 0) {
+      query = query.not('id', 'in', `(${scheduledJobIds.join(',')})`);
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error loading jobs:', error);
@@ -231,7 +238,7 @@ export const DeliveryManagement = () => {
   }) => {
     const [formData, setFormData] = useState({
       job_id: delivery?.job_id?.toString() || '',
-      scheduled_date: delivery?.scheduled_date || '',
+      scheduled_date: delivery?.scheduled_date || new Date().toISOString().split('T')[0],
       scheduled_time_start: delivery?.scheduled_time_start || '',
       scheduled_time_end: delivery?.scheduled_time_end || '',
       delivery_address: delivery?.delivery_address || '',
@@ -275,7 +282,6 @@ export const DeliveryManagement = () => {
               type="date"
               value={formData.scheduled_date}
               onChange={(e) => setFormData({...formData, scheduled_date: e.target.value})}
-              required
             />
           </div>
         </div>
