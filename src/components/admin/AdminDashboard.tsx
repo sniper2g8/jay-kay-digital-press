@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
@@ -23,23 +23,15 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
-  const { toast } = useToast();
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
-      // The auth state change will automatically redirect to login
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Failed to sign out");
     }
   };
 

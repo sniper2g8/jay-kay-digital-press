@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
@@ -15,19 +15,17 @@ interface CustomerDashboardProps {
 }
 
 export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
-  const { toast } = useToast();
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Failed to sign out");
     }
   };
 
