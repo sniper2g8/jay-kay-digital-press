@@ -28,46 +28,63 @@ export const WaitingArea = () => {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const { data: active } = await supabase
-        .from('jobs')
-        .select(`
-          id,
-          tracking_code,
-          title,
-          status,
-          customer_uuid,
-          estimated_completion,
-          created_at,
-          profiles:customer_uuid (
-            name,
-            customer_display_id
-          )
-        `)
-        .in('status', ['Processing', 'Printing', 'Finishing'])
-        .order('created_at', { ascending: true })
-        .limit(10);
+      try {
+        console.log('Fetching active jobs...');
+        const { data: active, error: activeError } = await supabase
+          .from('jobs')
+          .select(`
+            id,
+            tracking_code,
+            title,
+            status,
+            customer_uuid,
+            estimated_completion,
+            created_at,
+            profiles:customer_uuid (
+              name,
+              customer_display_id
+            )
+          `)
+          .in('status', ['Pending', 'Received', 'Processing', 'Printing', 'Finishing'])
+          .order('created_at', { ascending: true })
+          .limit(10);
 
-      const { data: completed } = await supabase
-        .from('jobs')
-        .select(`
-          id,
-          tracking_code,
-          title,
-          status,
-          customer_uuid,
-          estimated_completion,
-          created_at,
-          profiles:customer_uuid (
-            name,
-            customer_display_id
-          )
-        `)
-        .in('status', ['Waiting for Collection', 'Completed'])
-        .order('updated_at', { ascending: false })
-        .limit(5);
+        console.log('Fetching completed jobs...');
+        const { data: completed, error: completedError } = await supabase
+          .from('jobs')
+          .select(`
+            id,
+            tracking_code,
+            title,
+            status,
+            customer_uuid,
+            estimated_completion,
+            created_at,
+            profiles:customer_uuid (
+              name,
+              customer_display_id
+            )
+          `)
+          .in('status', ['Waiting for Collection', 'Out for Delivery', 'Completed'])
+          .order('updated_at', { ascending: false })
+          .limit(5);
 
-      if (active) setActiveJobs(active);
-      if (completed) setCompletedJobs(completed);
+        if (activeError) {
+          console.error('Error fetching active jobs:', activeError);
+        } else {
+          console.log('Active jobs fetched:', active);
+          setActiveJobs(active || []);
+        }
+
+        if (completedError) {
+          console.error('Error fetching completed jobs:', completedError);
+        } else {
+          console.log('Completed jobs fetched:', completed);
+          setCompletedJobs(completed || []);
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching jobs:', error);
+      }
     };
 
     fetchJobs();
@@ -83,10 +100,13 @@ export const WaitingArea = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
+      case 'pending': return <Clock className="h-5 w-5 text-yellow-500" />;
+      case 'received': return <Package className="h-5 w-5 text-blue-500" />;
       case 'processing': return <Clock className="h-5 w-5 text-yellow-500" />;
       case 'printing': return <Package className="h-5 w-5 text-blue-500" />;
       case 'finishing': return <AlertCircle className="h-5 w-5 text-orange-500" />;
       case 'waiting for collection': return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'out for delivery': return <Package className="h-5 w-5 text-blue-600" />;
       case 'completed': return <CheckCircle className="h-5 w-5 text-green-600" />;
       default: return <Clock className="h-5 w-5 text-gray-500" />;
     }
@@ -94,10 +114,13 @@ export const WaitingArea = () => {
 
   const getStatusProgress = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'processing': return 25;
-      case 'printing': return 50;
-      case 'finishing': return 75;
-      case 'waiting for collection': return 90;
+      case 'pending': return 10;
+      case 'received': return 20;
+      case 'processing': return 35;
+      case 'printing': return 60;
+      case 'finishing': return 80;
+      case 'waiting for collection': return 95;
+      case 'out for delivery': return 95;
       case 'completed': return 100;
       default: return 0;
     }
@@ -137,13 +160,13 @@ export const WaitingArea = () => {
                   ) : (
                     activeJobs.map((job) => (
                       <div key={job.id} className="border rounded-lg p-4 space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold">{job.title}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {job.profiles?.name} • {job.profiles?.customer_display_id}
-                            </p>
-                            <p className="text-xs text-muted-foreground">#{job.tracking_code}</p>
+                         <div className="flex justify-between items-start">
+                           <div>
+                             <h4 className="font-semibold">{job.title || `Job #${job.tracking_code.slice(-6)}`}</h4>
+                             <p className="text-sm text-muted-foreground">
+                               {job.profiles?.name || 'Unknown Customer'} • {job.profiles?.customer_display_id || 'N/A'}
+                             </p>
+                             <p className="text-xs text-muted-foreground">#{job.tracking_code}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(job.status)}
@@ -186,11 +209,11 @@ export const WaitingArea = () => {
                             {job.status}
                           </Badge>
                         </div>
-                        <h5 className="font-medium text-sm">{job.title}</h5>
-                        <p className="text-xs text-muted-foreground">
-                          {job.profiles?.name} • {job.profiles?.customer_display_id}
-                        </p>
-                        <p className="text-xs text-muted-foreground">#{job.tracking_code}</p>
+                         <h5 className="font-medium text-sm">{job.title || `Job #${job.tracking_code.slice(-6)}`}</h5>
+                         <p className="text-xs text-muted-foreground">
+                           {job.profiles?.name || 'Unknown Customer'} • {job.profiles?.customer_display_id || 'N/A'}
+                         </p>
+                         <p className="text-xs text-muted-foreground">#{job.tracking_code}</p>
                       </div>
                     ))
                   )}
@@ -215,7 +238,7 @@ export const WaitingArea = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Ready for Collection:</span>
-                    <span className="font-semibold">{completedJobs.filter(j => j.status === 'Waiting for Collection').length}</span>
+                    <span className="font-semibold">{completedJobs.filter(j => j.status === 'Waiting for Collection' || j.status === 'Out for Delivery').length}</span>
                   </div>
                 </div>
               </CardContent>
