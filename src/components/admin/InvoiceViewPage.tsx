@@ -88,11 +88,35 @@ export const InvoiceViewPage = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    toast({
-      title: "Download",
-      description: "PDF download functionality will be implemented soon",
-    });
+  const handleDownload = async () => {
+    try {
+      const { default: html2pdf } = await import('html2pdf.js');
+      
+      const element = document.querySelector('.invoice-content');
+      if (!element) return;
+
+      const options = {
+        margin: 1,
+        filename: `invoice-${invoice.invoice_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(options).from(element).save();
+      
+      toast({
+        title: "Success",
+        description: "Invoice PDF downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -149,7 +173,7 @@ export const InvoiceViewPage = () => {
         </div>
 
         {/* Invoice */}
-        <Card className="print:shadow-none print:border-none">
+        <Card className="invoice-content print:shadow-none print:border-none">
           <CardHeader className="text-center border-b">
             <div className="flex justify-between items-start">
               <div>
