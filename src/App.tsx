@@ -56,6 +56,7 @@ const AppContent = () => {
           />
 
           {/* Job Tracking Routes */}
+          <Route path="/track" element={<JobTrackingPage />} />
           <Route path="/track/:trackingCode" element={<JobTrackingPage />} />
           
           {/* Display Routes */}
