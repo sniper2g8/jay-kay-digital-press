@@ -11,9 +11,11 @@ import { AnalyticsDashboard } from "./AnalyticsDashboard";
 import { CustomerManagement } from "./CustomerManagement";
 import { QuoteManagement } from "./QuoteManagement";
 import { InvoiceManagement } from "./InvoiceManagement";
+import { InvoiceTemplateSettings } from "./InvoiceTemplateSettings";
 import { CompanySettings } from "./CompanySettings";
 import { DisplayScreenManagement } from "./DisplayScreenManagement";
 import { JobProgressDashboard } from "./JobProgressDashboard";
+import { OverviewDashboard } from "./OverviewDashboard";
 
 interface AdminDashboardProps {
   user: User;
@@ -148,11 +150,18 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           >
             Displays
           </Button>
+          <Button
+            variant={activeTab === "invoice-templates" ? "default" : "ghost"}
+            onClick={() => setActiveTab("invoice-templates")}
+            className="px-3 sm:px-6 text-xs sm:text-sm"
+          >
+            Invoice Templates
+          </Button>
           </div>
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" && <JobProgressDashboard />}
+        {activeTab === "overview" && <OverviewDashboard />}
         {activeTab === "job-progress" && <JobProgressDashboard />}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
@@ -165,6 +174,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "invoices" && <InvoiceManagement />}
         {activeTab === "settings" && <CompanySettings />}
         {activeTab === "displays" && <DisplayScreenManagement />}
+        {activeTab === "invoice-templates" && <InvoiceTemplateSettings />}
       </main>
     </div>
   );

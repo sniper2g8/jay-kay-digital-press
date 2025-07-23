@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
@@ -15,25 +17,33 @@ import { InvoiceViewPage } from "./components/admin/InvoiceViewPage";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { settings, loading } = useCompanySettings();
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/home" element={<Homepage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/waiting-area" element={<WaitingArea />} />
+        <Route path="/showcase" element={<ShowcaseScreen />} />
+        <Route path="/invoice/:invoiceId" element={<InvoiceViewPage />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/home" element={<Homepage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/waiting-area" element={<WaitingArea />} />
-          <Route path="/showcase" element={<ShowcaseScreen />} />
-          <Route path="/invoice/:invoiceId" element={<InvoiceViewPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AppContent />
     </TooltipProvider>
   </QueryClientProvider>
 );

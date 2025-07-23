@@ -1,38 +1,24 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CompanySettings {
-  id: number;
   company_name: string;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  website: string | null;
-  business_hours: string | null;
-  logo_url: string | null;
   primary_color: string;
   secondary_color: string;
   theme_color: string;
   highlight_color: string;
   link_color: string;
+  logo_url: string;
   currency_symbol: string;
-  currency_code: string;
-  country: string | null;
-  notification_sender_name: string | null;
-  notification_sender_email: string | null;
-  seo_title: string | null;
-  seo_description: string | null;
-  seo_keywords: string | null;
-  og_title: string | null;
-  og_description: string | null;
-  og_image: string | null;
-  twitter_handle: string | null;
+  phone?: string;
+  email?: string;
+  address?: string;
+  country?: string;
 }
 
 export const useCompanySettings = () => {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -40,32 +26,64 @@ export const useCompanySettings = () => {
 
   const fetchSettings = async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase
-        .from('company_settings')
-        .select('*')
+        .from("company_settings")
+        .select("*")
         .single();
 
-      if (error) {
-        console.error('Error fetching company settings:', error);
-        setError('Failed to load company settings');
-        return;
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      if (data) {
+        setSettings(data);
+        applyTheme(data);
       }
-
-      setSettings(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error in fetchSettings:', err);
-      setError('Failed to load company settings');
+    } catch (error) {
+      console.error('Error fetching company settings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    settings,
-    loading,
-    error,
-    refetch: fetchSettings,
+  const applyTheme = (settings: CompanySettings) => {
+    const root = document.documentElement;
+    
+    // Convert hex to HSL
+    const hexToHsl = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+          default: h = 0;
+        }
+        h /= 6;
+      }
+
+      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    };
+
+    if (settings.primary_color) {
+      root.style.setProperty('--primary', hexToHsl(settings.primary_color));
+    }
+    if (settings.secondary_color) {
+      root.style.setProperty('--secondary', hexToHsl(settings.secondary_color));
+    }
+    if (settings.highlight_color) {
+      root.style.setProperty('--accent', hexToHsl(settings.highlight_color));
+    }
   };
+
+  return { settings, loading, refetch: fetchSettings };
 };
