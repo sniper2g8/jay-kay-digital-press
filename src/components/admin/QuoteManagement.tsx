@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Search, CheckCircle, XCircle, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type QuoteStatus = 'requested' | 'reviewed' | 'approved' | 'rejected' | 'expired';
+type QuoteStatus = 'requested' | 'reviewed' | 'approved' | 'rejected' | 'expired' | 'sent' | 'converted';
 
 interface Quote {
   id: string;
@@ -95,8 +95,12 @@ export const QuoteManagement = () => {
   const getStatusColor = (status: QuoteStatus) => {
     switch (status) {
       case 'requested': return 'default';
+      case 'reviewed': return 'secondary';
       case 'approved': return 'default';
       case 'rejected': return 'destructive';
+      case 'sent': return 'secondary';
+      case 'converted': return 'default';
+      case 'expired': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -144,12 +148,16 @@ export const QuoteManagement = () => {
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="requested">Requested</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="requested">Requested</SelectItem>
+                <SelectItem value="reviewed">Reviewed</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="converted">Converted</SelectItem>
+              </SelectContent>
           </Select>
         </div>
 
