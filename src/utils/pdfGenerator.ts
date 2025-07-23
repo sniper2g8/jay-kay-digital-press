@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 interface InvoiceData {
   invoice_number: string;
@@ -65,11 +66,27 @@ export const generateInvoicePDF = async (
     return `${companySettings.currency_symbol} ${amount.toLocaleString()}`;
   };
 
-  // Header - Company Info
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text(companySettings.company_name, margin, yPosition);
-  yPosition += 15;
+  // Header - Company Info and Logo
+  if (companySettings.logo_url) {
+    try {
+      // Add logo (you would need to load the image properly in a real implementation)
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(companySettings.company_name, margin + 30, yPosition);
+      yPosition += 15;
+    } catch (error) {
+      console.warn('Could not load logo:', error);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text(companySettings.company_name, margin, yPosition);
+      yPosition += 15;
+    }
+  } else {
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text(companySettings.company_name, margin, yPosition);
+    yPosition += 15;
+  }
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -212,6 +229,21 @@ export const generateInvoicePDF = async (
     
     doc.setFont("helvetica", "normal");
     yPosition = addText(invoiceData.notes, margin, yPosition, pageWidth - 2 * margin) + 10;
+  }
+
+  // QR Code for invoice tracking
+  try {
+    const qrData = `${window.location.origin}/invoice/${invoiceData.invoice_number}`;
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 60, margin: 1 });
+    
+    // Add QR code to top right corner
+    doc.addImage(qrCodeDataURL, 'PNG', pageWidth - margin - 60, margin, 50, 50);
+    
+    // Add QR code label
+    doc.setFontSize(8);
+    doc.text('Scan to view', pageWidth - margin - 60, margin + 60);
+  } catch (error) {
+    console.warn('Could not generate QR code:', error);
   }
 
   // Footer

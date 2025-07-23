@@ -84,8 +84,7 @@ import { SlideManager } from '@/components/admin/SlideManager';
 import { NotificationSender } from '@/components/admin/NotificationSender';
 import { ServiceManager } from '@/components/admin/ServiceManager';
 import { CustomerStatements } from '@/components/admin/CustomerStatements';
-import { DeliveryScheduleForm } from '@/components/delivery/DeliveryScheduleForm';
-import { DeliveryScheduleList } from '@/components/delivery/DeliveryScheduleList';
+import { DeliveryManagement } from './DeliveryManagement';
 import { useDeliverySchedules } from '@/hooks/useDeliverySchedules';
 
 // Navigation Items
@@ -813,8 +812,22 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             {activeView === "customers" && <CustomersContent />}
             {activeView === "statements" && <CustomerStatements />}
             {/* Add other views here */}
-            {activeView === "services" && <ServiceManager />}
-            {activeView === "delivery" && <DeliveryScheduleList />}
+        {activeView === "services" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Service Management</h2>
+                <p className="text-muted-foreground">Manage print services and pricing</p>
+              </div>
+              <Button onClick={() => navigate('/admin/services')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Service
+              </Button>
+            </div>
+            <ServiceManager />
+          </div>
+        )}
+            {activeView === "delivery" && <DeliveryManagement />}
             {activeView === "invoices" && <div className="p-8 text-center text-muted-foreground">Invoice management will be implemented here</div>}
             {activeView === "staff" && <div className="p-8 text-center text-muted-foreground">Staff management will be implemented here</div>}
             {activeView === "analytics" && <div className="p-8 text-center text-muted-foreground">Analytics will be implemented here</div>}

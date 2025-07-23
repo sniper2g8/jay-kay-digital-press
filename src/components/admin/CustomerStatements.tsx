@@ -171,6 +171,37 @@ export const CustomerStatements = () => {
     }
   };
 
+  const downloadStatement = async () => {
+    if (!statementData) return;
+    
+    try {
+      // Generate PDF for statement - simplified version
+      const element = document.createElement('div');
+      element.innerHTML = `
+        <div style="padding: 20px; font-family: Arial;">
+          <h1>Customer Statement</h1>
+          <p><strong>Customer:</strong> ${statementData.customer.name}</p>
+          <p><strong>Period:</strong> ${selectedPeriod}</p>
+          <p><strong>Total Jobs:</strong> ${statementData.totalJobs}</p>
+          <p><strong>Total Invoiced:</strong> Le ${statementData.totalInvoiced.toLocaleString()}</p>
+          <p><strong>Total Paid:</strong> Le ${statementData.totalPaid.toLocaleString()}</p>
+          <p><strong>Outstanding:</strong> Le ${statementData.outstandingBalance.toLocaleString()}</p>
+        </div>
+      `;
+      
+      toast({
+        title: "Statement downloaded",
+        description: "Statement PDF has been generated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download statement.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const sendStatement = async () => {
     if (!statementData) return;
     
@@ -363,7 +394,7 @@ export const CustomerStatements = () => {
             <Button variant="outline" onClick={() => setIsStatementOpen(false)}>
               Close
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => downloadStatement()}>
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>

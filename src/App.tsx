@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LogoHeader } from "@/components/common/LogoHeader";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const AppContent = () => {
 
   return (
     <AuthProvider>
+      <LogoHeader />
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
@@ -44,6 +46,14 @@ const AppContent = () => {
           {/* Protected Routes */}
           <Route 
             path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/*" 
             element={
               <ProtectedRoute>
                 <Index />
