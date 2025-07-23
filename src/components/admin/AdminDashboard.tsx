@@ -20,6 +20,7 @@ import { DisplayScreenManagement } from "./DisplayScreenManagement";
 import { AddUser } from "./AddUser";
 import { OverviewDashboard } from "./OverviewDashboard";
 import { UserManagement } from "./UserManagement";
+import { PayrollManagement } from "./PayrollManagement";
 
 interface AdminDashboardProps {
   user: User;
@@ -238,6 +239,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
           >
             Invoice Templates
           </Button>
+          <Button
+            variant={activeTab === "payroll" ? "default" : "ghost"}
+            onClick={() => setActiveTab("payroll")}
+            className="px-3 sm:px-6 text-xs sm:text-sm"
+          >
+            Payroll
+          </Button>
           </div>
         </div>
 
@@ -257,6 +265,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "settings" && <CompanySettings />}
         {activeTab === "displays" && <DisplayScreenManagement />}
         {activeTab === "invoice-templates" && <InvoiceTemplateSettings />}
+        {activeTab === "payroll" && <PayrollManagement />}
       </main>
     </div>
   );
