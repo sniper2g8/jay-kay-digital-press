@@ -58,40 +58,54 @@ export const JobManagement = () => {
   }, []);
 
   const fetchJobs = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("jobs")
-      .select(`
-        id,
-        title,
-        quantity,
-        status,
-        tracking_code,
-        created_at,
-        quoted_price,
-        final_price,
-        customer_uuid,
-        customers!jobs_customer_uuid_fkey (
-          name,
-          customer_display_id
-        ),
-        services (
-          name,
-          service_type
-        )
-      `)
-      .order("created_at", { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select(`
+          id,
+          title,
+          quantity,
+          status,
+          tracking_code,
+          created_at,
+          quoted_price,
+          final_price,
+          customer_uuid,
+          customers!jobs_customer_uuid_fkey (
+            name,
+            customer_display_id
+          ),
+          services (
+            name,
+            service_type
+          )
+        `)
+        .order("created_at", { ascending: false });
 
-    if (error) {
+      if (error) {
+        console.error('Error fetching jobs:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load jobs",
+          variant: "destructive",
+        });
+        setJobs([]);
+      } else {
+        console.log('Jobs fetched successfully:', data);
+        setJobs(data || []);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
-        title: "Error",
-        description: "Failed to load jobs",
+        title: "Error", 
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-    } else {
-      setJobs(data || []);
+      setJobs([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updateJobStatus = async (jobId: number, newStatus: string) => {
@@ -262,7 +276,9 @@ export const JobManagement = () => {
               <TableBody>
                 {filteredJobs.map((job) => (
                   <TableRow key={job.id}>
-                    <TableCell className="font-medium">{job.title}</TableCell>
+                     <TableCell className="font-medium">
+                       {job.title || `Job #${job.id}`}
+                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">
