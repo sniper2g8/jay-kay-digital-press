@@ -17,6 +17,7 @@ import { RegisterPage } from "./components/auth/RegisterPage";
 import { Unauthorized } from "./pages/Unauthorized";
 import { InvoiceViewPage } from "./components/admin/InvoiceViewPage";
 import { JobTrackingPage } from "./pages/JobTrackingPage";
+import { ResetPassword } from "./pages/ResetPassword";
 import { DisplayJobsScreen } from "./pages/DisplayJobsScreen";
 import { DisplayShowcaseScreen } from "./pages/DisplayShowcaseScreen";
 
@@ -33,8 +34,10 @@ const AppContent = () => {
           <Route path="/" element={<Homepage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth" element={<LoginPage />} />
           <Route path="/waiting-area" element={<WaitingArea />} />
+          <Route path="/showcase" element={<ShowcaseScreen />} />
           <Route path="/showcase" element={<ShowcaseScreen />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           

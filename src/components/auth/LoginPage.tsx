@@ -12,6 +12,7 @@ export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { settings } = useCompanySettings();
@@ -51,6 +52,40 @@ export const LoginPage = () => {
       navigate('/dashboard', { replace: true });
     }
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Reset Email Sent",
+        description: "Check your email for password reset instructions.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Reset Failed",
+        description: error.message || "Failed to send reset email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -140,6 +175,17 @@ export const LoginPage = () => {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-sm text-primary hover:text-primary/80 hover:underline disabled:opacity-50"
+              >
+                {resetLoading ? 'Sending...' : 'Forgot your password?'}
+              </button>
+            </div>
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
