@@ -31,6 +31,11 @@ import { Link } from "react-router-dom";
 import useEmblaCarousel from 'embla-carousel-react';
 import heroImage from "@/assets/hero-bg.jpg";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { 
+  SERVICE_TYPES, 
+  DEFAULT_SERVICES,
+  type ServiceType 
+} from '@/constants/services';
 
 interface Service {
   id: number;
@@ -64,14 +69,28 @@ export const Homepage = () => {
     fetchServices();
   }, []);
 
-  const keyServices = [
-    { icon: CreditCard, title: "Business Cards", description: "Professional business cards that make lasting impressions" },
-    { icon: Image, title: "Banners", description: "PVC, Canvas & Vinyl banners for indoor and outdoor use" },
-    { icon: Eye, title: "SAV", description: "Reflective, Transparent & One-way Vision signage" },
-    { icon: FileImage, title: "Posters & Flyers", description: "High-quality marketing materials for any event" },
-    { icon: Palette, title: "Custom Prints", description: "Personalized printing solutions for unique projects" },
-    { icon: Package, title: "Packaging", description: "Custom packaging and branded materials" }
-  ];
+  // Generate service icons based on service type
+  const getServiceIcon = (serviceType: string) => {
+    switch (serviceType) {
+      case 'Business Card': return CreditCard;
+      case 'Banner': return Image;
+      case 'SAV': return Eye;
+      case 'Flyer': return FileImage;
+      case 'Poster': return FileImage;
+      case 'Brochure': return FileImage;
+      case 'Sticker': return Package;
+      default: return Palette;
+    }
+  };
+
+  // Dynamic services from constants
+  const keyServices = DEFAULT_SERVICES.slice(0, 6).map(service => ({
+    icon: getServiceIcon(service.service_type),
+    title: service.name,
+    description: service.description,
+    service_type: service.service_type,
+    base_price: service.base_price
+  }));
 
   const whyChooseUs = [
     { icon: Star, title: "High-Quality Prints", description: "Premium materials and latest printing technology" },
@@ -161,13 +180,55 @@ export const Homepage = () => {
                     <service.icon className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{service.title}</CardTitle>
+                  <Badge variant="outline" className="w-fit mx-auto">
+                    {service.service_type}
+                  </Badge>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <CardDescription className="text-base">{service.description}</CardDescription>
+                  <CardDescription className="text-base mb-3">{service.description}</CardDescription>
+                  <p className="text-lg font-semibold text-primary">
+                    Starting at Le {service.base_price.toFixed(2)}
+                  </p>
                 </CardContent>
               </Card>
             ))}
           </div>
+          
+          {/* Dynamic Services from Database */}
+          {services.length > 0 && (
+            <>
+              <div className="text-center mt-16 mb-8">
+                <h4 className="text-2xl font-bold mb-4">More Services</h4>
+                <p className="text-muted-foreground">Additional services available in our system</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.filter(service => 
+                  !DEFAULT_SERVICES.some(ds => ds.name === service.name)
+                ).map((service) => (
+                  <Card key={service.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{service.name}</CardTitle>
+                        <Badge variant="secondary">{service.service_type}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-3">{service.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-primary">Le {service.base_price.toFixed(2)}</span>
+                        <Link to="/register">
+                          <Button size="sm" variant="outline">
+                            Order Now
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </section>
 

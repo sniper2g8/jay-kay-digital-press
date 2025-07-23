@@ -7,10 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Upload, X } from "lucide-react";
+import { 
+  SERVICE_TYPES, 
+  SAV_TYPES, 
+  BANNER_TYPES, 
+  PAPER_TYPES, 
+  PAPER_WEIGHTS,
+  FINISHING_OPTIONS,
+  type ServiceType,
+  type FinishingOption
+} from '@/constants/services';
 
 interface Service {
   id: number;
@@ -47,7 +58,6 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const { sendJobSubmittedNotification, sendAdminJobNotification } = useNotifications();
   const { trackJobCreated } = useAnalytics();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>();
@@ -73,15 +83,11 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
       .order("name");
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load services",
-        variant: "destructive",
-      });
+      toast.error("Failed to load services");
       return;
     }
 
-    setServices(data || []);
+    setServices(data as Service[] || []);
   };
 
   const uploadFiles = async (jobId: string): Promise<string[]> => {
@@ -171,10 +177,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
         console.warn('Notification or analytics failed but job was created:', notificationError);
       }
 
-      toast({
-        title: "Success!",
-        description: `Job has been submitted successfully. Tracking Code: ${job.tracking_code}`,
-      });
+      toast.success(`Job submitted successfully! Tracking Code: ${job.tracking_code}`);
 
       reset();
       setUploadedFiles([]);
@@ -182,11 +185,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
       onSuccess?.();
 
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit job",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to submit job");
     } finally {
       setIsSubmitting(false);
     }
@@ -262,7 +261,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
               <SelectContent>
                 {services.map((service) => (
                   <SelectItem key={service.id} value={service.id.toString()}>
-                    {service.name} - ${service.base_price}
+                    {service.name} - Le {service.base_price.toFixed(2)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -374,25 +373,35 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
               {selectedService.available_finishes && selectedService.available_finishes.length > 0 && (
                 <div>
                   <Label>Finishing Options</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {selectedService.available_finishes.map((finish) => (
-                      <label key={finish} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          value={finish}
-                          onChange={(e) => {
-                            const current = watch("finishing_options") || [];
-                            if (e.target.checked) {
-                              setValue("finishing_options", [...current, finish]);
-                            } else {
-                              setValue("finishing_options", current.filter(f => f !== finish));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span className="text-sm">{finish}</span>
-                      </label>
-                    ))}
+                  <div className="grid grid-cols-1 gap-3 mt-2">
+                    {selectedService.available_finishes.map((finishId: string) => {
+                      const finishOption = FINISHING_OPTIONS.find(f => f.id === finishId);
+                      if (!finishOption) return null;
+                      
+                      return (
+                        <label key={finishId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            value={finishId}
+                            onChange={(e) => {
+                              const current = watch("finishing_options") || [];
+                              if (e.target.checked) {
+                                setValue("finishing_options", [...current, finishId]);
+                              } else {
+                                setValue("finishing_options", current.filter(f => f !== finishId));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{finishOption.name}</span>
+                              <Badge variant="secondary">+Le {finishOption.price.toFixed(2)}</Badge>
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
