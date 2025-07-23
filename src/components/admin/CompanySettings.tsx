@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Settings } from "lucide-react";
+import { Save, Settings, Upload, Image, Globe } from "lucide-react";
 
 interface CompanySettingsData {
   company_name: string;
@@ -64,6 +64,7 @@ export const CompanySettings = () => {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<{ logo: boolean; favicon: boolean }>({ logo: false, favicon: false });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,6 +119,97 @@ export const CompanySettings = () => {
 
   const handleInputChange = (field: keyof CompanySettingsData, value: string) => {
     setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const uploadFile = async (file: File, type: 'logo' | 'favicon') => {
+    setUploading(prev => ({ ...prev, [type]: true }));
+    
+    try {
+      // Validate file type
+      if (type === 'favicon' && !['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Favicon must be a PNG or JPG file. ICO files are not supported.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (type === 'logo' && !file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File Type", 
+          description: "Logo must be an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('company-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(filePath);
+
+      if (!urlData.publicUrl) throw new Error('Failed to get public URL');
+
+      // Update settings
+      if (type === 'logo') {
+        setSettings(prev => ({ ...prev, logo_url: urlData.publicUrl }));
+      }
+
+      // For favicon, we need to update the HTML head as well
+      if (type === 'favicon') {
+        updateFavicon(urlData.publicUrl);
+      }
+
+      toast({
+        title: "Success",
+        description: `${type === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Upload Error",
+        description: error.message || `Failed to upload ${type}`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const updateFavicon = (faviconUrl: string) => {
+    // Remove existing favicon links
+    const existingLinks = document.querySelectorAll('link[rel*="icon"]');
+    existingLinks.forEach(link => link.remove());
+
+    // Add new favicon link
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.href = faviconUrl;
+    link.type = 'image/png';
+    document.head.appendChild(link);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadFile(file, type);
+    }
   };
 
   if (loading) {
@@ -240,6 +332,84 @@ export const CompanySettings = () => {
                 onChange={(e) => handleInputChange("currency_code", e.target.value)}
                 placeholder="SLE"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Brand Assets */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Brand Assets</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="logo_url">Logo URL</Label>
+              <div className="space-y-2">
+                <Input
+                  id="logo_url"
+                  value={settings.logo_url}
+                  onChange={(e) => handleInputChange("logo_url", e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                />
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="logo_upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 text-sm">
+                      <Upload className="h-4 w-4" />
+                      {uploading.logo ? "Uploading..." : "Upload Logo"}
+                    </div>
+                  </Label>
+                  <Input
+                    id="logo_upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'logo')}
+                    className="hidden"
+                    disabled={uploading.logo}
+                  />
+                  {settings.logo_url && (
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Logo set</span>
+                    </div>
+                  )}
+                </div>
+                {settings.logo_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={settings.logo_url} 
+                      alt="Company Logo Preview" 
+                      className="h-16 w-auto border rounded"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="favicon_upload">Favicon</Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="favicon_upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 text-sm">
+                      <Globe className="h-4 w-4" />
+                      {uploading.favicon ? "Uploading..." : "Upload Favicon"}
+                    </div>
+                  </Label>
+                  <Input
+                    id="favicon_upload"
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={(e) => handleFileUpload(e, 'favicon')}
+                    className="hidden"
+                    disabled={uploading.favicon}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload a PNG or JPG file for the favicon. ICO files are not supported.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
