@@ -264,25 +264,40 @@ export const OverviewDashboard = () => {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>Quick Actions & Display Links</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+            <a
+              href="/waiting-area"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+            >
+              <Clock className="h-8 w-8 text-primary mb-2" />
+              <span className="text-sm font-medium text-center">Waiting Area Display</span>
+            </a>
+            <a
+              href="/display-jobs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+            >
               <Package className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium">New Job</span>
-            </div>
-            <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium">Add Customer</span>
-            </div>
+              <span className="text-sm font-medium text-center">Job Progress Display</span>
+            </a>
+            <a
+              href="/showcase"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+            >
+              <TrendingUp className="h-8 w-8 text-primary mb-2" />
+              <span className="text-sm font-medium text-center">Showcase Screen</span>
+            </a>
             <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
               <FileText className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium">Create Invoice</span>
-            </div>
-            <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-              <TrendingUp className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium">View Reports</span>
+              <span className="text-sm font-medium">Analytics Dashboard</span>
             </div>
           </div>
         </CardContent>

@@ -69,7 +69,7 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
           service_type
         )
       `)
-      .eq("customer_id", customer.id)
+      .eq("customer_uuid", customer.id)
       .order("created_at", { ascending: false });
 
     if (error) {

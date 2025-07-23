@@ -121,6 +121,10 @@ export const DisplayJobsScreen = () => {
     return groups;
   };
 
+  const getTotalJobCount = () => {
+    return jobs.length;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Header */}
@@ -129,11 +133,16 @@ export const DisplayJobsScreen = () => {
           {settings?.company_name || "Loading..."}
         </h1>
         <p className="text-xl text-gray-600 mb-4">Live Job Progress Display</p>
-        <div className="flex justify-center items-center gap-4 text-lg text-gray-700">
+        <div className="flex justify-center items-center gap-6 text-lg text-gray-700 mb-4">
           <Calendar className="h-5 w-5" />
           <span>{currentTime.toLocaleDateString()}</span>
           <Clock className="h-5 w-5" />
           <span>{currentTime.toLocaleTimeString()}</span>
+        </div>
+        <div className="bg-white/80 rounded-lg p-4 inline-block">
+          <p className="text-2xl font-bold text-primary">
+            Total Active Jobs: {getTotalJobCount()}
+          </p>
         </div>
       </div>
 

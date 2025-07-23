@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X } from "lucide-react";
+import { PasswordChange } from "./PasswordChange";
 
 interface CustomerProfileData {
   id: string;
@@ -135,132 +136,136 @@ export const CustomerProfile = ({ userId }: CustomerProfileProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            My Profile
-          </CardTitle>
-          {!isEditing ? (
-            <Button onClick={handleEdit} variant="outline" size="sm">
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} size="sm">
-                <Save className="h-4 w-4 mr-1" />
-                {saving ? "Saving..." : "Save"}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              My Profile
+            </CardTitle>
+            {!isEditing ? (
+              <Button onClick={handleEdit} variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
               </Button>
-              <Button onClick={handleCancel} variant="outline" size="sm">
-                <X className="h-4 w-4 mr-1" />
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Customer ID */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-medium">
-              <User className="h-4 w-4" />
-              Customer ID
-            </Label>
-            <div className="p-3 bg-muted rounded-md">
-              <span className="font-mono text-sm">{profile.customer_display_id}</span>
-            </div>
-          </div>
-
-          {/* Member Since */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-medium">
-              <Calendar className="h-4 w-4" />
-              Member Since
-            </Label>
-            <div className="p-3 bg-muted rounded-md">
-              <span className="text-sm">{new Date(profile.created_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="flex items-center gap-2 text-sm font-medium">
-              <User className="h-4 w-4" />
-              Full Name
-            </Label>
-            {isEditing ? (
-              <Input
-                id="name"
-                value={editData.name || ""}
-                onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                placeholder="Enter your full name"
-              />
             ) : (
-              <div className="p-3 bg-muted rounded-md">
-                <span className="text-sm">{profile.name}</span>
+              <div className="flex gap-2">
+                <Button onClick={handleSave} disabled={saving} size="sm">
+                  <Save className="h-4 w-4 mr-1" />
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+                <Button onClick={handleCancel} variant="outline" size="sm">
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </Button>
               </div>
             )}
           </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-medium">
-              <Mail className="h-4 w-4" />
-              Email Address
-            </Label>
-            <div className="p-3 bg-muted rounded-md">
-              <span className="text-sm">{profile.email}</span>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Customer ID */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <User className="h-4 w-4" />
+                Customer ID
+              </Label>
+              <div className="p-3 bg-muted rounded-md">
+                <span className="font-mono text-sm">{profile.customer_display_id}</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed. Contact support if needed.
-            </p>
+
+            {/* Member Since */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4" />
+                Member Since
+              </Label>
+              <div className="p-3 bg-muted rounded-md">
+                <span className="text-sm">{new Date(profile.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="flex items-center gap-2 text-sm font-medium">
+                <User className="h-4 w-4" />
+                Full Name
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="name"
+                  value={editData.name || ""}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  placeholder="Enter your full name"
+                />
+              ) : (
+                <div className="p-3 bg-muted rounded-md">
+                  <span className="text-sm">{profile.name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Mail className="h-4 w-4" />
+                Email Address
+              </Label>
+              <div className="p-3 bg-muted rounded-md">
+                <span className="text-sm">{profile.email}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed. Contact support if needed.
+              </p>
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
+                <Phone className="h-4 w-4" />
+                Phone Number
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="phone"
+                  value={editData.phone || ""}
+                  onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                  placeholder="Enter your phone number"
+                />
+              ) : (
+                <div className="p-3 bg-muted rounded-md">
+                  <span className="text-sm">{profile.phone || "Not provided"}</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Phone */}
+          {/* Address */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
-              <Phone className="h-4 w-4" />
-              Phone Number
+            <Label htmlFor="address" className="flex items-center gap-2 text-sm font-medium">
+              <MapPin className="h-4 w-4" />
+              Address
             </Label>
             {isEditing ? (
-              <Input
-                id="phone"
-                value={editData.phone || ""}
-                onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                placeholder="Enter your phone number"
+              <Textarea
+                id="address"
+                value={editData.address || ""}
+                onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                placeholder="Enter your address"
+                rows={3}
               />
             ) : (
-              <div className="p-3 bg-muted rounded-md">
-                <span className="text-sm">{profile.phone || "Not provided"}</span>
+              <div className="p-3 bg-muted rounded-md min-h-[80px]">
+                <span className="text-sm">{profile.address || "Not provided"}</span>
               </div>
             )}
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Address */}
-        <div className="space-y-2">
-          <Label htmlFor="address" className="flex items-center gap-2 text-sm font-medium">
-            <MapPin className="h-4 w-4" />
-            Address
-          </Label>
-          {isEditing ? (
-            <Textarea
-              id="address"
-              value={editData.address || ""}
-              onChange={(e) => setEditData({ ...editData, address: e.target.value })}
-              placeholder="Enter your address"
-              rows={3}
-            />
-          ) : (
-            <div className="p-3 bg-muted rounded-md min-h-[80px]">
-              <span className="text-sm">{profile.address || "Not provided"}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      <PasswordChange />
+    </div>
   );
 };

@@ -19,6 +19,7 @@ import { CompanySettings } from "./CompanySettings";
 import { DisplayScreenManagement } from "./DisplayScreenManagement";
 import { JobProgressDashboard } from "./JobProgressDashboard";
 import { OverviewDashboard } from "./OverviewDashboard";
+import { UserManagement } from "./UserManagement";
 
 interface AdminDashboardProps {
   user: User;
@@ -189,6 +190,13 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             Logs
           </Button>
           <Button
+            variant={activeTab === "users" ? "default" : "ghost"}
+            onClick={() => setActiveTab("users")}
+            className="px-3 sm:px-6 text-xs sm:text-sm"
+          >
+            Users
+          </Button>
+          <Button
             variant={activeTab === "customers" ? "default" : "ghost"}
             onClick={() => setActiveTab("customers")}
             className="px-3 sm:px-6 text-xs sm:text-sm"
@@ -242,6 +250,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
         {activeTab === "services" && <ServiceManagement />}
         {activeTab === "notifications" && <NotificationManagement />}
         {activeTab === "notification-logs" && <NotificationLogs />}
+        {activeTab === "users" && <UserManagement />}
         {activeTab === "customers" && <CustomerManagement />}
         {activeTab === "quotes" && <QuoteManagement />}
         {activeTab === "invoices" && <InvoiceManagement />}
