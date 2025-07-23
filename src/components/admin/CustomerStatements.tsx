@@ -105,8 +105,7 @@ export const CustomerStatements = () => {
         .from('jobs')
         .select(`
           *,
-          services(name),
-          workflow_status(name)
+          services(name)
         `)
         .eq('customer_uuid', customer.id)
         .gte('created_at', startDate.toISOString())
@@ -329,7 +328,7 @@ export const CustomerStatements = () => {
                           <p className="text-sm text-muted-foreground">{job.services?.name}</p>
                         </div>
                         <div className="text-right">
-                          <Badge variant="outline">{job.workflow_status?.name}</Badge>
+                          <Badge variant="outline">{job.status}</Badge>
                           <p className="text-sm text-muted-foreground">
                             {format(new Date(job.created_at), 'MMM dd, yyyy')}
                           </p>
