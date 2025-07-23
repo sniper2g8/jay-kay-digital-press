@@ -174,23 +174,101 @@ export const CustomerStatements = () => {
     if (!statementData) return;
     
     try {
-      // Generate PDF for statement - simplified version
-      const element = document.createElement('div');
-      element.innerHTML = `
-        <div style="padding: 20px; font-family: Arial;">
-          <h1>Customer Statement</h1>
-          <p><strong>Customer:</strong> ${statementData.customer.name}</p>
-          <p><strong>Period:</strong> ${selectedPeriod}</p>
-          <p><strong>Total Jobs:</strong> ${statementData.totalJobs}</p>
-          <p><strong>Total Invoiced:</strong> Le ${statementData.totalInvoiced.toLocaleString()}</p>
-          <p><strong>Total Paid:</strong> Le ${statementData.totalPaid.toLocaleString()}</p>
-          <p><strong>Outstanding:</strong> Le ${statementData.outstandingBalance.toLocaleString()}</p>
-        </div>
+      // Create a more comprehensive PDF content
+      const pdfContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Customer Statement</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .customer-info { margin-bottom: 20px; }
+            .summary { display: flex; gap: 20px; margin: 20px 0; }
+            .summary-card { border: 1px solid #ddd; padding: 15px; flex: 1; text-align: center; }
+            .jobs-list { margin-top: 30px; }
+            .job-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Customer Statement</h1>
+            <p>Generated on ${format(new Date(), 'MMMM dd, yyyy')}</p>
+          </div>
+          
+          <div class="customer-info">
+            <h2>Customer Details</h2>
+            <p><strong>Name:</strong> ${statementData.customer.name}</p>
+            <p><strong>Email:</strong> ${statementData.customer.email}</p>
+            <p><strong>Customer ID:</strong> ${statementData.customer.customer_display_id}</p>
+          </div>
+          
+          <div class="summary">
+            <div class="summary-card">
+              <h3>Total Jobs</h3>
+              <p style="font-size: 24px; margin: 0;">${statementData.totalJobs}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Total Invoiced</h3>
+              <p style="font-size: 24px; margin: 0;">Le ${statementData.totalInvoiced.toLocaleString()}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Total Paid</h3>
+              <p style="font-size: 24px; margin: 0;">Le ${statementData.totalPaid.toLocaleString()}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Outstanding</h3>
+              <p style="font-size: 24px; margin: 0; color: ${statementData.outstandingBalance > 0 ? 'red' : 'green'};">Le ${statementData.outstandingBalance.toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div class="jobs-list">
+            <h2>Jobs Summary</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${statementData.jobs.map(job => `
+                  <tr>
+                    <td>${job.tracking_code}</td>
+                    <td>${job.services?.name || 'N/A'}</td>
+                    <td>${job.status}</td>
+                    <td>${format(new Date(job.created_at), 'MMM dd, yyyy')}</td>
+                    <td>Le ${(job.final_price || job.quoted_price || 0).toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </body>
+        </html>
       `;
+      
+      // Create a blob and download
+      const blob = new Blob([pdfContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `statement_${statementData.customer.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Statement downloaded",
-        description: "Statement PDF has been generated.",
+        description: "Statement has been generated and downloaded.",
       });
     } catch (error) {
       toast({
@@ -205,13 +283,50 @@ export const CustomerStatements = () => {
     if (!statementData) return;
     
     try {
-      // Here you would integrate with your email service
+      // Generate statement content for email
+      const statementContent = `
+        Customer Statement for ${statementData.customer.name}
+        
+        Statement Period: ${selectedPeriod}
+        Generated on: ${format(new Date(), 'MMMM dd, yyyy')}
+        
+        Customer Details:
+        - Name: ${statementData.customer.name}
+        - Email: ${statementData.customer.email}
+        - Customer ID: ${statementData.customer.customer_display_id}
+        
+        Summary:
+        - Total Jobs: ${statementData.totalJobs}
+        - Total Invoiced: Le ${statementData.totalInvoiced.toLocaleString()}
+        - Total Paid: Le ${statementData.totalPaid.toLocaleString()}
+        - Outstanding Balance: Le ${statementData.outstandingBalance.toLocaleString()}
+        
+        Jobs Details:
+        ${statementData.jobs.map(job => `
+        - Job ${job.tracking_code}: ${job.services?.name || 'N/A'} - ${job.status} - Le ${(job.final_price || job.quoted_price || 0).toLocaleString()}
+        `).join('')}
+      `;
+
+      // Send email via edge function
+      const { error } = await supabase.functions.invoke('send-notification', {
+        body: {
+          type: 'email',
+          recipient: statementData.customer.email,
+          subject: `Customer Statement - ${statementData.customer.name}`,
+          message: statementContent,
+          customer_id: statementData.customer.id
+        }
+      });
+
+      if (error) throw error;
+      
       toast({
         title: "Statement sent",
         description: `Statement has been sent to ${statementData.customer.email}`,
       });
       setIsStatementOpen(false);
     } catch (error) {
+      console.error('Error sending statement:', error);
       toast({
         title: "Error",
         description: "Failed to send statement.",

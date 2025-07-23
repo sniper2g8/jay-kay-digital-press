@@ -18,6 +18,7 @@ import {
   FileText,
   Grid3X3,
   LogOut,
+  DollarSign,
 } from "lucide-react";
 
 // Components
@@ -32,6 +33,7 @@ import { CompanySettings } from './CompanySettings';
 import { CustomerStatements } from '@/components/admin/CustomerStatements';
 import { DeliveryManagement } from './DeliveryManagement';
 import { ServiceManager } from '@/components/admin/ServiceManager';
+import { PayrollManagement } from './PayrollManagement';
 
 // Navigation Items
 const navigationItems = [
@@ -43,6 +45,7 @@ const navigationItems = [
   { id: "customers", label: "Customers", icon: Users },
   { id: "statements", label: "Customer Statements", icon: FileText },
   { id: "staff", label: "Staff & Users", icon: Shield },
+  { id: "payroll", label: "Payroll Management", icon: DollarSign },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
 ];
@@ -116,6 +119,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             {activeView === "delivery" && <DeliveryManagement />}
             {activeView === "invoices" && <InvoiceManagement />}
             {activeView === "staff" && <UserManagement />}
+            {activeView === "payroll" && <PayrollManagement />}
             {activeView === "analytics" && <AnalyticsDashboard />}
             {activeView === "settings" && <CompanySettings />}
           </div>
