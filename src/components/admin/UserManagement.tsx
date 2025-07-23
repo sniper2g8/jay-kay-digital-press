@@ -87,8 +87,22 @@ export const UserManagement = () => {
           )
         `);
 
+      // Fetch non-system staff
+      const { data: nonSystemStaff, error: nonSystemError } = await supabase
+        .from("non_system_staff")
+        .select(`
+          id,
+          name,
+          email,
+          phone,
+          created_at,
+          position,
+          is_active
+        `);
+
       if (customersError) throw customersError;
       if (internalError) throw internalError;
+      if (nonSystemError) throw nonSystemError;
 
       const allUsers: User[] = [
         ...(customers || []).map(customer => ({
@@ -107,6 +121,15 @@ export const UserManagement = () => {
           phone: user.phone,
           role: (user as any).roles?.name || "Unknown",
           created_at: user.created_at,
+          user_type: 'internal' as const
+        })),
+        ...(nonSystemStaff || []).map(staff => ({
+          id: staff.id,
+          name: staff.name,
+          email: staff.email || "N/A",
+          phone: staff.phone,
+          role: staff.position || "Non-System Staff",
+          created_at: staff.created_at || new Date().toISOString(),
           user_type: 'internal' as const
         }))
       ];

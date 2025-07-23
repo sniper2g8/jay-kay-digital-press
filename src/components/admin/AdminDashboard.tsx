@@ -17,7 +17,7 @@ import { InvoiceManagement } from "./InvoiceManagement";
 import { InvoiceTemplateSettings } from "./InvoiceTemplateSettings";
 import { CompanySettings } from "./CompanySettings";
 import { DisplayScreenManagement } from "./DisplayScreenManagement";
-import { JobProgressDashboard } from "./JobProgressDashboard";
+import { AddUser } from "./AddUser";
 import { OverviewDashboard } from "./OverviewDashboard";
 import { UserManagement } from "./UserManagement";
 
@@ -148,11 +148,11 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             Overview
           </Button>
           <Button
-            variant={activeTab === "job-progress" ? "default" : "ghost"}
-            onClick={() => setActiveTab("job-progress")}
+            variant={activeTab === "add-user" ? "default" : "ghost"}
+            onClick={() => setActiveTab("add-user")}
             className="px-3 sm:px-6 text-xs sm:text-sm"
           >
-            Job Progress
+            Add User
           </Button>
           <Button
             variant={activeTab === "analytics" ? "default" : "ghost"}
@@ -243,7 +243,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
 
         {/* Tab Content */}
         {activeTab === "overview" && <OverviewDashboard />}
-        {activeTab === "job-progress" && <JobProgressDashboard />}
+        {activeTab === "add-user" && <AddUser />}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
         {activeTab === "jobs" && <JobManagement />}
