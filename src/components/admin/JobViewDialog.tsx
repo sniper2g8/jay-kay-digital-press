@@ -17,7 +17,11 @@ import {
   FileText, 
   DollarSign,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Download,
+  File,
+  Image,
+  Paperclip
 } from "lucide-react";
 
 interface JobDetails {
@@ -53,6 +57,14 @@ interface JobDetails {
   } | null;
 }
 
+interface JobFile {
+  id: number;
+  job_id: number;
+  file_path: string;
+  description: string | null;
+  uploaded_at: string;
+}
+
 interface JobViewDialogProps {
   jobId: number | null;
   isOpen: boolean;
@@ -61,12 +73,15 @@ interface JobViewDialogProps {
 
 export const JobViewDialog = ({ jobId, isOpen, onClose }: JobViewDialogProps) => {
   const [job, setJob] = useState<JobDetails | null>(null);
+  const [jobFiles, setJobFiles] = useState<JobFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [filesLoading, setFilesLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (jobId && isOpen) {
       fetchJobDetails();
+      fetchJobFiles();
     }
   }, [jobId, isOpen]);
 
@@ -106,6 +121,96 @@ export const JobViewDialog = ({ jobId, isOpen, onClose }: JobViewDialogProps) =>
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchJobFiles = async () => {
+    if (!jobId) return;
+    
+    setFilesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("job_files")
+        .select("*")
+        .eq("job_id", jobId)
+        .order("uploaded_at", { ascending: false });
+
+      if (error) throw error;
+      setJobFiles(data || []);
+    } catch (error) {
+      console.error("Error fetching job files:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load job files",
+        variant: "destructive",
+      });
+    } finally {
+      setFilesLoading(false);
+    }
+  };
+
+  const downloadFile = async (filePath: string, fileName?: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('job-files')
+        .download(filePath);
+
+      if (error) {
+        // Try job-uploads bucket if not found in job-files
+        const { data: data2, error: error2 } = await supabase.storage
+          .from('job-uploads')
+          .download(filePath);
+        
+        if (error2) throw error2;
+        
+        const url = URL.createObjectURL(data2);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName || filePath.split('/').pop() || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || filePath.split('/').pop() || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "File downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+      case 'svg':
+        return <Image className="h-4 w-4" />;
+      case 'pdf':
+        return <FileText className="h-4 w-4" />;
+      default:
+        return <File className="h-4 w-4" />;
     }
   };
 
@@ -354,6 +459,60 @@ export const JobViewDialog = ({ jobId, isOpen, onClose }: JobViewDialogProps) =>
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Job Files */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Paperclip className="h-5 w-5" />
+                  Job Files ({jobFiles.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filesLoading ? (
+                  <div className="text-center py-8">
+                    <File className="h-8 w-8 mx-auto text-muted-foreground mb-2 animate-pulse" />
+                    <p className="text-sm text-muted-foreground">Loading files...</p>
+                  </div>
+                ) : jobFiles.length === 0 ? (
+                  <div className="text-center py-8">
+                    <File className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">No files uploaded for this job</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {jobFiles.map((file) => {
+                      const fileName = file.file_path.split('/').pop() || 'Unknown File';
+                      return (
+                        <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            {getFileIcon(fileName)}
+                            <div>
+                              <p className="font-medium text-sm">{fileName}</p>
+                              {file.description && (
+                                <p className="text-xs text-muted-foreground">{file.description}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                Uploaded: {new Date(file.uploaded_at).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadFile(file.file_path, fileName)}
+                            className="shrink-0"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
