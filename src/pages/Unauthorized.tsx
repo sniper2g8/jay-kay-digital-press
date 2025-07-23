@@ -20,7 +20,18 @@ export function Unauthorized() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col space-y-2">
-            <Button onClick={() => navigate(-1)} variant="outline" className="w-full">
+            <Button 
+              onClick={() => {
+                // Try to go back, but if there's no proper history, go to home
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }} 
+              variant="outline" 
+              className="w-full"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Go Back
             </Button>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, ArrowLeft } from "lucide-react";
@@ -6,6 +6,16 @@ import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 const NotFound = () => {
   const { settings } = useCompanySettings();
+  const navigate = useNavigate();
+  
+  const handleGoBack = () => {
+    // Try to go back, but if there's no history, go to home
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -30,7 +40,7 @@ const NotFound = () => {
             <Button 
               variant="outline" 
               className="w-full" 
-              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/'}
+              onClick={handleGoBack}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back

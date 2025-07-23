@@ -4,19 +4,9 @@ import { CustomerDashboard } from "@/components/customer/CustomerDashboard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Index = () => {
-  const { user, session, loading, userRole, userProfile } = useAuth();
-
-  // Debug logging
-  console.log('Index page - Auth state:', {
-    user: !!user,
-    session: !!session,
-    loading,
-    userRole,
-    userProfile: !!userProfile
-  });
+  const { user, session, loading, userRole } = useAuth();
 
   if (loading) {
-    console.log('Index page - Still loading...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner />
@@ -25,9 +15,7 @@ const Index = () => {
   }
 
   if (!user || !session) {
-    console.log('Index page - No user or session, redirecting...');
     // This should not happen since this page is protected, but just in case
-    window.location.href = '/login';
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner />
@@ -35,16 +23,12 @@ const Index = () => {
     );
   }
 
-  console.log('Index page - User role check:', userRole);
-
   // Route based on user role
   if (userRole === 'Admin' || userRole === 'Staff' || userRole === 'System User') {
-    console.log('Index page - Showing admin dashboard');
     return <AdminDashboard user={user} userRole={userRole} />;
   }
 
   // Default to customer dashboard
-  console.log('Index page - Showing customer dashboard');
   return <CustomerDashboard user={user} />;
 };
 
