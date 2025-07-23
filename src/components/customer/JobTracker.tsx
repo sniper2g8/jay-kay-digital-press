@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Package, Clock, CheckCircle, TruckIcon } from "lucide-react";
+import { Search, Package, Clock, CheckCircle, TruckIcon, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 interface Job {
@@ -171,21 +171,77 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
     return `${window.location.origin}/track/${trackingCode}`;
   };
 
+  const canCancelJob = (status: string) => {
+    const cancellableStatuses = ['Pending', 'Received', 'Processing'];
+    return cancellableStatuses.includes(status);
+  };
+
+  const cancelJob = async (jobId: number) => {
+    if (!confirm('Are you sure you want to cancel this job?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: 'Cancelled', current_status: 9 })
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Job cancelled",
+        description: "Your job has been cancelled successfully.",
+      });
+
+      // Refresh jobs if user is logged in
+      if (userId) {
+        fetchUserJobs();
+      }
+      
+      // Clear tracked job if it was the cancelled one
+      if (trackedJob && trackedJob.id === jobId) {
+        setTrackedJob(null);
+        setTrackingCode("");
+      }
+    } catch (error) {
+      console.error('Error cancelling job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel job. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const JobCard = ({ job }: { job: Job }) => (
     <Card className="mb-4">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{job.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {job.services.name} • Qty: {job.quantity}
-            </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{job.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {job.services.name} • Qty: {job.quantity}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {getStatusIcon(job.status)}
+                {job.status}
+              </Badge>
+              {canCancelJob(job.status) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cancelJob(job.id)}
+                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            {getStatusIcon(job.status)}
-            {job.status}
-          </Badge>
-        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
