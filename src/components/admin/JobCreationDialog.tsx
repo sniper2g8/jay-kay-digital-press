@@ -15,6 +15,7 @@ interface Customer {
   name: string;
   email: string;
   customer_display_id: string;
+  profile_id?: string;
 }
 
 interface Service {
@@ -95,7 +96,13 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   const fetchCustomers = async () => {
     const { data, error } = await supabase
       .from("customers")
-      .select("id, name, email, customer_display_id")
+      .select(`
+        id, 
+        name, 
+        email, 
+        customer_display_id,
+        profiles!inner(id)
+      `)
       .order("name");
     
     if (error) {
@@ -103,7 +110,13 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       return;
     }
     
-    setCustomers(data || []);
+    // Transform the data to include profile_id
+    const transformedData = data?.map(customer => ({
+      ...customer,
+      profile_id: customer.profiles?.[0]?.id
+    })) || [];
+    
+    setCustomers(transformedData);
   };
 
   const fetchServices = async () => {
@@ -125,6 +138,12 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
     setIsSubmitting(true);
     
     try {
+      // Find the selected customer to get both IDs
+      const selectedCustomer = customers.find(c => c.id === data.customer_id);
+      if (!selectedCustomer || !selectedCustomer.profile_id) {
+        throw new Error("Selected customer not found or missing profile");
+      }
+
       // Get the first available workflow status
       const { data: statusData, error: statusError } = await supabase
         .from("workflow_status")
@@ -139,8 +158,8 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       const jobData = {
         title: data.title,
         description: data.description,
-        customer_id: data.customer_id,
-        customer_uuid: data.customer_id,
+        customer_id: selectedCustomer.profile_id, // This should reference profiles.id
+        customer_uuid: selectedCustomer.id, // This should reference customers.id
         service_id: parseInt(data.service_id),
         quantity: data.quantity,
         service_subtype: data.service_subtype || null,
@@ -168,7 +187,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
 
       // Send notification to customer
       try {
-        await sendJobSubmittedNotification(data.customer_id, newJob.id, data.title);
+        await sendJobSubmittedNotification(selectedCustomer.id, newJob.id, data.title);
       } catch (notificationError) {
         console.warn('Failed to send notification:', notificationError);
       }
