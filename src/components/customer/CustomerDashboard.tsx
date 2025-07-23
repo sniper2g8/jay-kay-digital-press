@@ -9,6 +9,8 @@ import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
 import { InvoiceView } from "./InvoiceView";
 import { NotificationPreferences } from "./NotificationPreferences";
+import { CustomerProfile } from "./CustomerProfile";
+import { OrderHistory } from "./OrderHistory";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface CustomerDashboardProps {
@@ -118,7 +120,10 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
               <p className="text-muted-foreground">Track progress of your current jobs</p>
             </div>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("history")}
+            >
               <h3 className="text-lg font-semibold mb-2">Order History</h3>
               <p className="text-muted-foreground">View your past orders and invoices</p>
             </div>
@@ -138,7 +143,10 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
               </DialogContent>
             </Dialog>
             
-            <div className="bg-card p-6 rounded-lg border">
+            <div 
+              className="bg-card p-6 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setActiveTab("profile")}
+            >
               <h3 className="text-lg font-semibold mb-2">My Profile</h3>
               <p className="text-muted-foreground">Update your account information</p>
             </div>
@@ -166,6 +174,10 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
         )}
 
         {activeTab === "notifications" && <NotificationPreferences />}
+
+        {activeTab === "profile" && <CustomerProfile userId={user.id} />}
+
+        {activeTab === "history" && <OrderHistory userId={user.id} />}
       </main>
     </div>
   );

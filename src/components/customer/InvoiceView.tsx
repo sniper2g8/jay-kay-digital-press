@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Receipt, Download, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface Invoice {
   id: string;
@@ -17,6 +19,17 @@ interface Invoice {
   issued_date: string;
   due_date: string | null;
   created_at: string;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  notes: string | null;
+  customers: {
+    name: string;
+    email: string;
+    phone: string | null;
+    address: string | null;
+    customer_display_id: string;
+  };
 }
 
 interface InvoiceViewProps {
@@ -26,7 +39,9 @@ interface InvoiceViewProps {
 export const InvoiceView = ({ userId }: InvoiceViewProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const { toast } = useToast();
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     fetchInvoices();
@@ -48,7 +63,16 @@ export const InvoiceView = ({ userId }: InvoiceViewProps) => {
 
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          customers (
+            name,
+            email,
+            phone,
+            address,
+            customer_display_id
+          )
+        `)
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
@@ -63,6 +87,72 @@ export const InvoiceView = ({ userId }: InvoiceViewProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    if (!settings) {
+      toast({
+        title: "Error",
+        description: "Company settings not loaded",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDownloading(invoice.id);
+    
+    try {
+      // Fetch invoice items
+      const { data: invoiceItems, error: itemsError } = await supabase
+        .from('invoice_items')
+        .select('*')
+        .eq('invoice_id', invoice.id);
+
+      if (itemsError) throw itemsError;
+
+      // Prepare data for PDF generation
+      const invoiceData = {
+        ...invoice,
+        invoice_items: invoiceItems || []
+      };
+
+      const companySettings = {
+        company_name: settings.company_name,
+        address: settings.address,
+        phone: settings.phone,
+        email: settings.email,
+        logo_url: settings.logo_url,
+        primary_color: settings.primary_color || '#000000',
+        currency_symbol: settings.currency_symbol || 'Le'
+      };
+
+      // Generate and download PDF
+      const pdfBlob = await generateInvoicePDF(invoiceData, companySettings);
+      
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice.invoice_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download invoice",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -148,8 +238,14 @@ export const InvoiceView = ({ userId }: InvoiceViewProps) => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownloadInvoice(invoice)}
+                        disabled={downloading === invoice.id}
+                      >
                         <Download className="h-4 w-4" />
+                        {downloading === invoice.id ? "..." : ""}
                       </Button>
                       {invoice.status !== 'paid' && invoice.balance_due && invoice.balance_due > 0 && (
                         <Button size="sm">
