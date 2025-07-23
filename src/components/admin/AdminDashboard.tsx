@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { ExternalLink, Monitor, ImageIcon, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { JobManagement } from "./JobManagement";
 import { ServiceManagement } from "./ServiceManagement";
 import { NotificationLogs } from "./NotificationLogs";
@@ -46,11 +48,88 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
               <h1 className="text-xl sm:text-2xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-muted-foreground text-sm">Admin Dashboard - {userRole}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs sm:text-sm">Welcome, {user.email}</span>
-              <Button variant="outline" onClick={handleSignOut} size="sm">
-                Sign Out
-              </Button>
+            <div className="flex items-center gap-2">
+              {/* Display Screen Links - Desktop */}
+              <div className="hidden md:flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a 
+                    href="/waiting-area" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1"
+                  >
+                    <Monitor className="h-4 w-4" />
+                    Waiting Area
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a 
+                    href="/showcase" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    Showcase
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+              </div>
+
+              {/* Display Screen Links - Mobile Dropdown */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Monitor className="h-4 w-4" />
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <a 
+                        href="/waiting-area" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 w-full"
+                      >
+                        <Monitor className="h-4 w-4" />
+                        Waiting Area
+                        <ExternalLink className="h-3 w-3 ml-auto" />
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a 
+                        href="/showcase" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 w-full"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        Showcase
+                        <ExternalLink className="h-3 w-3 ml-auto" />
+                      </a>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="flex items-center gap-2 border-l pl-2 ml-2">
+                <span className="text-xs sm:text-sm">Welcome, {user.email}</span>
+                <Button variant="outline" onClick={handleSignOut} size="sm">
+                  Sign Out
+                </Button>
+              </div>
             </div>
           </div>
         </div>
