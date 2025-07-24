@@ -6,8 +6,6 @@ export interface DeliverySchedule {
   id: string;
   job_id: number;
   scheduled_date: string;
-  scheduled_time_start?: string;
-  scheduled_time_end?: string;
   delivery_method: string;
   delivery_address?: string;
   delivery_status: string;
