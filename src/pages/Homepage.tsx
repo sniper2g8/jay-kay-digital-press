@@ -183,18 +183,38 @@ export const Homepage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-primary text-primary-foreground sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">{companySettings?.company_name || 'Loading...'}</h1>
-            <p className="text-primary-foreground/80">Bringing Your Prints to Life</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">J</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{companySettings?.company_name || 'JAY KAY DIGITAL PRESS'}</h1>
+              <p className="text-sm text-gray-500">Professional Printing Services</p>
+            </div>
           </div>
-          <div className="flex gap-4">
+          
+          <nav className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-gray-700 hover:text-primary transition-colors">Home</Link>
+            <Link to="/register" className="text-gray-700 hover:text-primary transition-colors">Services</Link>
+            <Link to="/track/JKDP-0001" className="text-gray-700 hover:text-primary transition-colors">Track Order</Link>
+          </nav>
+          
+          <div className="flex gap-3">
             <Link to="/login">
-              <Button variant="secondary">Login</Button>
+              <Button variant="ghost" className="text-gray-700">
+                <Search className="h-4 w-4 mr-2" />
+                Track Order
+              </Button>
+            </Link>
+            <Link to="/login">
+              <Button variant="outline" className="border-gray-300 text-gray-700">
+                Sign In
+              </Button>
             </Link>
             <Link to="/register">
-              <Button variant="outline" className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary">
+              <Button className="bg-primary hover:bg-primary/90">
                 Get Started
               </Button>
             </Link>
@@ -206,25 +226,36 @@ export const Homepage = () => {
       <section 
         className="relative min-h-screen flex items-center justify-center text-center text-white"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroImage})`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${heroImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed'
         }}
       >
         <div className="container mx-auto px-4 z-10">
-          <h2 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-            Bringing Your Prints to Life
-          </h2>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-            Professional digital printing services with cutting-edge technology and personalized customer care
-          </p>
-          <Link to="/register">
-            <Button size="lg" className="px-12 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 animate-scale-in">
-              Start Your Print Job
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-6xl md:text-8xl font-bold mb-8 animate-fade-in tracking-wide">
+              Professional <span className="text-primary">Printing</span><br />
+              Made Simple
+            </h2>
+            <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-90 leading-relaxed">
+              Transform your ideas into stunning printed materials with our premium quality services and fast turnaround times.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/register">
+                <Button size="lg" className="px-10 py-4 text-lg font-semibold bg-primary hover:bg-primary/90 animate-scale-in">
+                  Get Your Quote
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button size="lg" variant="outline" className="px-10 py-4 text-lg font-semibold border-white text-white hover:bg-white hover:text-black animate-scale-in">
+                  <Upload className="mr-2 h-5 w-5" />
+                  Submit Project
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -284,12 +315,12 @@ export const Homepage = () => {
       </section>
 
       {/* Our Services */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-4">Our Services</h3>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Professional printing solutions for all your business and personal needs
+            <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our Services</h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Professional printing services with premium finishing options to meet all your business and personal needs
             </p>
           </div>
 
