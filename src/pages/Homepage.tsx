@@ -1,46 +1,21 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CompanyLogo } from "@/components/common/LogoHeader";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Printer, 
-  Package, 
-  Palette,
-  CreditCard,
-  FileImage,
-  Eye,
-  Image,
-  Wrench,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Users,
-  Truck,
-  Upload,
-  MessageSquareQuote,
-  ShoppingCart,
+  FileText, 
+  Image, 
+  Calendar, 
   Star,
   ArrowRight,
-  Play,
-  Search,
-  Package2
+  Users,
+  Clock,
+  Award,
+  Palette
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import useEmblaCarousel from 'embla-carousel-react';
-import heroImage from "@/assets/hero-bg.jpg";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { CompanyLogo } from "@/components/common/LogoHeader";
-import { 
-  SERVICE_TYPES, 
-  DEFAULT_SERVICES,
-  type ServiceType 
-} from '@/constants/services';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface Service {
   id: number;
@@ -48,538 +23,293 @@ interface Service {
   description: string;
   service_type: string;
   image_url: string | null;
-  base_price: number;
+  base_price: number | null;
 }
 
 export const Homepage = () => {
+  const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [emblaRef] = useEmblaCarousel({ loop: true });
-  const { settings: companySettings } = useCompanySettings();
-  
-  // Tracking functionality
-  const [trackingCode, setTrackingCode] = useState("");
-  const [trackingJob, setTrackingJob] = useState<any>(null);
-  const [trackingLoading, setTrackingLoading] = useState(false);
-  const [trackingError, setTrackingError] = useState("");
 
   useEffect(() => {
     const fetchServices = async () => {
-      const { data } = await supabase
-        .from('services')
-        .select('*')
-        .eq('is_active', true)
-        .limit(6);
-      
-      if (data) {
-        setServices(data);
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .limit(6);
+        
+        if (error) throw error;
+        setServices(data || []);
+      } catch (error) {
+        console.error('Error fetching services:', error);
       }
-      setLoading(false);
     };
 
     fetchServices();
   }, []);
 
-  const navigate = useNavigate();
-
-  const handleTrackJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackingCode.trim()) {
-      setTrackingError("Please enter a tracking code");
-      return;
+  const popularServices = [
+    {
+      title: "Business Cards",
+      description: "Make lasting first impressions with premium business cards featuring elegant designs and professional finishes",
+      features: ["Premium cardstock options", "Elegant finishes available", "Same-day turnaround", "Professional designs"],
+      icon: FileText,
+      popular: true
+    },
+    {
+      title: "Flyers & Brochures",
+      description: "Captivate your audience with eye-catching marketing materials that showcase your brand and drive engagement",
+      features: ["Full-color vibrant printing", "Multiple paper grades", "Custom sizes & folds", "Marketing optimization"],
+      icon: Image,
+      popular: true
+    },
+    {
+      title: "Banners & Signage",
+      description: "Command attention with durable outdoor banners and indoor signage solutions for maximum brand visibility",
+      features: ["Weather-resistant materials", "Custom dimensions", "Indoor/outdoor options", "High-resolution graphics"],
+      icon: Calendar,
+      popular: true
+    },
+    {
+      title: "Posters & Large Format",
+      description: "Transform spaces with stunning large format prints perfect for events, presentations, and advertising displays",
+      features: ["Large format capabilities", "Museum-quality prints", "Multiple substrate options", "Exhibition ready"],
+      icon: Star,
+      popular: true
+    },
+    {
+      title: "Booklets & Catalogs",
+      description: "Present comprehensive information beautifully with professionally bound booklets and detailed product catalogs",
+      features: ["Perfect binding options", "Saddle-stitch binding", "Full-color pages", "Custom page counts"],
+      icon: Palette,
+      popular: true
     }
-
-    setTrackingLoading(true);
-    setTrackingError("");
-    
-    try {
-      const { data, error } = await supabase
-        .from("jobs")
-        .select(`
-          id,
-          title,
-          description,
-          quantity,
-          status,
-          tracking_code,
-          created_at,
-          estimated_completion,
-          delivery_method,
-          delivery_address,
-          services (
-            name,
-            service_type
-          ),
-          customers (
-            name,
-            email,
-            phone
-          )
-        `)
-        .eq("tracking_code", trackingCode.trim())
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        setTrackingError("No job found with this tracking code");
-        return;
-      }
-
-      // Navigate to tracking page
-      navigate(`/track/${trackingCode.trim()}`);
-    } catch (error) {
-      console.error("Error tracking job:", error);
-      setTrackingError("Failed to track job. Please try again.");
-    } finally {
-      setTrackingLoading(false);
-    }
-  };
-
-  // Generate service icons and images based on service type
-  const getServiceIcon = (serviceType: string) => {
-    switch (serviceType) {
-      case 'Business Card': return CreditCard;
-      case 'Banner': return Image;
-      case 'SAV': return Eye;
-      case 'Flyer': return FileImage;
-      case 'Poster': return FileImage;
-      case 'Brochure': return FileImage;
-      case 'Sticker': return Package;
-      default: return Palette;
-    }
-  };
-
-  const getServiceImage = (serviceType: string) => {
-    switch (serviceType) {
-      case 'Business Cards': return 'https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=400&h=250&fit=crop';
-      case 'Banner': return 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=400&h=250&fit=crop';
-      case 'SAV': return 'https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=250&fit=crop';
-      case 'Flyers': return 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop';
-      case 'Poster': return 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=250&fit=crop';
-      case 'Brochure': return 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=250&fit=crop';
-      default: return 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=400&h=250&fit=crop';
-    }
-  };
-
-  // Dynamic services from constants
-  const keyServices = DEFAULT_SERVICES.slice(0, 6).map(service => ({
-    icon: getServiceIcon(service.service_type),
-    image: getServiceImage(service.service_type),
-    title: service.name,
-    description: service.description,
-    service_type: service.service_type,
-    base_price: service.base_price
-  }));
-
-  const whyChooseUs = [
-    { icon: Star, title: "High-Quality Prints", description: "Premium materials and latest printing technology" },
-    { icon: Clock, title: "Fast Turnaround", description: "Quick delivery without compromising quality" },
-    { icon: DollarSign, title: "Competitive Pricing", description: "Best value for professional printing services" },
-    { icon: Users, title: "Expert Staff", description: "Experienced team dedicated to your success" },
-    { icon: Truck, title: "Nationwide Delivery", description: "Reliable delivery across Sierra Leone" }
   ];
 
-  const howItWorks = [
-    { step: 1, icon: ShoppingCart, title: "Choose Service", description: "Select from our wide range of printing services" },
-    { step: 2, icon: Upload, title: "Upload Files & Details", description: "Submit your designs and specifications" },
-    { step: 3, icon: MessageSquareQuote, title: "Get a Quote", description: "Receive instant pricing for your project" },
-    { step: 4, icon: Truck, title: "Receive & Track", description: "Track your order and receive premium prints" }
-  ];
-
-  const showcaseImages = [
-    "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400",
-    "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400", 
-    "https://images.unsplash.com/photo-1607703703520-bb638e84caf2?w=400",
-    "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400"
+  const stats = [
+    { icon: Users, value: "500+", label: "Happy Customers" },
+    { icon: Clock, value: "24hr", label: "Fast Turnaround" },
+    { icon: Award, value: "100%", label: "Quality Guarantee" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <header className="bg-background border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CompanyLogo className="w-10 h-10 object-contain" />
+            <CompanyLogo className="h-10 w-auto" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{companySettings?.company_name || 'JAY KAY DIGITAL PRESS'}</h1>
-              <p className="text-sm text-gray-500">Professional Printing Services</p>
+              <h1 className="text-xl font-bold text-foreground">JAY KAY DIGITAL PRESS</h1>
+              <p className="text-sm text-muted-foreground">Professional Printing Services</p>
             </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-gray-700 hover:text-primary transition-colors">Home</Link>
-            <Link to="/register" className="text-gray-700 hover:text-primary transition-colors">Services</Link>
-            <Link to="/track/JKDP-0001" className="text-gray-700 hover:text-primary transition-colors">Track Order</Link>
+            <a href="#" className="text-foreground hover:text-primary transition-colors">Home</a>
+            <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
+            <a href="#" className="text-foreground hover:text-primary transition-colors">Track Order</a>
           </nav>
-          
-          <div className="flex gap-3">
-            <Link to="/login">
-              <Button variant="ghost" className="text-gray-700">
-                <Search className="h-4 w-4 mr-2" />
-                Track Order
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="outline" className="border-gray-300 text-gray-700">
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button className="bg-primary hover:bg-primary/90">
-                Get Started
-              </Button>
-            </Link>
+
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/login")}>
+              Sign In
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => navigate("/auth")}
+            >
+              Get Started
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section 
-        className="relative min-h-screen flex items-center justify-center text-center text-white"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${heroImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="container mx-auto px-4 z-10">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-6xl md:text-8xl font-bold mb-8 animate-fade-in tracking-wide">
-              Professional <span className="text-primary">Printing</span><br />
-              Made Simple
-            </h2>
-            <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-90 leading-relaxed">
-              Transform your ideas into stunning printed materials with our premium quality services and fast turnaround times.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/register">
-                <Button size="lg" className="px-10 py-4 text-lg font-semibold bg-primary hover:bg-primary/90 animate-scale-in">
-                  Get Your Quote
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="px-10 py-4 text-lg font-semibold border-white text-white hover:bg-white hover:text-black animate-scale-in">
-                  <Upload className="mr-2 h-5 w-5" />
-                  Submit Project
-                </Button>
-              </Link>
-            </div>
+      <section className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 min-h-[70vh] flex items-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1541961017774-22349e4a1262?q=80&w=1920&auto=format&fit=crop')",
+            backgroundPosition: "center",
+            backgroundSize: "cover"
+          }}
+        />
+        <div className="relative container mx-auto px-4 text-center text-white">
+          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+            Professional <span className="text-red-500">Printing</span>
+            <br />
+            Made Simple
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 text-gray-200 max-w-4xl mx-auto leading-relaxed">
+            Transform your ideas into stunning printed materials with our premium quality services and fast turnaround times.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg"
+              onClick={() => navigate("/auth")}
+            >
+              Get Your Quote <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 text-lg"
+              onClick={() => navigate("/auth")}
+            >
+              Submit Project
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Job Tracking Section */}
-      <section className="py-20 bg-primary/5">
+      {/* Stats Section */}
+      <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-4xl font-bold mb-4">Track Your Order</h3>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Enter your tracking code to see the current status of your print job
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto">
-            <Card className="p-6">
-              <form onSubmit={handleTrackJob} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="trackingCode" className="text-base font-medium">
-                    Tracking Code
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="trackingCode"
-                      type="text"
-                      placeholder="Enter your tracking code (e.g., JKDP-0001)"
-                      value={trackingCode}
-                      onChange={(e) => setTrackingCode(e.target.value)}
-                      className="pl-10"
-                    />
-                    <Package2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {trackingError && (
-                    <p className="text-sm text-destructive">{trackingError}</p>
-                  )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                  <stat.icon className="h-8 w-8 text-red-600" />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={trackingLoading}
-                >
-                  {trackingLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Tracking...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4 mr-2" />
-                      Track Order
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Card>
+                <div className="text-3xl font-bold text-foreground mb-2">{stat.value}</div>
+                <div className="text-muted-foreground">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Our Services */}
-      <section className="py-20 bg-gray-50">
+      {/* Services Section */}
+      <section id="services" className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our Services</h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Professional printing services with premium finishing options to meet all your business and personal needs
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Our Services</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Professional printing services with premium finishing options to meet all your needs
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {keyServices.map((service, index) => (
-              <Card key={index} className="overflow-hidden hover:shadow-xl transition-all duration-300 hover-scale group">
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={service.image} 
-                    alt={service.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <Badge variant="secondary" className="bg-white/90 text-gray-900 mb-2">
-                      {service.service_type}
-                    </Badge>
+            {popularServices.map((service, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-red-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg">
+                      <service.icon className="h-6 w-6 text-red-600" />
+                    </div>
+                    {service.popular && (
+                      <Badge className="bg-red-600 text-white">Popular</Badge>
+                    )}
                   </div>
-                </div>
-                <CardHeader className="text-center pb-2">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                    <service.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{service.title}</CardTitle>
+                  <CardTitle className="text-xl font-bold text-foreground group-hover:text-red-600 transition-colors">
+                    {service.title}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="text-center pt-0">
-                  <CardDescription className="text-base mb-4 line-clamp-2">{service.description}</CardDescription>
-                  <div className="flex items-center justify-between">
-                    <p className="text-lg font-semibold text-primary">
-                      Starting at Le {service.base_price.toFixed(2)}
-                    </p>
-                    <Link to="/register">
-                      <Button size="sm" variant="outline" className="hover:bg-primary hover:text-white">
-                        Order Now
-                      </Button>
-                    </Link>
-                  </div>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4 leading-relaxed">
+                    {service.description}
+                  </p>
+                  <ul className="space-y-2 mb-6">
+                    {service.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center text-sm text-muted-foreground">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-3 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    variant="outline" 
+                    className="w-full group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-all"
+                    onClick={() => navigate("/login")}
+                  >
+                    Request Quote
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-          
-          {/* Dynamic Services from Database */}
-          {services.length > 0 && (
-            <>
-              <div className="text-center mt-16 mb-8">
-                <h4 className="text-2xl font-bold mb-4">More Services</h4>
-                <p className="text-muted-foreground">Additional services available in our system</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.filter(service => 
-                  !DEFAULT_SERVICES.some(ds => ds.name === service.name)
-                ).map((service) => (
-                  <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{service.name}</CardTitle>
-                        <Badge variant="secondary">{service.service_type}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-3">{service.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-primary">Le {service.base_price.toFixed(2)}</span>
-                        <Link to="/register">
-                          <Button size="sm" variant="outline">
-                            Order Now
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-20 bg-muted">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-4">Why Choose Us?</h3>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We deliver exceptional value through quality, speed, and service excellence
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {whyChooseUs.map((item, index) => (
-              <div key={index} className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <item.icon className="h-10 w-10 text-primary-foreground" />
-                </div>
-                <h4 className="text-xl font-semibold mb-2">{item.title}</h4>
-                <p className="text-muted-foreground">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Showcase Gallery */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-4">Showcase Gallery</h3>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              See our recent work and quality in action
-            </p>
-          </div>
-
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex">
-              {showcaseImages.map((image, index) => (
-                <div key={index} className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.333%] px-4">
-                  <div className="relative group cursor-pointer">
-                    <img 
-                      src={image} 
-                      alt={`Showcase ${index + 1}`}
-                      className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
-                      <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-center mt-8">
-            <Link to="/showcase">
-              <Button variant="outline" size="lg">
-                View Full Portfolio
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 bg-muted">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-4">How It Works</h3>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Simple steps to get your professional prints delivered
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {howItWorks.map((step, index) => (
-              <div key={index} className="text-center group">
-                <div className="relative mb-6">
-                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                    <step.icon className="h-10 w-10 text-primary-foreground" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-sm font-bold text-secondary-foreground">
-                    {step.step}
-                  </div>
-                </div>
-                <h4 className="text-xl font-semibold mb-2">{step.title}</h4>
-                <p className="text-muted-foreground">{step.description}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link to="/register">
-              <Button size="lg" className="px-8">
-                Get Started Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold mb-4">Get In Touch</h3>
-            <p className="text-xl text-muted-foreground">Ready to start your project? Contact us today!</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center">
-                <Phone className="h-12 w-12 text-primary mx-auto mb-4" />
-                <CardTitle className="text-xl">Call Us</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="font-semibold text-lg">{companySettings?.phone || 'Contact us'}</p>
-                <p className="text-muted-foreground">Mon - Fri, 8AM - 6PM</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center">
-                <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
-                <CardTitle className="text-xl">Email Us</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="font-semibold text-lg">{companySettings?.email || 'Contact us'}</p>
-                <p className="text-muted-foreground">Quick response guaranteed</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center">
-                <MapPin className="h-12 w-12 text-primary mx-auto mb-4" />
-                <CardTitle className="text-xl">Visit Us</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="font-semibold text-lg">{companySettings?.address || '123 Business Street'}</p>
-                <p className="text-muted-foreground">{companySettings?.country || 'Freetown, Sierra Leone'}</p>
-              </CardContent>
-            </Card>
+      {/* CTA Section */}
+      <section className="py-20 bg-red-600">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Ready to Start Your Project?
+          </h2>
+          <p className="text-xl text-red-100 mb-8 max-w-2xl mx-auto">
+            Get professional printing services with fast turnaround times and premium quality results.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              className="bg-white text-red-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+              onClick={() => navigate("/auth")}
+            >
+              Get Started Today
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-red-600 px-8 py-4 text-lg"
+              onClick={() => navigate("/auth")}
+            >
+              View Portfolio
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary text-primary-foreground py-12">
+      <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h4 className="text-2xl font-bold mb-4">{companySettings?.company_name || 'Loading...'}</h4>
-            <p className="text-primary-foreground/80 mb-6 text-lg">Your trusted printing partner since 2020</p>
-            <div className="flex justify-center gap-6 mb-6">
-              <Link to="/login" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
-                Services
-              </Link>
-              <Link to="/showcase" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
-                Portfolio
-              </Link>
-              <Link to="/login" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors">
-                Contact
-              </Link>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <CompanyLogo className="h-8 w-auto" />
+                <span className="font-bold text-lg">Jay Kay Digital Press</span>
+              </div>
+              <p className="text-gray-400">
+                Professional printing services with premium quality and fast turnaround times.
+              </p>
             </div>
-            <p className="text-sm text-primary-foreground/60">
-              © 2024 {companySettings?.company_name || 'Print Shop'}. All rights reserved.
-            </p>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Services</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Business Cards</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Flyers & Brochures</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Banners</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Large Format</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Company</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Track Order</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Returns</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 Jay Kay Digital Press. All rights reserved.</p>
           </div>
         </div>
       </footer>
