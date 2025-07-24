@@ -25,9 +25,9 @@ interface Service {
   description: string;
   service_type: string;
   requires_dimensions: boolean;
-  available_subtypes: any;
-  available_paper_types: any;
-  available_paper_weights: any;
+  available_subtypes: Array<{name: string; description: string}> | null;
+  available_paper_types: string[] | null;
+  available_paper_weights: string[] | null;
   base_price: number;
 }
 
@@ -132,7 +132,21 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       return;
     }
     
-    setServices(data || []);
+    // Transform the data to match our Service interface
+    const transformedServices: Service[] = (data || []).map(service => ({
+      ...service,
+      available_subtypes: Array.isArray(service.available_subtypes) 
+        ? service.available_subtypes as Array<{name: string; description: string}>
+        : null,
+      available_paper_types: Array.isArray(service.available_paper_types)
+        ? service.available_paper_types as string[]
+        : null,
+      available_paper_weights: Array.isArray(service.available_paper_weights)
+        ? service.available_paper_weights as string[]
+        : null
+    }));
+    
+    setServices(transformedServices);
   };
 
   const uploadFiles = async (jobId: string): Promise<string[]> => {
@@ -359,13 +373,18 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                 <SelectTrigger>
                   <SelectValue placeholder="Select service" />
                 </SelectTrigger>
-                <SelectContent>
-                  {services.map((service) => (
-                    <SelectItem key={service.id} value={service.id.toString()}>
-                      {service.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectContent>
+                    {services.map((service) => (
+                      <SelectItem key={service.id} value={service.id.toString()}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{service.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {service.service_type} - Base: Le{service.base_price}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
               </Select>
               {errors.service_id && (
                 <p className="text-sm text-red-500 mt-1">Service is required</p>
@@ -386,7 +405,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             </div>
           </div>
 
-          {selectedService?.available_subtypes && (
+          {selectedService?.available_subtypes && selectedService.available_subtypes.length > 0 && (
             <div>
               <Label htmlFor="service_subtype">Service Subtype</Label>
               <Select onValueChange={(value) => setValue("service_subtype", value)}>
@@ -394,9 +413,12 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                   <SelectValue placeholder="Select subtype" />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectedService.available_subtypes.map((subtype: string) => (
-                    <SelectItem key={subtype} value={subtype}>
-                      {subtype}
+                  {selectedService.available_subtypes.map((subtype, index) => (
+                    <SelectItem key={index} value={subtype.name}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{subtype.name}</span>
+                        <span className="text-sm text-muted-foreground">{subtype.description}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
