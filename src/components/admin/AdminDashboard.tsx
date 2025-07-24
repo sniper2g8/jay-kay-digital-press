@@ -33,7 +33,7 @@ import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { CompanySettings } from './CompanySettings';
 import { CustomerStatements } from '@/components/admin/CustomerStatements';
 import { DeliveryManagement } from './DeliveryManagement';
-import { ServiceManager } from '@/components/admin/ServiceManager';
+import { ServiceManagement } from '@/components/admin/ServiceManagement';
 import { PayrollManagement } from './PayrollManagement';
 import { NotificationLogs } from './NotificationLogs';
 
@@ -118,7 +118,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             {activeView === "jobs" && <JobManagement />}
             {activeView === "customers" && <CustomerManagement />}
             {activeView === "statements" && <CustomerStatements />}
-            {activeView === "services" && <ServiceManager />}
+            {activeView === "services" && <ServiceManagement />}
             {activeView === "delivery" && <DeliveryManagement />}
             {activeView === "invoices" && <InvoiceManagement />}
             {activeView === "staff" && <UserManagement />}
