@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Printer, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
+import { CompanyLogo } from '@/components/common/LogoHeader';
 
 export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +131,7 @@ export const AuthPage = () => {
             Back to Homepage
           </Link>
           <div className="flex items-center justify-center mb-4">
-            <Printer className="w-8 h-8 text-primary mr-2" />
+            <CompanyLogo className="w-8 h-8 mr-2" />
             <h1 className="text-2xl font-bold">
               {settings?.company_name || 'Jay Kay Digital Press'}
             </h1>

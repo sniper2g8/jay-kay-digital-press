@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Printer, Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { CompanyLogo } from "@/components/common/LogoHeader";
 
 export const RegisterPage = () => {
   const [email, setEmail] = useState("");
@@ -75,8 +76,8 @@ export const RegisterPage = () => {
             Back to Homepage
           </Link>
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-3">
-              <Printer className="w-6 h-6 text-primary-foreground" />
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+              <CompanyLogo className="w-6 h-6" />
             </div>
             <div className="text-left">
               <h1 className="text-2xl font-bold text-foreground">

@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Printer, Eye, EyeOff, Lock } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { CompanyLogo } from "@/components/common/LogoHeader";
 
 export const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -92,8 +93,8 @@ export const ResetPassword = () => {
             Back to Login
           </Link>
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-3">
-              <Printer className="w-6 h-6 text-primary-foreground" />
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+              <CompanyLogo className="w-6 h-6" />
             </div>
             <div className="text-left">
               <h1 className="text-2xl font-bold text-foreground">
