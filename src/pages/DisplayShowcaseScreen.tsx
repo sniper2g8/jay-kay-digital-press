@@ -163,8 +163,8 @@ export const DisplayShowcaseScreen = () => {
           {/* Services Section */}
           <div>
             <h2 className="text-4xl font-bold mb-8 text-center">Our Services</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {services.map((service) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {services.slice(0, 6).map((service) => (
                 <Card key={service.id} className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/15 transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-4">

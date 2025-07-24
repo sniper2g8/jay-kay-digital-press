@@ -192,8 +192,8 @@ export const Homepage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularServices.map((service, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {popularServices.slice(0, 6).map((service, index) => (
               <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-red-200">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-3">
