@@ -49,16 +49,6 @@ export const generateInvoicePDF = async (
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
-  // Helper function to convert hex to rgb
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16) / 255,
-      g: parseInt(result[2], 16) / 255,
-      b: parseInt(result[3], 16) / 255
-    } : { r: 0, g: 0, b: 0 };
-  };
-
   // Helper function to format currency
   const formatCurrency = (amount: number) => {
     return `${companySettings.currency_symbol} ${amount.toLocaleString('en-US', { 
@@ -67,55 +57,39 @@ export const generateInvoicePDF = async (
     })}`;
   };
 
-  const primaryColor = hexToRgb(companySettings.primary_color || '#000000');
   const margin = 50;
   let yPosition = height - margin;
 
-  // Header background
-  page.drawRectangle({
-    x: 0,
-    y: height - 80,
-    width: width,
-    height: 80,
-    color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
-  });
-
-  // Company name
+  // Header section - matching HTML layout
+  // Company name and logo area (left side)
   page.drawText(companySettings.company_name, {
     x: margin,
-    y: height - 40,
-    size: 24,
-    font: boldFont,
-    color: rgb(1, 1, 1),
-  });
-
-  // Invoice title
-  page.drawText('INVOICE', {
-    x: width - margin - 100,
-    y: height - 40,
-    size: 28,
-    font: boldFont,
-    color: rgb(1, 1, 1),
-  });
-
-  yPosition = height - 100;
-
-  // Company details
-  page.drawText(companySettings.address || '', {
-    x: margin,
     y: yPosition,
-    size: 10,
-    font: font,
-    color: rgb(0.3, 0.3, 0.3),
+    size: 20,
+    font: boldFont,
+    color: rgb(0, 0, 0),
   });
 
-  yPosition -= 15;
+  yPosition -= 30;
+
+  // Company details below name
+  if (companySettings.address) {
+    page.drawText(companySettings.address, {
+      x: margin,
+      y: yPosition,
+      size: 10,
+      font: font,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+    yPosition -= 15;
+  }
+
   page.drawText(`Phone: ${companySettings.phone || ''}`, {
     x: margin,
     y: yPosition,
     size: 10,
     font: font,
-    color: rgb(0.3, 0.3, 0.3),
+    color: rgb(0.4, 0.4, 0.4),
   });
 
   yPosition -= 15;
@@ -124,12 +98,21 @@ export const generateInvoicePDF = async (
     y: yPosition,
     size: 10,
     font: font,
-    color: rgb(0.3, 0.3, 0.3),
+    color: rgb(0.4, 0.4, 0.4),
   });
 
-  // Invoice details (right side)
-  const rightX = width - margin - 150;
-  let rightY = height - 100;
+  // INVOICE title (right side) - matching HTML position
+  page.drawText('INVOICE', {
+    x: width - margin - 120,
+    y: height - 50,
+    size: 28,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  });
+
+  // Invoice details (right side) - matching HTML layout
+  let rightY = height - 85;
+  const rightX = width - margin - 180;
 
   page.drawText(`Invoice #: ${invoiceData.invoice_number}`, {
     x: rightX,
@@ -146,57 +129,33 @@ export const generateInvoicePDF = async (
     font: font,
   });
 
-  if (invoiceData.due_date) {
-    rightY -= 15;
-    page.drawText(`Due Date: ${new Date(invoiceData.due_date).toLocaleDateString()}`, {
-      x: rightX,
-      y: rightY,
-      size: 10,
-      font: font,
-    });
-  }
+  // Reset yPosition for two-column layout
+  yPosition = height - 180;
 
-  rightY -= 15;
-  page.drawText(`Status: ${invoiceData.status.toUpperCase()}`, {
-    x: rightX,
-    y: rightY,
-    size: 10,
+  // Two-column layout: Bill To (left) and Invoice Details (right)
+  // Bill To section (left column) - matching HTML
+  page.drawText('Bill To:', {
+    x: margin,
+    y: yPosition,
+    size: 16,
     font: boldFont,
   });
 
-  // Horizontal line
-  yPosition = Math.min(yPosition - 20, rightY - 20);
-  page.drawLine({
-    start: { x: margin, y: yPosition },
-    end: { x: width - margin, y: yPosition },
-    thickness: 1,
-    color: rgb(0.8, 0.8, 0.8),
-  });
-
-  yPosition -= 30;
-
-  // Bill To section
-  page.drawText('Bill To:', {
+  yPosition -= 25;
+  page.drawText(invoiceData.customers.name, {
     x: margin,
     y: yPosition,
     size: 12,
     font: boldFont,
   });
 
-  yPosition -= 20;
-  page.drawText(invoiceData.customers.name, {
-    x: margin,
-    y: yPosition,
-    size: 11,
-    font: boldFont,
-  });
-
-  yPosition -= 15;
-  page.drawText(`Customer ID: ${invoiceData.customers.customer_display_id}`, {
+  yPosition -= 18;
+  page.drawText(invoiceData.customers.customer_display_id, {
     x: margin,
     y: yPosition,
     size: 10,
     font: font,
+    color: rgb(0.4, 0.4, 0.4),
   });
 
   yPosition -= 15;
@@ -205,6 +164,7 @@ export const generateInvoicePDF = async (
     y: yPosition,
     size: 10,
     font: font,
+    color: rgb(0.4, 0.4, 0.4),
   });
 
   if (invoiceData.customers.phone) {
@@ -214,6 +174,7 @@ export const generateInvoicePDF = async (
       y: yPosition,
       size: 10,
       font: font,
+      color: rgb(0.4, 0.4, 0.4),
     });
   }
 
@@ -224,180 +185,273 @@ export const generateInvoicePDF = async (
       y: yPosition,
       size: 10,
       font: font,
+      color: rgb(0.4, 0.4, 0.4),
     });
   }
 
-  yPosition -= 40;
+  // Invoice Details section (right column) - matching HTML
+  let detailsY = height - 205;
+  const detailsX = width / 2 + 20;
 
-  // Items table header
+  page.drawText('Invoice Details:', {
+    x: detailsX,
+    y: detailsY,
+    size: 16,
+    font: boldFont,
+  });
+
+  detailsY -= 25;
+  page.drawText('Status:', {
+    x: detailsX,
+    y: detailsY,
+    size: 10,
+    font: font,
+    color: rgb(0.4, 0.4, 0.4),
+  });
+
+  page.drawText(invoiceData.status.charAt(0).toUpperCase() + invoiceData.status.slice(1), {
+    x: detailsX + 80,
+    y: detailsY,
+    size: 10,
+    font: boldFont,
+  });
+
+  detailsY -= 20;
+  page.drawText('Service:', {
+    x: detailsX,
+    y: detailsY,
+    size: 10,
+    font: font,
+    color: rgb(0.4, 0.4, 0.4),
+  });
+
+  page.drawText('Print Services', {
+    x: detailsX + 80,
+    y: detailsY,
+    size: 10,
+    font: boldFont,
+  });
+
+  // Move to items section
+  yPosition = Math.min(yPosition - 40, detailsY - 40);
+
+  // Items section header - matching HTML
+  page.drawText('Items:', {
+    x: margin,
+    y: yPosition,
+    size: 16,
+    font: boldFont,
+  });
+
+  yPosition -= 30;
+
+  // Items table - exactly matching HTML table styling
   const tableY = yPosition;
-  const colWidths = [250, 80, 100, 100];
+  const colWidths = [200, 80, 120, 120];
   const colX = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-  // Table header background
+  // Outer table border
   page.drawRectangle({
     x: margin,
-    y: tableY - 5,
-    width: colWidths.reduce((a, b) => a + b, 0),
-    height: 25,
-    color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+    y: tableY - 25,
+    width: tableWidth,
+    height: 30 + (invoiceData.invoice_items.length * 25),
+    borderColor: rgb(0.85, 0.85, 0.85),
+    borderWidth: 1,
   });
 
-  // Table headers
+  // Table header with muted background - matching HTML bg-muted/50
+  page.drawRectangle({
+    x: margin,
+    y: tableY - 25,
+    width: tableWidth,
+    height: 30,
+    color: rgb(0.96, 0.96, 0.96),
+  });
+
+  // Table headers - matching HTML
   page.drawText('Description', {
-    x: colX[0] + 5,
-    y: tableY + 5,
-    size: 10,
+    x: colX[0] + 15,
+    y: tableY - 8,
+    size: 11,
     font: boldFont,
-    color: rgb(1, 1, 1),
   });
 
-  page.drawText('Qty', {
-    x: colX[1] + 5,
-    y: tableY + 5,
-    size: 10,
+  page.drawText('Quantity', {
+    x: colX[1] + 15,
+    y: tableY - 8,
+    size: 11,
     font: boldFont,
-    color: rgb(1, 1, 1),
   });
 
   page.drawText('Unit Price', {
-    x: colX[2] + 5,
-    y: tableY + 5,
-    size: 10,
+    x: colX[2] + 25,
+    y: tableY - 8,
+    size: 11,
     font: boldFont,
-    color: rgb(1, 1, 1),
   });
 
   page.drawText('Total', {
-    x: colX[3] + 5,
-    y: tableY + 5,
-    size: 10,
+    x: colX[3] + 40,
+    y: tableY - 8,
+    size: 11,
     font: boldFont,
-    color: rgb(1, 1, 1),
   });
 
-  let itemY = tableY - 25;
+  let itemY = tableY - 50;
 
-  // Table rows
+  // Table rows - matching HTML styling
   invoiceData.invoice_items.forEach((item, index) => {
-    // Alternating row colors
-    if (index % 2 === 0) {
-      page.drawRectangle({
-        x: margin,
-        y: itemY - 5,
-        width: colWidths.reduce((a, b) => a + b, 0),
-        height: 20,
-        color: rgb(0.98, 0.98, 0.98),
+    // Top border for each row (matching HTML border-t border-muted)
+    page.drawLine({
+      start: { x: margin, y: itemY + 20 },
+      end: { x: margin + tableWidth, y: itemY + 20 },
+      thickness: 0.5,
+      color: rgb(0.85, 0.85, 0.85),
+    });
+
+    // Column separators
+    for (let i = 1; i < colX.length; i++) {
+      page.drawLine({
+        start: { x: colX[i], y: tableY - 25 },
+        end: { x: colX[i], y: itemY + 20 },
+        thickness: 0.5,
+        color: rgb(0.85, 0.85, 0.85),
       });
     }
 
     page.drawText(item.description, {
-      x: colX[0] + 5,
+      x: colX[0] + 15,
       y: itemY,
-      size: 9,
+      size: 10,
       font: font,
     });
 
     page.drawText(item.quantity.toString(), {
-      x: colX[1] + 20,
+      x: colX[1] + 35,
       y: itemY,
-      size: 9,
+      size: 10,
       font: font,
     });
 
     page.drawText(formatCurrency(item.unit_price), {
-      x: colX[2] + 5,
+      x: colX[2] + 35,
       y: itemY,
-      size: 9,
+      size: 10,
       font: font,
     });
 
     page.drawText(formatCurrency(item.total_price), {
-      x: colX[3] + 5,
+      x: colX[3] + 45,
       y: itemY,
-      size: 9,
-      font: font,
+      size: 10,
+      font: boldFont,
     });
 
-    itemY -= 20;
+    itemY -= 25;
   });
 
-  // Totals section
-  const totalX = width - margin - 150;
-  let totalY = itemY - 20;
+  // Totals section - right aligned exactly like HTML
+  const totalBoxWidth = 220;
+  const totalX = width - margin - totalBoxWidth;
+  let totalY = itemY - 40;
 
-  page.drawText(`Subtotal: ${formatCurrency(invoiceData.subtotal)}`, {
+  // Subtotal
+  page.drawText('Subtotal:', {
     x: totalX,
     y: totalY,
-    size: 10,
+    size: 11,
     font: font,
+    color: rgb(0.4, 0.4, 0.4),
   });
 
-  if (invoiceData.discount_amount > 0) {
-    totalY -= 15;
-    page.drawText(`Discount: ${formatCurrency(invoiceData.discount_amount)}`, {
-      x: totalX,
-      y: totalY,
-      size: 10,
-      font: font,
-    });
-  }
+  page.drawText(formatCurrency(invoiceData.subtotal), {
+    x: totalX + 120,
+    y: totalY,
+    size: 11,
+    font: boldFont,
+  });
 
+  // Tax (if applicable)
   if (invoiceData.tax_amount > 0) {
-    totalY -= 15;
-    page.drawText(`Tax: ${formatCurrency(invoiceData.tax_amount)}`, {
+    totalY -= 20;
+    page.drawText('Tax:', {
       x: totalX,
       y: totalY,
-      size: 10,
+      size: 11,
       font: font,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+
+    page.drawText(formatCurrency(invoiceData.tax_amount), {
+      x: totalX + 120,
+      y: totalY,
+      size: 11,
+      font: boldFont,
     });
   }
 
-  // Total line
-  totalY -= 10;
+  // Total line separator - matching HTML border-t border-muted
+  totalY -= 15;
   page.drawLine({
-    start: { x: totalX - 10, y: totalY },
+    start: { x: totalX, y: totalY },
     end: { x: width - margin, y: totalY },
     thickness: 1,
-    color: rgb(0.5, 0.5, 0.5),
+    color: rgb(0.85, 0.85, 0.85),
   });
 
-  totalY -= 20;
-  page.drawText(`Total: ${formatCurrency(invoiceData.total_amount)}`, {
+  // Total amount - matching HTML text-lg font-bold
+  totalY -= 25;
+  page.drawText('Total:', {
     x: totalX,
+    y: totalY,
+    size: 14,
+    font: boldFont,
+  });
+
+  page.drawText(formatCurrency(invoiceData.total_amount), {
+    x: totalX + 120,
+    y: totalY,
+    size: 14,
+    font: boldFont,
+  });
+
+  // Payment Terms section - matching HTML layout
+  totalY -= 80;
+  page.drawText('Payment Terms:', {
+    x: margin,
     y: totalY,
     size: 12,
     font: boldFont,
   });
 
-  if (invoiceData.paid_amount > 0) {
-    totalY -= 15;
-    page.drawText(`Paid: ${formatCurrency(invoiceData.paid_amount)}`, {
-      x: totalX,
-      y: totalY,
-      size: 10,
-      font: font,
-    });
-  }
+  totalY -= 20;
+  page.drawText('Payment is due within 30 days of invoice date.', {
+    x: margin,
+    y: totalY,
+    size: 10,
+    font: font,
+    color: rgb(0.4, 0.4, 0.4),
+  });
 
-  if (invoiceData.balance_due && invoiceData.balance_due > 0) {
-    totalY -= 15;
-    page.drawText(`Balance Due: ${formatCurrency(invoiceData.balance_due)}`, {
-      x: totalX,
-      y: totalY,
-      size: 12,
-      font: boldFont,
-      color: rgb(0.8, 0, 0),
-    });
-  }
+  totalY -= 20;
+  page.drawText(`Thank you for your business! For questions about this invoice, please contact us at ${companySettings.email || ''}.`, {
+    x: margin,
+    y: totalY,
+    size: 10,
+    font: font,
+    color: rgb(0.4, 0.4, 0.4),
+    maxWidth: width - 2 * margin,
+  });
 
-  // Notes section
+  // Notes section (if exists)
   if (invoiceData.notes) {
     totalY -= 40;
     page.drawText('Notes:', {
       x: margin,
       y: totalY,
-      size: 10,
+      size: 12,
       font: boldFont,
     });
 
@@ -405,24 +459,16 @@ export const generateInvoicePDF = async (
     page.drawText(invoiceData.notes, {
       x: margin,
       y: totalY,
-      size: 9,
+      size: 10,
       font: font,
       maxWidth: width - 2 * margin,
     });
   }
 
-  // Footer
-  page.drawText('Thank you for your business!', {
+  // Footer - matching HTML
+  page.drawText(`Generated on ${new Date().toLocaleDateString()} by ${companySettings.company_name}`, {
     x: margin,
-    y: 60,
-    size: 8,
-    font: font,
-    color: rgb(0.5, 0.5, 0.5),
-  });
-
-  page.drawText(`Generated on ${new Date().toLocaleDateString()}`, {
-    x: width - margin - 120,
-    y: 60,
+    y: 40,
     size: 8,
     font: font,
     color: rgb(0.5, 0.5, 0.5),
