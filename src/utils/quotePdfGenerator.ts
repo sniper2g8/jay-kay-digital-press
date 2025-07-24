@@ -1,5 +1,4 @@
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 interface QuoteData {
   id: string;
@@ -42,292 +41,419 @@ export const generateQuotePDF = async (
   quoteData: QuoteData,
   companySettings: CompanySettings
 ): Promise<Blob> => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-  const margin = 20;
-  let yPosition = margin;
-
-  // Helper function to add text with auto line breaks
-  const addText = (text: string, x: number, y: number, maxWidth?: number, fontSize: number = 10) => {
-    doc.setFontSize(fontSize);
-    if (maxWidth) {
-      const lines = doc.splitTextToSize(text, maxWidth);
-      doc.text(lines, x, y);
-      return y + (lines.length * fontSize * 0.4);
-    } else {
-      doc.text(text, x, y);
-      return y + (fontSize * 0.4);
-    }
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([595, 842]); // A4 size
+  const { width, height } = page.getSize();
+  
+  // Load fonts
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  // Helper function to convert hex to rgb
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255
+    } : { r: 0, g: 0, b: 0 };
   };
 
   // Helper function to format currency
   const formatCurrency = (amount: number) => {
-    return `${companySettings.currency_symbol} ${amount.toLocaleString()}`;
+    return `${companySettings.currency_symbol} ${amount.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
   };
 
-  // Helper function to convert hex to RGB
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
-  };
+  const primaryColor = hexToRgb(companySettings.primary_color || '#000000');
+  const margin = 50;
+  let yPosition = height - margin;
 
-  // Header with professional design
-  // Add colored header background
-  const primaryColor = companySettings.primary_color || '#000000';
-  const rgb = hexToRgb(primaryColor);
-  doc.setFillColor(rgb.r, rgb.g, rgb.b);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  
-  // Add company logo
-  if (companySettings.logo_url) {
-    try {
-      // Create a promise to load the image
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      // Load image as base64 for PDF
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 60;
-      canvas.height = 30;
-      
-      img.onload = () => {
-        ctx?.drawImage(img, 0, 0, 60, 30);
-        const logoDataUrl = canvas.toDataURL('image/png');
-        doc.addImage(logoDataUrl, 'PNG', margin, 8, 60, 30);
-      };
-      img.src = companySettings.logo_url;
-      
-      // Company name next to logo
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.text(companySettings.company_name, margin + 70, 25);
-      yPosition = 50;
-    } catch (error) {
-      console.warn('Could not load logo:', error);
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.setFont("helvetica", "bold");
-      doc.text(companySettings.company_name, margin, 25);
-      yPosition = 50;
-    }
-  } else {
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text(companySettings.company_name, margin, 25);
-    yPosition = 50;
-  }
-  
-  // Reset text color for body content
-  doc.setTextColor(0, 0, 0);
+  // Header background
+  page.drawRectangle({
+    x: 0,
+    y: height - 80,
+    width: width,
+    height: 80,
+    color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+  });
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  if (companySettings.address) {
-    yPosition = addText(companySettings.address, margin, yPosition, pageWidth - 2 * margin);
-  }
-  if (companySettings.phone) {
-    yPosition = addText(`Phone: ${companySettings.phone}`, margin, yPosition) + 5;
-  }
-  if (companySettings.email) {
-    yPosition = addText(`Email: ${companySettings.email}`, margin, yPosition) + 10;
-  }
+  // Company name
+  page.drawText(companySettings.company_name, {
+    x: margin,
+    y: height - 40,
+    size: 24,
+    font: boldFont,
+    color: rgb(1, 1, 1),
+  });
 
-  // Quote Title with styling
-  const titleBg = hexToRgb(companySettings.primary_color || '#000000');
-  doc.setFillColor(titleBg.r, titleBg.g, titleBg.b, 0.1);
-  doc.rect(pageWidth - margin - 90, yPosition - 5, 85, 20, 'F');
-  
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(titleBg.r, titleBg.g, titleBg.b);
-  doc.text("QUOTATION", pageWidth - margin - 80, yPosition + 8);
-  doc.setTextColor(0, 0, 0);
+  // Quote title
+  page.drawText('QUOTATION', {
+    x: width - margin - 120,
+    y: height - 40,
+    size: 28,
+    font: boldFont,
+    color: rgb(1, 1, 1),
+  });
 
-  // Quote Details (Top Right)
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  const rightColumnX = pageWidth - margin - 80;
-  let rightY = margin + 30;
+  yPosition = height - 100;
 
-  rightY = addText(`Quote #: QTE-${quoteData.id.slice(0, 8)}`, rightColumnX, rightY) + 5;
-  rightY = addText(`Date: ${new Date(quoteData.created_at).toLocaleDateString()}`, rightColumnX, rightY) + 5;
+  // Company details
+  page.drawText(companySettings.address || '', {
+    x: margin,
+    y: yPosition,
+    size: 10,
+    font: font,
+    color: rgb(0.3, 0.3, 0.3),
+  });
+
+  yPosition -= 15;
+  page.drawText(`Phone: ${companySettings.phone || ''}`, {
+    x: margin,
+    y: yPosition,
+    size: 10,
+    font: font,
+    color: rgb(0.3, 0.3, 0.3),
+  });
+
+  yPosition -= 15;
+  page.drawText(`Email: ${companySettings.email || ''}`, {
+    x: margin,
+    y: yPosition,
+    size: 10,
+    font: font,
+    color: rgb(0.3, 0.3, 0.3),
+  });
+
+  // Quote details (right side)
+  const rightX = width - margin - 150;
+  let rightY = height - 100;
+
+  page.drawText(`Quote #: QTE-${quoteData.id.slice(0, 8)}`, {
+    x: rightX,
+    y: rightY,
+    size: 10,
+    font: font,
+  });
+
+  rightY -= 15;
+  page.drawText(`Date: ${new Date(quoteData.created_at).toLocaleDateString()}`, {
+    x: rightX,
+    y: rightY,
+    size: 10,
+    font: font,
+  });
+
   if (quoteData.valid_until) {
-    rightY = addText(`Valid Until: ${new Date(quoteData.valid_until).toLocaleDateString()}`, rightColumnX, rightY) + 5;
+    rightY -= 15;
+    page.drawText(`Valid Until: ${new Date(quoteData.valid_until).toLocaleDateString()}`, {
+      x: rightX,
+      y: rightY,
+      size: 10,
+      font: font,
+    });
   }
-  rightY = addText(`Status: ${quoteData.status.toUpperCase()}`, rightColumnX, rightY) + 10;
 
-  // QR Code for quote tracking
-  try {
-    const qrData = `${window.location.origin}/admin/quotes/${quoteData.id}`;
-    const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 60, margin: 1 });
-    
-    // Add QR code to top right corner
-    doc.addImage(qrCodeDataURL, 'PNG', pageWidth - margin - 60, margin, 50, 50);
-    
-    // Add QR code label
-    doc.setFontSize(8);
-    doc.text('Scan to view', pageWidth - margin - 60, margin + 60);
-  } catch (error) {
-    console.warn('Could not generate QR code:', error);
-  }
+  rightY -= 15;
+  page.drawText(`Status: ${quoteData.status.toUpperCase()}`, {
+    x: rightX,
+    y: rightY,
+    size: 10,
+    font: boldFont,
+  });
 
   // Horizontal line
-  yPosition = Math.max(yPosition, rightY) + 10;
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 15;
+  yPosition = Math.min(yPosition - 20, rightY - 20);
+  page.drawLine({
+    start: { x: margin, y: yPosition },
+    end: { x: width - margin, y: yPosition },
+    thickness: 1,
+    color: rgb(0.8, 0.8, 0.8),
+  });
 
-  // Quote For Section
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Quote For:", margin, yPosition);
-  yPosition += 10;
+  yPosition -= 30;
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  yPosition = addText(quoteData.customers.name, margin, yPosition) + 5;
-  yPosition = addText(`Customer ID: ${quoteData.customers.customer_display_id}`, margin, yPosition) + 5;
-  yPosition = addText(quoteData.customers.email, margin, yPosition) + 5;
+  // Quote For section
+  page.drawText('Quote For:', {
+    x: margin,
+    y: yPosition,
+    size: 12,
+    font: boldFont,
+  });
+
+  yPosition -= 20;
+  page.drawText(quoteData.customers.name, {
+    x: margin,
+    y: yPosition,
+    size: 11,
+    font: boldFont,
+  });
+
+  yPosition -= 15;
+  page.drawText(`Customer ID: ${quoteData.customers.customer_display_id}`, {
+    x: margin,
+    y: yPosition,
+    size: 10,
+    font: font,
+  });
+
+  yPosition -= 15;
+  page.drawText(quoteData.customers.email, {
+    x: margin,
+    y: yPosition,
+    size: 10,
+    font: font,
+  });
+
   if (quoteData.customers.phone) {
-    yPosition = addText(quoteData.customers.phone, margin, yPosition) + 5;
+    yPosition -= 15;
+    page.drawText(quoteData.customers.phone, {
+      x: margin,
+      y: yPosition,
+      size: 10,
+      font: font,
+    });
   }
+
   if (quoteData.customers.address) {
-    yPosition = addText(quoteData.customers.address, margin, yPosition, pageWidth / 2) + 10;
+    yPosition -= 15;
+    page.drawText(quoteData.customers.address, {
+      x: margin,
+      y: yPosition,
+      size: 10,
+      font: font,
+    });
   }
 
-  yPosition += 10;
+  yPosition -= 30;
 
-  // Service Information
+  // Project title
+  page.drawText(`Project: ${quoteData.title}`, {
+    x: margin,
+    y: yPosition,
+    size: 14,
+    font: boldFont,
+    color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+  });
+
+  yPosition -= 30;
+
+  // Service information
   if (quoteData.services) {
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Service Details:", margin, yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    yPosition = addText(`Service: ${quoteData.services.name}`, margin, yPosition) + 5;
-    if (quoteData.services.description) {
-      yPosition = addText(`Description: ${quoteData.services.description}`, margin, yPosition, pageWidth - 2 * margin) + 10;
-    }
-    yPosition += 10;
-  }
-
-  // Items Table Header (if quote items exist)
-  if (quoteData.quote_items && quoteData.quote_items.length > 0) {
-    const tableStartY = yPosition;
-    const colWidths = {
-      description: 80,
-      quantity: 25,
-      unitPrice: 30,
-      total: 30
-    };
-    
-    const tableX = margin;
-    
-    // Table headers with professional styling
-    const headerBg = hexToRgb(companySettings.primary_color || '#000000');
-    doc.setFillColor(headerBg.r, headerBg.g, headerBg.b);
-    doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, 12, 'F');
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("Description", tableX + 2, yPosition + 8);
-    doc.text("Qty", tableX + colWidths.description + 2, yPosition + 8);
-    doc.text("Unit Price", tableX + colWidths.description + colWidths.quantity + 2, yPosition + 8);
-    doc.text("Total", tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 8);
-    doc.setTextColor(0, 0, 0);
-    
-    yPosition += 12;
-
-    // Table rows with alternating colors
-    doc.setFont("helvetica", "normal");
-    quoteData.quote_items.forEach((item, index) => {
-      const rowHeight = 10;
-      
-      // Alternating row colors
-      if (index % 2 === 0) {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, rowHeight, 'F');
-      }
-      
-      // Row border
-      doc.setDrawColor(220, 220, 220);
-      doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, rowHeight);
-      
-      // Add text
-      doc.setFontSize(9);
-      doc.text(item.description, tableX + 2, yPosition + 6);
-      doc.text(item.quantity.toString(), tableX + colWidths.description + 8, yPosition + 6, { align: 'center' });
-      doc.text(formatCurrency(item.unit_price), tableX + colWidths.description + colWidths.quantity + 2, yPosition + 6);
-      doc.text(formatCurrency(item.total_price), tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 6);
-      
-      yPosition += rowHeight;
+    page.drawText('Service Details:', {
+      x: margin,
+      y: yPosition,
+      size: 12,
+      font: boldFont,
     });
 
-    yPosition += 10;
+    yPosition -= 20;
+    page.drawText(`Service: ${quoteData.services.name}`, {
+      x: margin,
+      y: yPosition,
+      size: 10,
+      font: font,
+    });
+
+    if (quoteData.services.description) {
+      yPosition -= 15;
+      page.drawText(`Description: ${quoteData.services.description}`, {
+        x: margin,
+        y: yPosition,
+        size: 10,
+        font: font,
+        maxWidth: width - 2 * margin,
+      });
+    }
+
+    yPosition -= 30;
   }
 
-  // Quote Total
+  // Items table (if items exist)
+  if (quoteData.quote_items && quoteData.quote_items.length > 0) {
+    const tableY = yPosition;
+    const colWidths = [250, 80, 100, 100];
+    const colX = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
+
+    // Table header background
+    page.drawRectangle({
+      x: margin,
+      y: tableY - 5,
+      width: colWidths.reduce((a, b) => a + b, 0),
+      height: 25,
+      color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+    });
+
+    // Table headers
+    page.drawText('Description', {
+      x: colX[0] + 5,
+      y: tableY + 5,
+      size: 10,
+      font: boldFont,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText('Qty', {
+      x: colX[1] + 5,
+      y: tableY + 5,
+      size: 10,
+      font: boldFont,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText('Unit Price', {
+      x: colX[2] + 5,
+      y: tableY + 5,
+      size: 10,
+      font: boldFont,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText('Total', {
+      x: colX[3] + 5,
+      y: tableY + 5,
+      size: 10,
+      font: boldFont,
+      color: rgb(1, 1, 1),
+    });
+
+    let itemY = tableY - 25;
+
+    // Table rows
+    quoteData.quote_items.forEach((item, index) => {
+      // Alternating row colors
+      if (index % 2 === 0) {
+        page.drawRectangle({
+          x: margin,
+          y: itemY - 5,
+          width: colWidths.reduce((a, b) => a + b, 0),
+          height: 20,
+          color: rgb(0.98, 0.98, 0.98),
+        });
+      }
+
+      page.drawText(item.description, {
+        x: colX[0] + 5,
+        y: itemY,
+        size: 9,
+        font: font,
+      });
+
+      page.drawText(item.quantity.toString(), {
+        x: colX[1] + 20,
+        y: itemY,
+        size: 9,
+        font: font,
+      });
+
+      page.drawText(formatCurrency(item.unit_price), {
+        x: colX[2] + 5,
+        y: itemY,
+        size: 9,
+        font: font,
+      });
+
+      page.drawText(formatCurrency(item.total_price), {
+        x: colX[3] + 5,
+        y: itemY,
+        size: 9,
+        font: font,
+      });
+
+      itemY -= 20;
+    });
+
+    yPosition = itemY - 20;
+  }
+
+  // Quote total
   if (quoteData.quoted_price) {
-    const totalsX = pageWidth - margin - 80;
-    
+    const totalX = width - margin - 150;
+    yPosition -= 20;
+
     // Total line
-    doc.setLineWidth(0.5);
-    doc.line(totalsX - 5, yPosition, pageWidth - margin, yPosition);
-    yPosition += 8;
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    yPosition = addText(`Total Quote: ${formatCurrency(quoteData.quoted_price)}`, totalsX, yPosition) + 15;
+    page.drawLine({
+      start: { x: totalX - 10, y: yPosition },
+      end: { x: width - margin, y: yPosition },
+      thickness: 2,
+      color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+    });
+
+    yPosition -= 25;
+    page.drawText(`Total Quote: ${formatCurrency(quoteData.quoted_price)}`, {
+      x: totalX,
+      y: yPosition,
+      size: 16,
+      font: boldFont,
+      color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
+    });
   }
 
   // Notes section
   if (quoteData.notes) {
-    yPosition += 10;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    yPosition = addText("Notes:", margin, yPosition) + 5;
-    
-    doc.setFont("helvetica", "normal");
-    yPosition = addText(quoteData.notes, margin, yPosition, pageWidth - 2 * margin) + 10;
+    yPosition -= 40;
+    page.drawText('Notes:', {
+      x: margin,
+      y: yPosition,
+      size: 12,
+      font: boldFont,
+    });
+
+    yPosition -= 20;
+    page.drawText(quoteData.notes, {
+      x: margin,
+      y: yPosition,
+      size: 10,
+      font: font,
+      maxWidth: width - 2 * margin,
+    });
   }
 
-  // Terms and Conditions
-  yPosition += 10;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  yPosition = addText("Terms & Conditions:", margin, yPosition) + 5;
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  // Terms and conditions
+  yPosition -= 60;
+  page.drawText('Terms & Conditions:', {
+    x: margin,
+    y: yPosition,
+    size: 12,
+    font: boldFont,
+  });
+
   const terms = [
-    "• This quote is valid for 30 days from the date of issue",
-    "• Prices are subject to change without notice",
-    "• Payment terms: 50% deposit, balance on completion",
-    "• Additional charges may apply for changes to specifications"
+    '• This quote is valid for 30 days from the date of issue',
+    '• Prices are subject to change without notice',
+    '• Payment terms: 50% deposit, balance on completion',
+    '• Additional charges may apply for changes to specifications'
   ];
-  
+
   terms.forEach(term => {
-    yPosition = addText(term, margin, yPosition, pageWidth - 2 * margin) + 3;
+    yPosition -= 15;
+    page.drawText(term, {
+      x: margin,
+      y: yPosition,
+      size: 9,
+      font: font,
+    });
   });
 
   // Footer
-  yPosition = pageHeight - 40;
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text("Thank you for considering our services!", margin, yPosition);
-  doc.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, yPosition);
+  page.drawText('Thank you for considering our services!', {
+    x: margin,
+    y: 60,
+    size: 8,
+    font: font,
+    color: rgb(0.5, 0.5, 0.5),
+  });
 
-  // Return PDF as blob
-  return doc.output('blob');
+  page.drawText(`Generated on ${new Date().toLocaleDateString()}`, {
+    x: width - margin - 120,
+    y: 60,
+    size: 8,
+    font: font,
+    color: rgb(0.5, 0.5, 0.5),
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  return new Blob([pdfBytes], { type: 'application/pdf' });
 };
