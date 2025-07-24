@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
+import { Upload, X, File, Image } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -59,6 +60,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { toast } = useToast();
   const { sendJobSubmittedNotification } = useNotifications();
 
@@ -133,6 +135,54 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
     setServices(data || []);
   };
 
+  const uploadFiles = async (jobId: string): Promise<string[]> => {
+    const fileUrls: string[] = [];
+
+    for (const file of uploadedFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${jobId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('job-uploads')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw new Error(`Failed to upload ${file.name}`);
+      }
+
+      fileUrls.push(data.path);
+    }
+
+    return fileUrls;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+      case 'svg':
+        return <Image className="h-4 w-4" />;
+      default:
+        return <File className="h-4 w-4" />;
+    }
+  };
+
   const onSubmit = async (data: JobFormData) => {
     setIsSubmitting(true);
     
@@ -200,6 +250,29 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
 
       if (jobError) throw jobError;
 
+      // Upload files if any
+      if (uploadedFiles.length > 0) {
+        const fileUrls = await uploadFiles(newJob.id.toString());
+        
+        // Create records in job_files table for each uploaded file
+        for (let i = 0; i < fileUrls.length; i++) {
+          const filePath = fileUrls[i];
+          const originalFile = uploadedFiles[i];
+          
+          const { error: fileRecordError } = await supabase
+            .from('job_files')
+            .insert({
+              job_id: newJob.id,
+              file_path: filePath,
+              description: originalFile.name
+            });
+            
+          if (fileRecordError) {
+            console.error('Error creating file record:', fileRecordError);
+          }
+        }
+      }
+
       // Send notification to customer
       try {
         await sendJobSubmittedNotification(selectedCustomer.id, newJob.id, data.title);
@@ -213,6 +286,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       });
 
       reset();
+      setUploadedFiles([]);
       onJobCreated();
       onClose();
     } catch (error: any) {
@@ -452,6 +526,59 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                 placeholder="0.00"
               />
             </div>
+          </div>
+
+          {/* File Upload Section */}
+          <div className="space-y-4">
+            <Label>Job Files</Label>
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+              <div className="text-center">
+                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Drag files here or click to browse
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.svg"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  Choose Files
+                </Button>
+              </div>
+            </div>
+
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Uploaded Files ({uploadedFiles.length})</p>
+                {uploadedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      {getFileIcon(file.name)}
+                      <span className="text-sm truncate">{file.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2">

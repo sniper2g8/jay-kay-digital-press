@@ -11,7 +11,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { JobEditDialog } from "./JobEditDialog";
 import { JobCreationDialog } from "./JobCreationDialog";
 import { JobViewDialog } from "./JobViewDialog";
-import { Eye, Edit, Trash2, Package, Filter, Plus, Paperclip } from "lucide-react";
+import { Eye, Edit, Trash2, Package, Filter, Plus, Paperclip, Download } from "lucide-react";
 
 interface Job {
   id: number;
@@ -312,9 +312,24 @@ export const JobManagement = () => {
                     </TableCell>
                      <TableCell>{job.quantity}</TableCell>
                      <TableCell>
-                       <div className="flex items-center gap-1">
-                         <Paperclip className="h-4 w-4 text-muted-foreground" />
-                         <span className="text-sm">{job.file_count || 0}</span>
+                       <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-1">
+                           <Paperclip className="h-4 w-4 text-muted-foreground" />
+                           <span className="text-sm">{job.file_count || 0}</span>
+                         </div>
+                         {job.file_count > 0 && (
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => {
+                               setViewingJobId(job.id);
+                               setIsViewDialogOpen(true);
+                             }}
+                             title="View/Download Files"
+                           >
+                             <Download className="h-3 w-3" />
+                           </Button>
+                         )}
                        </div>
                      </TableCell>
                     <TableCell>
