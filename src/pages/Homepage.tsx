@@ -33,6 +33,7 @@ import { Link, useNavigate } from "react-router-dom";
 import useEmblaCarousel from 'embla-carousel-react';
 import heroImage from "@/assets/hero-bg.jpg";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { CompanyLogo } from "@/components/common/LogoHeader";
 import { 
   SERVICE_TYPES, 
   DEFAULT_SERVICES,
@@ -199,9 +200,7 @@ export const Homepage = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">J</span>
-            </div>
+            <CompanyLogo className="w-10 h-10 object-contain" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">{companySettings?.company_name || 'JAY KAY DIGITAL PRESS'}</h1>
               <p className="text-sm text-gray-500">Professional Printing Services</p>
