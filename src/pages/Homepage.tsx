@@ -135,7 +135,7 @@ export const Homepage = () => {
     }
   };
 
-  // Generate service icons based on service type
+  // Generate service icons and images based on service type
   const getServiceIcon = (serviceType: string) => {
     switch (serviceType) {
       case 'Business Card': return CreditCard;
@@ -149,9 +149,22 @@ export const Homepage = () => {
     }
   };
 
+  const getServiceImage = (serviceType: string) => {
+    switch (serviceType) {
+      case 'Business Cards': return 'https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=400&h=250&fit=crop';
+      case 'Banner': return 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=400&h=250&fit=crop';
+      case 'SAV': return 'https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=250&fit=crop';
+      case 'Flyers': return 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop';
+      case 'Poster': return 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=250&fit=crop';
+      case 'Brochure': return 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=250&fit=crop';
+      default: return 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=400&h=250&fit=crop';
+    }
+  };
+
   // Dynamic services from constants
   const keyServices = DEFAULT_SERVICES.slice(0, 6).map(service => ({
     icon: getServiceIcon(service.service_type),
+    image: getServiceImage(service.service_type),
     title: service.name,
     description: service.description,
     service_type: service.service_type,
@@ -326,21 +339,38 @@ export const Homepage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {keyServices.map((service, index) => (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 hover-scale group">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                    <service.icon className="h-8 w-8 text-primary" />
+              <Card key={index} className="overflow-hidden hover:shadow-xl transition-all duration-300 hover-scale group">
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={service.image} 
+                    alt={service.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <Badge variant="secondary" className="bg-white/90 text-gray-900 mb-2">
+                      {service.service_type}
+                    </Badge>
+                  </div>
+                </div>
+                <CardHeader className="text-center pb-2">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                    <service.icon className="h-6 w-6 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{service.title}</CardTitle>
-                  <Badge variant="outline" className="w-fit mx-auto">
-                    {service.service_type}
-                  </Badge>
                 </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-base mb-3">{service.description}</CardDescription>
-                  <p className="text-lg font-semibold text-primary">
-                    Starting at Le {service.base_price.toFixed(2)}
-                  </p>
+                <CardContent className="text-center pt-0">
+                  <CardDescription className="text-base mb-4 line-clamp-2">{service.description}</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-semibold text-primary">
+                      Starting at Le {service.base_price.toFixed(2)}
+                    </p>
+                    <Link to="/register">
+                      <Button size="sm" variant="outline" className="hover:bg-primary hover:text-white">
+                        Order Now
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             ))}
