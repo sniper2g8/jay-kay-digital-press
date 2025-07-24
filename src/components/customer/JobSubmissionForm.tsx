@@ -139,6 +139,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
       const { data: job, error: jobError } = await supabase
         .from("jobs")
         .insert({
+          customer_id: null,
           customer_uuid: customer.id,
           service_id: parseInt(formData.service_id),
           current_status: 1, // Pending status

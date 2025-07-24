@@ -793,7 +793,7 @@ export type Database = {
           created_by: string | null
           created_by_user: string | null
           current_status: number
-          customer_id: string
+          customer_id: string | null
           customer_uuid: string
           delivery_address: string | null
           delivery_method: string
@@ -823,7 +823,7 @@ export type Database = {
           created_by?: string | null
           created_by_user?: string | null
           current_status: number
-          customer_id: string
+          customer_id?: string | null
           customer_uuid: string
           delivery_address?: string | null
           delivery_method: string
@@ -853,7 +853,7 @@ export type Database = {
           created_by?: string | null
           created_by_user?: string | null
           current_status?: number
-          customer_id?: string
+          customer_id?: string | null
           customer_uuid?: string
           delivery_address?: string | null
           delivery_method?: string
