@@ -93,21 +93,47 @@ export const InvoiceViewPage = () => {
   };
 
   const handleDownload = async () => {
+    if (!invoice) return;
+    
     try {
-      const { default: html2pdf } = await import('html2pdf.js');
+      const { generateInvoicePDF } = await import('@/utils/pdfGenerator');
       
-      const element = document.querySelector('.invoice-content');
-      if (!element) return;
-
-      const options = {
-        margin: 1,
-        filename: `invoice-${invoice.invoice_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      // Transform invoice data to match PDF generator interface
+      const invoiceData = {
+        invoice_number: invoice.invoice_number,
+        issued_date: invoice.issued_date,
+        due_date: invoice.due_date,
+        status: invoice.status,
+        total_amount: invoice.total_amount,
+        paid_amount: 0, // We don't have payment data here
+        balance_due: invoice.total_amount,
+        tax_amount: invoice.tax_amount,
+        discount_amount: 0, // We don't have discount data
+        subtotal: invoice.subtotal,
+        notes: invoice.notes,
+        customers: invoice.customers,
+        invoice_items: invoiceItems
       };
 
-      await html2pdf().set(options).from(element).save();
+      const pdfBlob = await generateInvoicePDF(invoiceData, {
+        company_name: settings?.company_name || 'Print Shop',
+        address: settings?.address || null,
+        phone: settings?.phone || null,
+        email: settings?.email || null,
+        logo_url: settings?.logo_url || null,
+        primary_color: settings?.primary_color || '#000000',
+        currency_symbol: settings?.currency_symbol || 'Le'
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${invoice.invoice_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Success",
@@ -160,9 +186,13 @@ export const InvoiceViewPage = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 print:hidden">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/admin/invoices')}
+            className="hover:bg-muted"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            Back to Invoices
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePrint}>

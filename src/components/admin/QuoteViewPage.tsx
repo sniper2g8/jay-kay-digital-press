@@ -99,21 +99,47 @@ export const QuoteViewPage = () => {
   };
 
   const handleDownload = async () => {
+    if (!quote) return;
+    
     try {
-      const { default: html2pdf } = await import('html2pdf.js');
+      const { generateQuotePDF } = await import('@/utils/quotePdfGenerator');
       
-      const element = document.querySelector('.quote-content');
-      if (!element) return;
-
-      const options = {
-        margin: 1,
-        filename: `quote-${quote?.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      // Transform quote data to match PDF generator interface
+      const quoteData = {
+        id: quote.id,
+        title: quote.title,
+        created_at: quote.created_at,
+        valid_until: quote.valid_until,
+        status: quote.status,
+        quoted_price: quote.quoted_price,
+        notes: quote.notes,
+        customers: quote.customers,
+        services: {
+          name: quote.services.name,
+          description: null
+        },
+        quote_items: quoteItems
       };
 
-      await html2pdf().set(options).from(element).save();
+      const pdfBlob = await generateQuotePDF(quoteData, {
+        company_name: settings?.company_name || 'Print Shop',
+        address: settings?.address || null,
+        phone: settings?.phone || null,
+        email: settings?.email || null,
+        logo_url: settings?.logo_url || null,
+        primary_color: settings?.primary_color || '#000000',
+        currency_symbol: settings?.currency_symbol || 'Le'
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `quote-${quote.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Success",
@@ -224,9 +250,13 @@ export const QuoteViewPage = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 print:hidden">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/admin/quotes')}
+            className="hover:bg-muted"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            Back to Quotes
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePrint}>
