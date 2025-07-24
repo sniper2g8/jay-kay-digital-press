@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface InvoiceItem {
   id: string;
@@ -28,6 +29,7 @@ interface Invoice {
   issued_date: string;
   due_date: string;
   notes: string;
+  job_id: number | null;
   customers: {
     name: string;
     customer_display_id: string;
@@ -176,145 +178,152 @@ export const InvoiceViewPage = () => {
 
         {/* Invoice */}
         <Card className="invoice-content print:shadow-none print:border-none">
-          <CardContent className="p-0">
-            {/* Professional Header */}
-            <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-8">
-              <div className="flex justify-between items-start">
+          <CardContent className="p-8">
+            {/* Header with Company Info and Invoice Title */}
+            <div className="flex justify-between items-start mb-12">
+              <div className="flex items-center gap-4">
+                {settings?.logo_url && (
+                  <img 
+                    src={settings.logo_url} 
+                    alt={settings.company_name}
+                    className="h-16 w-auto"
+                  />
+                )}
                 <div>
-                  <h1 className="text-4xl font-bold tracking-tight">INVOICE</h1>
-                  <p className="text-primary-foreground/80 mt-2 text-lg">#{invoice.invoice_number}</p>
+                  <h1 className="text-2xl font-bold text-foreground">{settings?.company_name || 'Loading...'}</h1>
+                  <div className="text-sm text-muted-foreground space-y-1 mt-2">
+                    {settings?.address && <p>{settings.address}</p>}
+                    <p>Phone: {settings?.phone || ''}</p>
+                    <p>Email: {settings?.email || ''}</p>
+                    {settings?.website && <p>Website: {settings.website}</p>}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Badge 
-                    className={`${getStatusColor(invoice.status)} text-sm px-3 py-1`}
-                    variant="secondary"
-                  >
-                    {invoice.status.toUpperCase()}
-                  </Badge>
+              </div>
+              
+              <div className="text-right">
+                <h2 className="text-3xl font-bold text-foreground mb-2">INVOICE</h2>
+                <div className="text-sm space-y-1">
+                  <p><span className="font-medium">Invoice #:</span> {invoice.invoice_number}</p>
+                  <p><span className="font-medium">Date:</span> {new Date(invoice.issued_date).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-8">
-              {/* Company & Customer Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">From</h3>
-                  <div className="space-y-1">
-                    <p className="text-xl font-bold text-foreground">{settings?.company_name || 'Loading...'}</p>
-                    <p className="text-muted-foreground">{settings?.address || ''}</p>
-                    <p className="text-muted-foreground">{settings?.email || ''}</p>
-                    <p className="text-muted-foreground">{settings?.phone || ''}</p>
+            {/* Bill To and Invoice Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
+              <div>
+                <h3 className="text-lg font-bold text-foreground mb-4">Bill To:</h3>
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">{invoice.customers.name}</p>
+                  <p className="text-sm text-muted-foreground">{invoice.customers.customer_display_id}</p>
+                  <p className="text-sm text-muted-foreground">{invoice.customers.email}</p>
+                  {invoice.customers.phone && <p className="text-sm text-muted-foreground">{invoice.customers.phone}</p>}
+                  {invoice.customers.address && <p className="text-sm text-muted-foreground">{invoice.customers.address}</p>}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-bold text-foreground mb-4">Invoice Details:</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'} className="ml-2">
+                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                    </Badge>
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">To</h3>
-                  <div className="space-y-1">
-                    <p className="text-xl font-bold text-foreground">{invoice.customers.name}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Customer ID: {invoice.customers.customer_display_id}</p>
-                    {invoice.customers.address && <p className="text-muted-foreground">{invoice.customers.address}</p>}
-                    <p className="text-muted-foreground">{invoice.customers.email}</p>
-                    {invoice.customers.phone && <p className="text-muted-foreground">{invoice.customers.phone}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Invoice Details */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Issue Date</p>
-                  <p className="text-lg font-bold mt-1">{new Date(invoice.issued_date).toLocaleDateString()}</p>
-                </div>
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Due Date</p>
-                  <p className="text-lg font-bold mt-1">{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Upon Receipt'}</p>
-                </div>
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total Amount</p>
-                  <p className="text-lg font-bold mt-1 text-primary">Le {invoice.total_amount.toFixed(2)}</p>
-                </div>
-              </div>
-
-              <Separator className="my-8" />
-
-              {/* Invoice Items */}
-              <div className="mb-10">
-                <h3 className="text-lg font-bold mb-6">Items & Services</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-muted">
-                        <th className="text-left py-4 px-2 font-semibold text-muted-foreground uppercase tracking-wide text-sm">Description</th>
-                        <th className="text-center py-4 px-2 font-semibold text-muted-foreground uppercase tracking-wide text-sm">Qty</th>
-                        <th className="text-right py-4 px-2 font-semibold text-muted-foreground uppercase tracking-wide text-sm">Unit Price</th>
-                        <th className="text-right py-4 px-2 font-semibold text-muted-foreground uppercase tracking-wide text-sm">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoiceItems.map((item, index) => (
-                        <tr key={item.id} className={`border-b ${index % 2 === 0 ? 'bg-muted/20' : ''}`}>
-                          <td className="py-4 px-2 font-medium">{item.description}</td>
-                          <td className="text-center py-4 px-2">{item.quantity}</td>
-                          <td className="text-right py-4 px-2">Le {item.unit_price.toFixed(2)}</td>
-                          <td className="text-right py-4 px-2 font-semibold">Le {item.total_price.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Totals Section */}
-              <div className="flex justify-end mb-10">
-                <div className="w-full max-w-sm">
-                  <div className="bg-muted/30 p-6 rounded-lg space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Subtotal:</span>
-                      <span className="font-medium">Le {invoice.subtotal.toFixed(2)}</span>
+                  {invoice.job_id && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Related Job:</span>
+                      <span className="font-medium">JOB-{invoice.job_id}</span>
                     </div>
-                    <div className="flex justify-between items-center">
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Service:</span>
+                    <span className="font-medium">Print Services</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Items Section */}
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-foreground mb-4">Items:</h3>
+              <div className="border border-muted rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-foreground">Description</th>
+                      <th className="text-center py-3 px-4 font-medium text-foreground">Quantity</th>
+                      <th className="text-right py-3 px-4 font-medium text-foreground">Unit Price</th>
+                      <th className="text-right py-3 px-4 font-medium text-foreground">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoiceItems.map((item) => (
+                      <tr key={item.id} className="border-t border-muted">
+                        <td className="py-3 px-4">{item.description}</td>
+                        <td className="text-center py-3 px-4">{item.quantity}</td>
+                        <td className="text-right py-3 px-4">Le {item.unit_price.toFixed(2)}</td>
+                        <td className="text-right py-3 px-4 font-medium">Le {item.total_price.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Totals Section */}
+            <div className="flex justify-end mb-8">
+              <div className="w-80">
+                <div className="space-y-2 text-right">
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="font-medium">Le {invoice.subtotal.toFixed(2)}</span>
+                  </div>
+                  {invoice.tax_amount > 0 && (
+                    <div className="flex justify-between py-2">
                       <span className="text-muted-foreground">Tax ({(invoice.tax_rate * 100).toFixed(0)}%):</span>
                       <span className="font-medium">Le {invoice.tax_amount.toFixed(2)}</span>
                     </div>
-                    <Separator />
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="font-bold">Total Amount:</span>
-                      <span className="font-bold text-primary">Le {invoice.total_amount.toFixed(2)}</span>
+                  )}
+                  <div className="border-t border-muted pt-2">
+                    <div className="flex justify-between py-2">
+                      <span className="text-lg font-bold text-foreground">Total:</span>
+                      <span className="text-lg font-bold text-foreground">Le {invoice.total_amount.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Payment Terms & Notes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-muted/20 p-6 rounded-lg">
-                  <h4 className="font-semibold mb-3 text-foreground">Payment Terms</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Payment is due within 30 days of invoice date. Late payments may incur additional charges.
-                  </p>
-                </div>
-                
-                {invoice.notes && (
-                  <div className="bg-muted/20 p-6 rounded-lg">
-                    <h4 className="font-semibold mb-3 text-foreground">Additional Notes</h4>
-                    <p className="text-sm text-muted-foreground">{invoice.notes}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="text-center mt-12 pt-8 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Thank you for your business! For any questions regarding this invoice, please contact us.
+            {/* Payment Terms and QR Code */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+              <div>
+                <h4 className="font-bold text-foreground mb-2">Payment Terms:</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Payment is due within 30 days of invoice date.
                 </p>
-                <div className="flex justify-center items-center gap-4 mt-4 text-xs text-muted-foreground">
-                  <span>{settings?.email || ''}</span>
-                  <span>•</span>
-                  <span>{settings?.phone || ''}</span>
-                  <span>•</span>
-                  <span>{settings?.website || ''}</span>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Thank you for your business! For questions about this invoice, please contact us at {settings?.email || ''}.
+                </p>
               </div>
+              
+              <div className="flex flex-col items-end">
+                <div className="mb-2">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/admin/invoices/${invoice.id}`}
+                    size={80}
+                    level="M"
+                    includeMargin={true}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground text-center">Track Invoice</p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t border-muted">
+              <p>Generated on {new Date().toLocaleDateString()} by {settings?.company_name || ''}</p>
             </div>
           </CardContent>
         </Card>
