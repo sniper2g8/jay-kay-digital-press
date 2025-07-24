@@ -6,9 +6,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Receipt, Search, Plus, Eye, Download, Send } from "lucide-react";
+import { Receipt, Search, Plus, Eye, Download, Send, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { InvoiceCreationDialog } from "./InvoiceCreationDialog";
+import { InvoiceEditDialog } from "./InvoiceEditDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
@@ -22,6 +33,12 @@ interface Invoice {
   issued_date: string;
   due_date: string | null;
   created_at: string;
+  customer_id: string;
+  job_id: number | null;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  notes: string | null;
   customers: {
     name: string;
     customer_display_id: string;
@@ -35,6 +52,9 @@ export const InvoiceManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,6 +113,53 @@ export const InvoiceManagement = () => {
   const handleViewInvoice = (invoiceId: string) => {
     // Open invoice in a new tab/window for viewing
     window.open(`/invoice/${invoiceId}`, '_blank');
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!deletingInvoice) return;
+    
+    try {
+      // Delete invoice items first
+      await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', deletingInvoice.id);
+
+      // Delete payments
+      await supabase
+        .from('payments')
+        .delete()
+        .eq('invoice_id', deletingInvoice.id);
+
+      // Delete the invoice
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', deletingInvoice.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingInvoice(null);
+    }
   };
 
   const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
@@ -307,10 +374,27 @@ export const InvoiceManagement = () => {
                       <Button 
                         variant="outline" 
                         size="sm" 
+                        onClick={() => handleEditInvoice(invoice)}
+                        title="Edit Invoice"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
                         onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
                         title="Download Invoice"
                       >
                         <Download className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setDeletingInvoice(invoice)}
+                        title="Delete Invoice"
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                       {invoice.status === 'draft' && (
                         <Button 
@@ -343,6 +427,36 @@ export const InvoiceManagement = () => {
         onClose={() => setIsCreateDialogOpen(false)}
         onInvoiceCreated={fetchInvoices}
       />
+
+      <InvoiceEditDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingInvoice(null);
+        }}
+        onInvoiceUpdated={fetchInvoices}
+        invoice={editingInvoice}
+      />
+
+      <AlertDialog open={!!deletingInvoice} onOpenChange={() => setDeletingInvoice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice {deletingInvoice?.invoice_number}? This action cannot be undone and will remove all associated data including payments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteInvoice}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Invoice
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
