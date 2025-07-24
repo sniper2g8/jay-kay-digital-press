@@ -7,6 +7,7 @@ import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { JobSubmissionForm } from "./JobSubmissionForm";
 import { JobTracker } from "./JobTracker";
 import { QuoteRequest } from "./QuoteRequest";
+import { QuoteView } from "./QuoteView";
 import { InvoiceView } from "./InvoiceView";
 import { CustomerStatement } from "./CustomerStatement";
 import { NotificationPreferences } from "./NotificationPreferences";
@@ -174,7 +175,7 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
         )}
 
         {activeTab === "quotes" && (
-          <QuoteRequest />
+          <QuoteView userId={user.id} />
         )}
 
         {activeTab === "invoices" && (
