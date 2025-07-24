@@ -168,23 +168,33 @@ export const JobManagement = () => {
   const deleteJob = async (jobId: number) => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
-    const { error } = await supabase
-      .from("jobs")
-      .delete()
-      .eq("id", jobId);
+    try {
+      // First delete related notification logs
+      await supabase
+        .from("notifications_log")
+        .delete()
+        .eq("job_id", jobId);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete job",
-        variant: "destructive",
-      });
-    } else {
+      // Then delete the job
+      const { error } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", jobId);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Job deleted successfully",
       });
       fetchJobs();
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete job",
+        variant: "destructive",
+      });
     }
   };
 
