@@ -156,7 +156,7 @@ export const Homepage = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 text-lg"
+              className="border-white text-white bg-white/10 backdrop-blur hover:bg-white hover:text-gray-900 px-8 py-4 text-lg"
               onClick={() => navigate("/auth")}
             >
               Submit Project
@@ -254,7 +254,7 @@ export const Homepage = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-red-600 px-8 py-4 text-lg"
+              className="border-white text-white bg-white/10 backdrop-blur hover:bg-white hover:text-red-600 px-8 py-4 text-lg"
               onClick={() => navigate("/auth")}
             >
               View Portfolio
