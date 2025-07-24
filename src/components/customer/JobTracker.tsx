@@ -6,8 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Package, Clock, CheckCircle, TruckIcon, X } from "lucide-react";
+import { Search, Package, Clock, CheckCircle, TruckIcon, X, Eye, Edit, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { JobEditDialog } from './JobEditDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Job {
   id: number;
@@ -18,6 +29,8 @@ interface Job {
   tracking_code: string;
   created_at: string;
   service_id: number;
+  delivery_method: string;
+  delivery_address?: string;
   services: {
     name: string;
     service_type: string;
@@ -33,6 +46,8 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
   const [trackingCode, setTrackingCode] = useState("");
   const [trackedJob, setTrackedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [deletingJobId, setDeletingJobId] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +79,8 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
         tracking_code,
         created_at,
         service_id,
+        delivery_method,
+        delivery_address,
         services (
           name,
           service_type
@@ -106,6 +123,8 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
         tracking_code,
         created_at,
         service_id,
+        delivery_method,
+        delivery_address,
         services (
           name,
           service_type
@@ -223,6 +242,77 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
     }
   };
 
+  const canEditJob = (status: string) => {
+    // Allow editing only for jobs that haven't started processing
+    return ["Pending", "Received"].includes(status);
+  };
+
+  const canDeleteJob = (status: string) => {
+    // Allow deletion only for jobs that haven't started processing
+    return ["Pending", "Received"].includes(status);
+  };
+
+  const deleteJob = async (jobId: number) => {
+    try {
+      // First delete related notification logs
+      await supabase
+        .from("notifications_log")
+        .delete()
+        .eq("job_id", jobId);
+
+      // Delete job files
+      await supabase
+        .from("job_files")
+        .delete()
+        .eq("job_id", jobId);
+
+      // Delete job finishing options
+      await supabase
+        .from("job_finishing_options")
+        .delete()
+        .eq("job_id", jobId);
+
+      // Delete job history
+      await supabase
+        .from("job_history")
+        .delete()
+        .eq("job_id", jobId);
+
+      // Finally delete the job
+      const { error } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", jobId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Job deleted successfully",
+      });
+
+      // Refresh jobs
+      if (userId) {
+        fetchUserJobs();
+      }
+
+      // Clear tracked job if it was the deleted one
+      if (trackedJob && trackedJob.id === jobId) {
+        setTrackedJob(null);
+        setTrackingCode("");
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete job. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingJobId(null);
+    }
+  };
+
   const JobCard = ({ job }: { job: Job }) => (
     <Card className="mb-4">
       <CardHeader className="pb-3">
@@ -297,6 +387,32 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
             </div>
           </div>
         </div>
+
+        {/* Job Actions - only show for logged in users */}
+        {userId && (
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingJob(job)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              {canEditJob(job.status) ? "Edit" : "View"}
+            </Button>
+            
+            {canDeleteJob(job.status) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingJobId(job.id)}
+                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -355,6 +471,38 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Job Dialog */}
+      <JobEditDialog
+        job={editingJob}
+        isOpen={!!editingJob}
+        onClose={() => setEditingJob(null)}
+        onSuccess={() => {
+          fetchUserJobs();
+          setEditingJob(null);
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingJobId} onOpenChange={() => setDeletingJobId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Job</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this job? This action cannot be undone and will remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingJobId && deleteJob(deletingJobId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Job
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
