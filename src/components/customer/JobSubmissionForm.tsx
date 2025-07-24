@@ -8,19 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, Plus, FileText } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { 
-  SERVICE_TYPES, 
-  SAV_TYPES, 
-  BANNER_TYPES, 
-  PAPER_TYPES, 
-  PAPER_WEIGHTS,
   FINISHING_OPTIONS,
-  type ServiceType,
   type FinishingOption
 } from '@/constants/services';
 
@@ -37,10 +32,10 @@ interface Service {
   base_price: number;
 }
 
-interface JobFormData {
+interface JobFile {
+  file: File;
   title: string;
   description: string;
-  service_id: string;
   quantity: number;
   service_subtype?: string;
   paper_type?: string;
@@ -48,6 +43,9 @@ interface JobFormData {
   finishing_options: string[];
   width_mm?: number;
   height_mm?: number;
+}
+
+interface JobFormData {
   delivery_method: string;
   delivery_address?: string;
 }
@@ -59,7 +57,7 @@ interface JobSubmissionFormProps {
 export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [jobFiles, setJobFiles] = useState<JobFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [isUploading, setIsUploading] = useState(false);
@@ -71,19 +69,11 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
     }
   });
 
-  const serviceId = watch("service_id");
   const deliveryMethod = watch("delivery_method");
 
   useEffect(() => {
     fetchServices();
   }, []);
-
-  useEffect(() => {
-    if (serviceId) {
-      const service = services.find(s => s.id.toString() === serviceId);
-      setSelectedService(service || null);
-    }
-  }, [serviceId, services]);
 
   const fetchServices = async () => {
     const { data, error } = await supabase
@@ -98,67 +88,44 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
     }
 
     setServices(data as Service[] || []);
+    if (data && data.length > 0) {
+      setSelectedService(data[0]);
+    }
   };
 
-  const uploadFiles = async (jobId: string): Promise<string[]> => {
-    const fileUrls: string[] = [];
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && selectedService) {
+      const newFiles = Array.from(e.target.files);
+      const newJobFiles = newFiles.map(file => ({
+        file,
+        title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for title
+        description: "",
+        quantity: 1,
+        service_subtype: "",
+        paper_type: "",
+        paper_weight: "",
+        finishing_options: [],
+        width_mm: undefined,
+        height_mm: undefined
+      }));
+      setJobFiles(prev => [...prev, ...newJobFiles]);
+    }
+  };
+
+  const removeJobFile = (index: number) => {
+    setJobFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateJobFile = (index: number, field: keyof JobFile, value: any) => {
+    setJobFiles(prev => prev.map((jobFile, i) => 
+      i === index ? { ...jobFile, [field]: value } : jobFile
+    ));
+  };
+
+  const uploadFiles = async (): Promise<{jobId: string, fileUrls: string[]}[]> => {
+    const results: {jobId: string, fileUrls: string[]}[] = [];
     setIsUploading(true);
     
-    try {
-      for (let i = 0; i < uploadedFiles.length; i++) {
-        const file = uploadedFiles[i];
-        const fileKey = `${file.name}-${i}`;
-        
-        // Reset progress for this file
-        setUploadProgress(prev => ({ ...prev, [fileKey]: 0 }));
-        
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${jobId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-        try {
-          // Simulate progress updates during upload
-          const progressInterval = setInterval(() => {
-            setUploadProgress(prev => {
-              const currentProgress = prev[fileKey] || 0;
-              if (currentProgress < 90) {
-                return { ...prev, [fileKey]: currentProgress + 10 };
-              }
-              return prev;
-            });
-          }, 100);
-
-          const { data, error } = await supabase.storage
-            .from('job-uploads')
-            .upload(fileName, file);
-
-          clearInterval(progressInterval);
-          
-          if (error) {
-            console.error('Upload error:', error);
-            throw new Error(`Failed to upload ${file.name}: ${error.message}`);
-          }
-
-          // Set progress to 100% on success
-          setUploadProgress(prev => ({ ...prev, [fileKey]: 100 }));
-          fileUrls.push(data.path);
-          
-        } catch (uploadError) {
-          console.error(`Failed to upload ${file.name}:`, uploadError);
-          throw uploadError;
-        }
-      }
-    } finally {
-      setIsUploading(false);
-      // Clear progress after a short delay
-      setTimeout(() => setUploadProgress({}), 2000);
-    }
-
-    return fileUrls;
-  };
-
-  const onSubmit = async (formData: JobFormData) => {
-    setIsSubmitting(true);
-
     try {
       // Get current user's customer ID
       const { data: { user } } = await supabase.auth.getUser();
@@ -172,151 +139,145 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
 
       if (!customer) throw new Error("Customer profile not found");
 
-      // Create job
-      const { data: job, error: jobError } = await supabase
-        .from("jobs")
-        .insert({
-          customer_id: null,
-          customer_uuid: customer.id,
-          service_id: parseInt(formData.service_id),
-          current_status: 1, // Pending status
-          delivery_method: formData.delivery_method,
-          delivery_address: formData.delivery_address,
-          width: formData.width_mm,
-          length: formData.height_mm,
-          title: formData.title,
-          description: formData.description,
-          quantity: formData.quantity,
-          service_subtype: formData.service_subtype,
-          paper_type: formData.paper_type,
-          paper_weight: formData.paper_weight,
-          finishing_options: JSON.stringify(formData.finishing_options || []),
-        })
-        .select()
-        .single();
-
-      if (jobError) throw jobError;
-
-      // Upload files if any
-      let fileUrls: string[] = [];
-      if (uploadedFiles.length > 0) {
-        fileUrls = await uploadFiles(job.id.toString());
+      for (let i = 0; i < jobFiles.length; i++) {
+        const jobFile = jobFiles[i];
+        const fileKey = `${jobFile.file.name}-${i}`;
         
-        // Create records in job_files table for each uploaded file
-        for (let i = 0; i < fileUrls.length; i++) {
-          const filePath = fileUrls[i];
-          const originalFile = uploadedFiles[i];
-          
-          const { error: fileRecordError } = await supabase
-            .from('job_files')
-            .insert({
-              job_id: job.id,
-              file_path: filePath,
-              description: originalFile.name
-            });
-            
-          if (fileRecordError) {
-            console.error('Error creating file record:', fileRecordError);
-          }
+        // Reset progress for this file
+        setUploadProgress(prev => ({ ...prev, [fileKey]: 10 }));
+
+        // Create individual job for each file
+        const { data: job, error: jobError } = await supabase
+          .from("jobs")
+          .insert({
+            customer_id: null,
+            customer_uuid: customer.id,
+            service_id: selectedService!.id,
+            current_status: 1, // Pending status
+            delivery_method: watch("delivery_method"),
+            delivery_address: watch("delivery_address"),
+            width: jobFile.width_mm,
+            length: jobFile.height_mm,
+            title: jobFile.title,
+            description: jobFile.description,
+            quantity: jobFile.quantity,
+            service_subtype: jobFile.service_subtype,
+            paper_type: jobFile.paper_type,
+            paper_weight: jobFile.paper_weight,
+            finishing_options: JSON.stringify(jobFile.finishing_options || []),
+          })
+          .select()
+          .single();
+
+        if (jobError) throw jobError;
+
+        setUploadProgress(prev => ({ ...prev, [fileKey]: 30 }));
+
+        // Upload file
+        const fileExt = jobFile.file.name.split('.').pop();
+        const fileName = `${job.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            const currentProgress = prev[fileKey] || 30;
+            if (currentProgress < 90) {
+              return { ...prev, [fileKey]: currentProgress + 10 };
+            }
+            return prev;
+          });
+        }, 100);
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('job-uploads')
+          .upload(fileName, jobFile.file);
+
+        clearInterval(progressInterval);
+        
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error(`Failed to upload ${jobFile.file.name}: ${uploadError.message}`);
         }
-        
-        console.log("Files uploaded and recorded:", fileUrls);
+
+        // Create file record
+        const { error: fileRecordError } = await supabase
+          .from('job_files')
+          .insert({
+            job_id: job.id,
+            file_path: uploadData.path,
+            description: jobFile.file.name
+          });
+          
+        if (fileRecordError) {
+          console.error('Error creating file record:', fileRecordError);
+        }
+
+        setUploadProgress(prev => ({ ...prev, [fileKey]: 100 }));
+
+        results.push({ jobId: job.id.toString(), fileUrls: [uploadData.path] });
+
+        // Send notifications for each job
+        try {
+          const { data: customerProfile } = await supabase
+            .from("customers")
+            .select("name")
+            .eq("id", customer.id)
+            .single();
+
+          await sendJobSubmittedNotification(customer.id, job.id, jobFile.title);
+          await sendAdminJobNotification(customer.id, job.id, jobFile.title, customerProfile?.name || 'Unknown');
+          await trackJobCreated(job.id, customer.id);
+        } catch (notificationError) {
+          console.warn('Notification or analytics failed but job was created:', notificationError);
+        }
       }
+    } finally {
+      setIsUploading(false);
+      setTimeout(() => setUploadProgress({}), 2000);
+    }
 
-      // Get customer name for admin notification
-      const { data: customerProfile } = await supabase
-        .from("customers")
-        .select("name")
-        .eq("id", customer.id)
-        .single();
+    return results;
+  };
 
-      // Send notification and track analytics
-      try {
-        await sendJobSubmittedNotification(customer.id, job.id, formData.title);
-        await sendAdminJobNotification(customer.id, job.id, formData.title, customerProfile?.name || 'Unknown');
-        await trackJobCreated(job.id, customer.id);
-      } catch (notificationError) {
-        console.warn('Notification or analytics failed but job was created:', notificationError);
-      }
+  const onSubmit = async (formData: JobFormData) => {
+    if (jobFiles.length === 0) {
+      toast.error("Please upload at least one file");
+      return;
+    }
 
-      toast.success(`Job submitted successfully! Tracking Code: ${job.tracking_code}`);
+    setIsSubmitting(true);
+
+    try {
+      const results = await uploadFiles();
+      
+      toast.success(`${results.length} job(s) submitted successfully!`);
 
       reset();
-      setUploadedFiles([]);
-      setSelectedService(null);
+      setJobFiles([]);
+      setSelectedService(services[0] || null);
       onSuccess?.();
 
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit job");
+      toast.error(error.message || "Failed to submit jobs");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...newFiles]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-6xl mx-auto">
       <CardHeader>
-        <CardTitle>Submit New Print Job</CardTitle>
+        <CardTitle>Submit Print Jobs</CardTitle>
+        <p className="text-muted-foreground">Upload multiple files and specify individual requirements for each job</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="title">Job Title *</Label>
-              <Input
-                id="title"
-                {...register("title", { required: "Job title is required" })}
-                placeholder="e.g., Business Cards for John Doe"
-              />
-              {errors.title && (
-                <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <Label htmlFor="quantity">Quantity *</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                {...register("quantity", { 
-                  required: "Quantity is required",
-                  min: { value: 1, message: "Quantity must be at least 1" }
-                })}
-                placeholder="e.g., 100"
-              />
-              {errors.quantity && (
-                <p className="text-sm text-destructive mt-1">{errors.quantity.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...register("description")}
-              placeholder="Additional details about your print job..."
-              rows={3}
-            />
-          </div>
-
           {/* Service Selection */}
           <div>
             <Label htmlFor="service">Service Type *</Label>
-            <Select onValueChange={(value) => setValue("service_id", value)}>
+            <Select onValueChange={(value) => {
+              const service = services.find(s => s.id.toString() === value);
+              setSelectedService(service || null);
+            }} value={selectedService?.id.toString()}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a service" />
               </SelectTrigger>
@@ -328,145 +289,229 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
                 ))}
               </SelectContent>
             </Select>
-            {errors.service_id && (
-              <p className="text-sm text-destructive mt-1">Service selection is required</p>
-            )}
           </div>
 
-          {/* Service-specific options */}
-          {selectedService && (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-              <h3 className="font-semibold">Service Options</h3>
-              
-              {/* Subtypes for SAV and Banner */}
-              {selectedService.available_subtypes && selectedService.available_subtypes.length > 0 && (
-                <div>
-                  <Label htmlFor="subtype">{selectedService.service_type} Type</Label>
-                  <Select onValueChange={(value) => setValue("service_subtype", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={`Select ${selectedService.service_type} type`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedService.available_subtypes.map((subtype) => (
-                        <SelectItem key={subtype} value={subtype}>
-                          {subtype}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          {/* File Upload */}
+          <div>
+            <Label htmlFor="files">Upload Files</Label>
+            <div className="mt-2">
+              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                <div className="text-center">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Click to upload files or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF, PNG, JPG up to 50MB each
+                  </p>
                 </div>
-              )}
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.docx,.doc"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
 
-              {/* Dimensions for SAV and Banner */}
-              {selectedService.requires_dimensions && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="width">Width (mm) *</Label>
-                    <Input
-                      id="width"
-                      type="number"
-                      step="0.1"
-                      {...register("width_mm", { 
-                        required: "Width is required for this service" 
-                      })}
-                      placeholder="e.g., 1000"
-                    />
-                    {errors.width_mm && (
-                      <p className="text-sm text-destructive mt-1">{errors.width_mm.message}</p>
+          {/* Job Files List */}
+          {jobFiles.length > 0 && (
+            <div className="space-y-4">
+              <Label className="text-lg font-semibold">Job Details ({jobFiles.length} files)</Label>
+              {jobFiles.map((jobFile, index) => {
+                const fileKey = `${jobFile.file.name}-${index}`;
+                const progress = uploadProgress[fileKey];
+                const isFileUploading = isUploading && progress !== undefined;
+                
+                return (
+                  <Card key={index} className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <span className="font-medium">{jobFile.file.name}</span>
+                        {isFileUploading && (
+                          <Badge variant="secondary">Uploading {progress}%</Badge>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeJobFile(index)}
+                        disabled={isUploading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {isFileUploading && (
+                      <div className="mb-4">
+                        <Progress value={progress} className="h-2" />
+                      </div>
                     )}
-                  </div>
-                  <div>
-                    <Label htmlFor="height">Height (mm) *</Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      step="0.1"
-                      {...register("height_mm", { 
-                        required: "Height is required for this service" 
-                      })}
-                      placeholder="e.g., 500"
-                    />
-                    {errors.height_mm && (
-                      <p className="text-sm text-destructive mt-1">{errors.height_mm.message}</p>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              {/* Paper Type */}
-              {selectedService.available_paper_types && selectedService.available_paper_types.length > 0 && (
-                <div>
-                  <Label htmlFor="paper_type">Paper Type</Label>
-                  <Select onValueChange={(value) => setValue("paper_type", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select paper type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedService.available_paper_types.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Label>Job Title *</Label>
+                        <Input
+                          value={jobFile.title}
+                          onChange={(e) => updateJobFile(index, "title", e.target.value)}
+                          placeholder="e.g., Business Cards for John Doe"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label>Quantity *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={jobFile.quantity}
+                          onChange={(e) => updateJobFile(index, "quantity", parseInt(e.target.value) || 1)}
+                          required
+                        />
+                      </div>
+                    </div>
 
-              {/* Paper Weight */}
-              {selectedService.available_paper_weights && selectedService.available_paper_weights.length > 0 && (
-                <div>
-                  <Label htmlFor="paper_weight">Paper Weight</Label>
-                  <Select onValueChange={(value) => setValue("paper_weight", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select paper weight" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedService.available_paper_weights.map((weight) => (
-                        <SelectItem key={weight} value={weight}>
-                          {weight}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                    <div className="mb-4">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={jobFile.description}
+                        onChange={(e) => updateJobFile(index, "description", e.target.value)}
+                        placeholder="Additional details about this job..."
+                        rows={2}
+                      />
+                    </div>
 
-              {/* Finishing Options */}
-              {selectedService.available_finishes && selectedService.available_finishes.length > 0 && (
-                <div>
-                  <Label>Finishing Options</Label>
-                  <div className="grid grid-cols-1 gap-3 mt-2">
-                    {selectedService.available_finishes.map((finishId: string) => {
-                      const finishOption = FINISHING_OPTIONS.find(f => f.id === finishId);
-                      if (!finishOption) return null;
-                      
-                      return (
-                        <label key={finishId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            value={finishId}
-                            onChange={(e) => {
-                              const current = watch("finishing_options") || [];
-                              if (e.target.checked) {
-                                setValue("finishing_options", [...current, finishId]);
-                              } else {
-                                setValue("finishing_options", current.filter(f => f !== finishId));
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{finishOption.name}</span>
-                              <Badge variant="secondary">+Le {finishOption.price.toFixed(2)}</Badge>
+                    {/* Service-specific options */}
+                    {selectedService && (
+                      <div className="space-y-4 p-3 border rounded-lg bg-muted/30">
+                        <h4 className="font-medium text-sm">Service Options</h4>
+                        
+                        {/* Subtypes */}
+                        {selectedService.available_subtypes && selectedService.available_subtypes.length > 0 && (
+                          <div>
+                            <Label className="text-sm">{selectedService.service_type} Type</Label>
+                            <Select onValueChange={(value) => updateJobFile(index, "service_subtype", value)}>
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {selectedService.available_subtypes.map((subtype) => (
+                                  <SelectItem key={subtype} value={subtype}>
+                                    {subtype}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* Dimensions */}
+                        {selectedService.requires_dimensions && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-sm">Width (mm)</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={jobFile.width_mm || ""}
+                                onChange={(e) => updateJobFile(index, "width_mm", parseFloat(e.target.value) || undefined)}
+                                placeholder="1000"
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">Height (mm)</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={jobFile.height_mm || ""}
+                                onChange={(e) => updateJobFile(index, "height_mm", parseFloat(e.target.value) || undefined)}
+                                placeholder="500"
+                                className="h-8"
+                              />
                             </div>
                           </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                        )}
+
+                        {/* Paper Type & Weight */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectedService.available_paper_types && selectedService.available_paper_types.length > 0 && (
+                            <div>
+                              <Label className="text-sm">Paper Type</Label>
+                              <Select onValueChange={(value) => updateJobFile(index, "paper_type", value)}>
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Select paper" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {selectedService.available_paper_types.map((type) => (
+                                    <SelectItem key={type} value={type}>
+                                      {type}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {selectedService.available_paper_weights && selectedService.available_paper_weights.length > 0 && (
+                            <div>
+                              <Label className="text-sm">Paper Weight</Label>
+                              <Select onValueChange={(value) => updateJobFile(index, "paper_weight", value)}>
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Select weight" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {selectedService.available_paper_weights.map((weight) => (
+                                    <SelectItem key={weight} value={weight}>
+                                      {weight}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Finishing Options */}
+                        {selectedService.available_finishes && selectedService.available_finishes.length > 0 && (
+                          <div>
+                            <Label className="text-sm">Finishing Options</Label>
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              {selectedService.available_finishes.map((finishId: string) => {
+                                const finishOption = FINISHING_OPTIONS.find(f => f.id === finishId);
+                                if (!finishOption) return null;
+                                
+                                return (
+                                  <label key={finishId} className="flex items-center space-x-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={jobFile.finishing_options.includes(finishId)}
+                                      onChange={(e) => {
+                                        const current = jobFile.finishing_options;
+                                        if (e.target.checked) {
+                                          updateJobFile(index, "finishing_options", [...current, finishId]);
+                                        } else {
+                                          updateJobFile(index, "finishing_options", current.filter(f => f !== finishId));
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <span>{finishOption.name}</span>
+                                    <Badge variant="outline" className="text-xs">+Le {finishOption.price.toFixed(2)}</Badge>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
             </div>
           )}
 
@@ -505,79 +550,14 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
             )}
           </div>
 
-          {/* File Upload */}
-          <div>
-            <Label htmlFor="files">Upload Files</Label>
-            <div className="mt-2">
-              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
-                <div className="text-center">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Click to upload files or drag and drop
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PDF, PNG, JPG up to 50MB each
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.png,.jpg,.jpeg,.gif"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {/* Uploaded Files List */}
-            {uploadedFiles.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <Label>Uploaded Files:</Label>
-                {uploadedFiles.map((file, index) => {
-                  const fileKey = `${file.name}-${index}`;
-                  const progress = uploadProgress[fileKey];
-                  const isFileUploading = isUploading && progress !== undefined;
-                  
-                  return (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between p-2 bg-muted rounded">
-                        <div className="flex-1">
-                          <span className="text-sm">{file.name}</span>
-                          {isFileUploading && (
-                            <div className="mt-1">
-                              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                                <span>Uploading...</span>
-                                <span>{progress}%</span>
-                              </div>
-                              <Progress value={progress} className="h-1" />
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          disabled={isUploading}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
+          <Button type="submit" disabled={isSubmitting || isUploading || jobFiles.length === 0} className="w-full">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isUploading ? "Uploading files..." : "Submitting..."}
+                {isUploading ? "Uploading files..." : "Creating jobs..."}
               </>
             ) : (
-              "Submit Job"
+              `Submit ${jobFiles.length} Job${jobFiles.length !== 1 ? 's' : ''}`
             )}
           </Button>
         </form>
