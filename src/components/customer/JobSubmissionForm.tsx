@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { 
   SERVICE_TYPES, 
   SAV_TYPES, 
@@ -60,6 +61,8 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [isUploading, setIsUploading] = useState(false);
   const { sendJobSubmittedNotification, sendAdminJobNotification } = useNotifications();
   const { trackJobCreated } = useAnalytics();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>({
@@ -99,21 +102,55 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
 
   const uploadFiles = async (jobId: string): Promise<string[]> => {
     const fileUrls: string[] = [];
+    setIsUploading(true);
+    
+    try {
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        const fileKey = `${file.name}-${i}`;
+        
+        // Reset progress for this file
+        setUploadProgress(prev => ({ ...prev, [fileKey]: 0 }));
+        
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${jobId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-    for (const file of uploadedFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${jobId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        try {
+          // Simulate progress updates during upload
+          const progressInterval = setInterval(() => {
+            setUploadProgress(prev => {
+              const currentProgress = prev[fileKey] || 0;
+              if (currentProgress < 90) {
+                return { ...prev, [fileKey]: currentProgress + 10 };
+              }
+              return prev;
+            });
+          }, 100);
 
-      const { data, error } = await supabase.storage
-        .from('job-uploads')
-        .upload(fileName, file);
+          const { data, error } = await supabase.storage
+            .from('job-uploads')
+            .upload(fileName, file);
 
-      if (error) {
-        console.error('Upload error:', error);
-        throw new Error(`Failed to upload ${file.name}`);
+          clearInterval(progressInterval);
+          
+          if (error) {
+            console.error('Upload error:', error);
+            throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+          }
+
+          // Set progress to 100% on success
+          setUploadProgress(prev => ({ ...prev, [fileKey]: 100 }));
+          fileUrls.push(data.path);
+          
+        } catch (uploadError) {
+          console.error(`Failed to upload ${file.name}:`, uploadError);
+          throw uploadError;
+        }
       }
-
-      fileUrls.push(data.path);
+    } finally {
+      setIsUploading(false);
+      // Clear progress after a short delay
+      setTimeout(() => setUploadProgress({}), 2000);
     }
 
     return fileUrls;
@@ -496,25 +533,52 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
             {uploadedFiles.length > 0 && (
               <div className="mt-4 space-y-2">
                 <Label>Uploaded Files:</Label>
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                    <span className="text-sm">{file.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                {uploadedFiles.map((file, index) => {
+                  const fileKey = `${file.name}-${index}`;
+                  const progress = uploadProgress[fileKey];
+                  const isFileUploading = isUploading && progress !== undefined;
+                  
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div className="flex-1">
+                          <span className="text-sm">{file.name}</span>
+                          {isFileUploading && (
+                            <div className="mt-1">
+                              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                                <span>Uploading...</span>
+                                <span>{progress}%</span>
+                              </div>
+                              <Progress value={progress} className="h-1" />
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          disabled={isUploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Submitting..." : "Submit Job"}
+          <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isUploading ? "Uploading files..." : "Submitting..."}
+              </>
+            ) : (
+              "Submit Job"
+            )}
           </Button>
         </form>
       </CardContent>
