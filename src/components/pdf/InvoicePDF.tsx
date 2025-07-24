@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import QRCode from 'qrcode';
 
 interface InvoiceData {
   invoice_number: string;
@@ -235,6 +236,11 @@ const styles = StyleSheet.create({
   },
   qrSection: {
     alignItems: 'center',
+    marginLeft: 20,
+  },
+  qrCode: {
+    width: 60,
+    height: 60,
   },
   qrLabel: {
     fontSize: 7,
@@ -265,6 +271,29 @@ const formatCurrency = (amount: number, symbol: string) => {
 };
 
 export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoiceData, companySettings }) => {
+  const [qrCodeUrl, setQrCodeUrl] = React.useState<string>('');
+
+  React.useEffect(() => {
+    const generateQRCode = async () => {
+      try {
+        const trackingUrl = `${window.location.origin}/invoice-tracking?number=${invoiceData.invoice_number}`;
+        const qrDataUrl = await QRCode.toDataURL(trackingUrl, {
+          width: 120,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF',
+          },
+        });
+        setQrCodeUrl(qrDataUrl);
+      } catch (error) {
+        console.error('Error generating QR code:', error);
+      }
+    };
+
+    generateQRCode();
+  }, [invoiceData.invoice_number]);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -386,6 +415,14 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoiceData, companySett
               Thank you for your business! For questions about this invoice, please contact us at {companySettings.email || ''}.
             </Text>
           </View>
+          
+          {/* QR Code */}
+          {qrCodeUrl && (
+            <View style={styles.qrSection}>
+              <Image src={qrCodeUrl} style={styles.qrCode} />
+              <Text style={styles.qrLabel}>Scan to track invoice</Text>
+            </View>
+          )}
         </View>
 
         {/* Footer Line and Text */}
