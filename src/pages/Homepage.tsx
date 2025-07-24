@@ -131,7 +131,7 @@ export const Homepage = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1541961017774-22349e4a1262?q=80&w=1920&auto=format&fit=crop')",
+            backgroundImage: "url('/lovable-uploads/87bafaa0-cb50-4516-a7bd-e4fc28fc84f3.png')",
             backgroundPosition: "center",
             backgroundSize: "cover"
           }}
