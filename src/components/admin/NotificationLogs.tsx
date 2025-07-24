@@ -38,40 +38,56 @@ export const NotificationLogs = () => {
   }, []);
 
   const fetchLogs = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("notifications_log")
-      .select(`
-        id,
-        notification_type,
-        notification_event,
-        recipient_email,
-        recipient_phone,
-        subject,
-        message,
-        status,
-        external_id,
-        error_message,
-        sent_at,
-        created_at,
-        customers (
-          name,
-          customer_display_id
-        )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(100);
+    try {
+      setLoading(true);
+      console.log('Fetching notification logs...');
+      
+      const { data, error } = await supabase
+        .from("notifications_log")
+        .select(`
+          id,
+          notification_type,
+          notification_event,
+          recipient_email,
+          recipient_phone,
+          subject,
+          message,
+          status,
+          external_id,
+          error_message,
+          sent_at,
+          created_at,
+          customers (
+            name,
+            customer_display_id
+          )
+        `)
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-    if (error) {
+      console.log('Notification logs response:', { data, error });
+
+      if (error) {
+        console.error('Error fetching notification logs:', error);
+        toast({
+          title: "Error",
+          description: `Failed to load notification logs: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log(`Loaded ${data?.length || 0} notification logs`);
+        setLogs(data || []);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching logs:', error);
       toast({
         title: "Error",
-        description: "Failed to load notification logs",
+        description: "Unexpected error loading notification logs",
         variant: "destructive",
       });
-    } else {
-      setLogs(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getStatusIcon = (status: string) => {
