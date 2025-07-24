@@ -154,6 +154,22 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
 
       const currentStatusId = statusData?.[0]?.id || 1;
 
+      // Get the current user's internal_users record
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: internalUser, error: userError } = await supabase
+        .from("internal_users")
+        .select("id")
+        .eq("auth_user_id", currentUser.data.user.id)
+        .maybeSingle();
+
+      if (userError || !internalUser) {
+        throw new Error("User is not an internal user. Only staff can create jobs.");
+      }
+
       const jobData = {
         title: data.title,
         description: data.description,
@@ -173,7 +189,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         due_date: data.due_date ? new Date(data.due_date).toISOString() : null,
         current_status: currentStatusId,
         status: "Pending",
-        created_by_user: (await supabase.auth.getUser()).data.user?.id
+        created_by_user: internalUser.id // This should reference internal_users.id
       };
 
       const { data: newJob, error: jobError } = await supabase
