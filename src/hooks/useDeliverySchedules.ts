@@ -76,12 +76,61 @@ export const useDeliverySchedules = () => {
 
   const updateDeliveryStatus = async (scheduleId: string, status: string) => {
     try {
+      // First get delivery schedule details for notification
+      const { data: scheduleData, error: fetchError } = await supabase
+        .from('delivery_schedules')
+        .select(`
+          id,
+          delivery_status,
+          jobs (
+            id,
+            title,
+            tracking_code,
+            customer_uuid
+          )
+        `)
+        .eq('id', scheduleId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('delivery_schedules')
         .update({ delivery_status: status })
         .eq('id', scheduleId);
 
       if (error) throw error;
+
+      // Send notification to customer about status update
+      if (scheduleData?.jobs) {
+        const job = scheduleData.jobs;
+        let message = '';
+        
+        switch (status) {
+          case 'in_transit':
+            message = `Your job "${job.title}" (${job.tracking_code}) is now in transit for delivery.`;
+            break;
+          case 'delivered':
+            message = `Your job "${job.title}" (${job.tracking_code}) has been successfully delivered.`;
+            break;
+          case 'failed':
+            message = `Delivery attempt for your job "${job.title}" (${job.tracking_code}) was unsuccessful. We will contact you to reschedule.`;
+            break;
+          default:
+            message = `Your job "${job.title}" (${job.tracking_code}) delivery status has been updated to: ${status}.`;
+        }
+
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'email',
+            customer_id: job.customer_uuid,
+            event: 'delivery_status_update',
+            subject: 'Delivery Status Update',
+            message: message,
+            delivery_schedule_id: scheduleId
+          }
+        });
+      }
 
       toast({
         title: "Success",

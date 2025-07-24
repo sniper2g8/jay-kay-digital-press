@@ -151,9 +151,11 @@ export const DeliveryScheduleForm = () => {
         created_by: (await supabase.auth.getUser()).data.user?.id
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('delivery_schedules')
-        .insert(scheduleData);
+        .insert(scheduleData)
+        .select('id')
+        .single();
 
       if (error) throw error;
 
@@ -163,14 +165,15 @@ export const DeliveryScheduleForm = () => {
         const staffMember = staff.find(s => s.id === selectedStaff);
         const job = customerJobs.find(j => j.id.toString() === selectedJob);
 
-        if (customer && staffMember && job) {
+        if (customer && staffMember && job && data) {
           await supabase.functions.invoke('send-notification', {
             body: {
-              type: 'delivery_scheduled',
+              type: 'email',
               customer_id: selectedCustomer,
               event: 'delivery_scheduled',
               subject: 'Delivery Scheduled',
-              message: `Your job "${job.title}" (${job.tracking_code}) has been scheduled for delivery on ${new Date(scheduledDate).toLocaleDateString()}. Contact ${staffMember.name} at ${staffMember.phone} for any questions.`
+              message: `Your job "${job.title}" (${job.tracking_code}) has been scheduled for delivery on ${new Date(scheduledDate).toLocaleDateString()}. Contact ${staffMember.name} at ${staffMember.phone} for any questions.`,
+              delivery_schedule_id: data.id
             }
           });
         }
