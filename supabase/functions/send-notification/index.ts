@@ -12,7 +12,7 @@ interface NotificationRequest {
   customer_id: string;
   job_id?: number;
   delivery_schedule_id?: string;
-  event: 'job_submitted' | 'status_updated' | 'delivery_scheduled' | 'delivery_completed' | 'admin_job_submitted';
+  event: 'job_submitted' | 'status_updated' | 'delivery_scheduled' | 'delivery_completed' | 'delivery_status_update' | 'admin_job_submitted';
   subject?: string;
   message: string;
   custom_data?: any;
@@ -206,7 +206,7 @@ serve(async (req: Request) => {
 
     // Check if notifications are enabled for this event
     const isJobEvent = ['job_submitted', 'status_updated'].includes(event);
-    const isDeliveryEvent = ['delivery_scheduled', 'delivery_completed'].includes(event);
+    const isDeliveryEvent = ['delivery_scheduled', 'delivery_completed', 'delivery_status_update'].includes(event);
     
     const emailEnabled = preferences?.email_notifications && 
       ((isJobEvent && preferences?.job_status_updates) || 
