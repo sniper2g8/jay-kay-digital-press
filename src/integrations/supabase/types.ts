@@ -380,13 +380,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "delivery_schedules_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "internal_users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "delivery_schedules_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
