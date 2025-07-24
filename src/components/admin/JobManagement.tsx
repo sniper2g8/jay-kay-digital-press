@@ -169,13 +169,93 @@ export const JobManagement = () => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      // First delete related notification logs
+      // Delete all related records in the correct order
+      
+      // 1. Delete customer feedback
+      await supabase
+        .from("customer_feedback")
+        .delete()
+        .eq("job_id", jobId);
+
+      // 2. Delete delivery schedules and their history
+      const { data: deliverySchedules } = await supabase
+        .from("delivery_schedules")
+        .select("id")
+        .eq("job_id", jobId);
+
+      if (deliverySchedules) {
+        for (const schedule of deliverySchedules) {
+          await supabase
+            .from("delivery_history")
+            .delete()
+            .eq("delivery_schedule_id", schedule.id);
+        }
+        
+        await supabase
+          .from("delivery_schedules")
+          .delete()
+          .eq("job_id", jobId);
+      }
+
+      // 3. Delete job files
+      await supabase
+        .from("job_files")
+        .delete()
+        .eq("job_id", jobId);
+
+      // 4. Delete job finishing options
+      await supabase
+        .from("job_finishing_options")
+        .delete()
+        .eq("job_id", jobId);
+
+      // 5. Delete job history
+      await supabase
+        .from("job_history")
+        .delete()
+        .eq("job_id", jobId);
+
+      // 6. Delete notification logs
       await supabase
         .from("notifications_log")
         .delete()
         .eq("job_id", jobId);
 
-      // Then delete the job
+      // 7. Update any quotes that reference this job
+      await supabase
+        .from("quotes")
+        .update({ converted_to_job_id: null })
+        .eq("converted_to_job_id", jobId);
+
+      // 8. Delete any invoices for this job
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("job_id", jobId);
+
+      if (invoices) {
+        for (const invoice of invoices) {
+          // Delete invoice items first
+          await supabase
+            .from("invoice_items")
+            .delete()
+            .eq("invoice_id", invoice.id);
+          
+          // Delete payments
+          await supabase
+            .from("payments")
+            .delete()
+            .eq("invoice_id", invoice.id);
+        }
+        
+        // Delete invoices
+        await supabase
+          .from("invoices")
+          .delete()
+          .eq("job_id", jobId);
+      }
+
+      // 9. Finally delete the job
       const { error } = await supabase
         .from("jobs")
         .delete()
@@ -185,14 +265,14 @@ export const JobManagement = () => {
 
       toast({
         title: "Success",
-        description: "Job deleted successfully",
+        description: "Job and all related data deleted successfully",
       });
       fetchJobs();
     } catch (error) {
       console.error('Error deleting job:', error);
       toast({
         title: "Error",
-        description: "Failed to delete job",
+        description: `Failed to delete job: ${error.message}`,
         variant: "destructive",
       });
     }
