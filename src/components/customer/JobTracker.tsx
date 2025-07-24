@@ -182,9 +182,18 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
     }
 
     try {
+      // Get the cancelled status ID from workflow_status
+      const { data: cancelledStatus } = await supabase
+        .from('workflow_status')
+        .select('id')
+        .eq('name', 'Cancelled')
+        .single();
+
+      const statusId = cancelledStatus?.id || 9; // Fallback to 9 if not found
+
       const { error } = await supabase
         .from('jobs')
-        .update({ status: 'Cancelled', current_status: 9 })
+        .update({ status: 'Cancelled', current_status: statusId })
         .eq('id', jobId);
 
       if (error) throw error;
