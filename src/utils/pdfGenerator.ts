@@ -56,19 +56,74 @@ export const generateInvoicePDF = async (
     doc.roundedRect(x, y, w, h, r, r);
   };
 
+  // Helper function to add logo
+  const addLogo = async (logoUrl: string, x: number, y: number, width: number, height: number) => {
+    try {
+      const response = await fetch(logoUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      
+      return new Promise((resolve) => {
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+            ctx?.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            doc.addImage(dataUrl, 'JPEG', x, y, width, height);
+            resolve(true);
+          };
+          img.src = reader.result as string;
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error loading logo:', error);
+      return false;
+    }
+  };
+
+  // Helper function to generate QR code
+  const addQRCode = async (text: string, x: number, y: number, size: number) => {
+    try {
+      const QRCode = (await import('qrcode')).default;
+      const qrDataUrl = await QRCode.toDataURL(text, {
+        width: size * 4, // Higher resolution
+        margin: 1,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+      doc.addImage(qrDataUrl, 'PNG', x, y, size, size);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
+
   let yPosition = margin + 10;
 
-  // Header section - Company info (left) and INVOICE title (right)
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.text(companySettings.company_name, margin, yPosition);
+  // Add company logo if available
+  if (companySettings.logo_url) {
+    await addLogo(companySettings.logo_url, margin, yPosition, 40, 20);
+    // Company name next to logo
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text(companySettings.company_name, margin + 45, yPosition + 15);
+  } else {
+    // Header section - Company info (left) and INVOICE title (right)
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text(companySettings.company_name, margin, yPosition + 15);
+  }
   
   // INVOICE title - right aligned
   doc.setFontSize(36);
-  doc.text('INVOICE', pageWidth - margin, yPosition, { align: 'right' });
+  doc.text('INVOICE', pageWidth - margin, yPosition + 15, { align: 'right' });
 
-  yPosition += 8;
+  yPosition += 30;
 
   // Company details (left side) - styled like HTML
   doc.setFontSize(9);
@@ -323,6 +378,20 @@ export const generateInvoicePDF = async (
     doc.setTextColor(120, 120, 120);
     doc.text(invoiceData.notes, margin, totalsY, { maxWidth: pageWidth - 2 * margin });
   }
+
+  // Add QR Code for invoice tracking
+  const qrSize = 25;
+  const qrX = pageWidth - margin - qrSize;
+  const qrY = totalsY + 20;
+  // Use a generic invoice tracking URL since we're in PDF context
+  const invoiceUrl = `Invoice: ${invoiceData.invoice_number}`;
+  await addQRCode(invoiceUrl, qrX, qrY, qrSize);
+  
+  // QR Code label
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(120, 120, 120);
+  doc.text('Track Invoice', qrX + (qrSize / 2), qrY + qrSize + 5, { align: 'center' });
 
   // Footer with separator line - matching HTML
   const footerY = pageHeight - 20;
