@@ -169,15 +169,21 @@ export const JobManagement = () => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      // Delete all related records in the correct order
+      // Delete all related records in the correct order to avoid foreign key constraints
       
-      // 1. Delete customer feedback
+      // 1. Delete notification logs first (they reference job_id)
+      await supabase
+        .from("notifications_log")
+        .delete()
+        .eq("job_id", jobId);
+
+      // 2. Delete customer feedback
       await supabase
         .from("customer_feedback")
         .delete()
         .eq("job_id", jobId);
 
-      // 2. Delete delivery schedules and their history
+      // 3. Delete delivery schedules and their history
       const { data: deliverySchedules } = await supabase
         .from("delivery_schedules")
         .select("id")
@@ -197,27 +203,21 @@ export const JobManagement = () => {
           .eq("job_id", jobId);
       }
 
-      // 3. Delete job files
+      // 4. Delete job files
       await supabase
         .from("job_files")
         .delete()
         .eq("job_id", jobId);
 
-      // 4. Delete job finishing options
+      // 5. Delete job finishing options
       await supabase
         .from("job_finishing_options")
         .delete()
         .eq("job_id", jobId);
 
-      // 5. Delete job history
+      // 6. Delete job history
       await supabase
         .from("job_history")
-        .delete()
-        .eq("job_id", jobId);
-
-      // 6. Delete notification logs
-      await supabase
-        .from("notifications_log")
         .delete()
         .eq("job_id", jobId);
 
