@@ -66,26 +66,67 @@ export const generateQuotePDF = async (
     return `${companySettings.currency_symbol} ${amount.toLocaleString()}`;
   };
 
-  // Header - Company Info and Logo
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  };
+
+  // Header with professional design
+  // Add colored header background
+  const primaryColor = companySettings.primary_color || '#000000';
+  const rgb = hexToRgb(primaryColor);
+  doc.setFillColor(rgb.r, rgb.g, rgb.b);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  
+  // Add company logo
   if (companySettings.logo_url) {
     try {
-      doc.setFontSize(18);
+      // Create a promise to load the image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      // Load image as base64 for PDF
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 60;
+      canvas.height = 30;
+      
+      img.onload = () => {
+        ctx?.drawImage(img, 0, 0, 60, 30);
+        const logoDataUrl = canvas.toDataURL('image/png');
+        doc.addImage(logoDataUrl, 'PNG', margin, 8, 60, 30);
+      };
+      img.src = companySettings.logo_url;
+      
+      // Company name next to logo
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
-      doc.text(companySettings.company_name, margin + 30, yPosition);
-      yPosition += 15;
+      doc.text(companySettings.company_name, margin + 70, 25);
+      yPosition = 50;
     } catch (error) {
       console.warn('Could not load logo:', error);
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text(companySettings.company_name, margin, yPosition);
-      yPosition += 15;
+      doc.text(companySettings.company_name, margin, 25);
+      yPosition = 50;
     }
   } else {
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text(companySettings.company_name, margin, yPosition);
-    yPosition += 15;
+    doc.text(companySettings.company_name, margin, 25);
+    yPosition = 50;
   }
+  
+  // Reset text color for body content
+  doc.setTextColor(0, 0, 0);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -99,10 +140,16 @@ export const generateQuotePDF = async (
     yPosition = addText(`Email: ${companySettings.email}`, margin, yPosition) + 10;
   }
 
-  // Quote Title
-  doc.setFontSize(20);
+  // Quote Title with styling
+  const titleBg = hexToRgb(companySettings.primary_color || '#000000');
+  doc.setFillColor(titleBg.r, titleBg.g, titleBg.b, 0.1);
+  doc.rect(pageWidth - margin - 90, yPosition - 5, 85, 20, 'F');
+  
+  doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("QUOTATION", pageWidth - margin - 50, margin + 10);
+  doc.setTextColor(titleBg.r, titleBg.g, titleBg.b);
+  doc.text("QUOTATION", pageWidth - margin - 80, yPosition + 8);
+  doc.setTextColor(0, 0, 0);
 
   // Quote Details (Top Right)
   doc.setFontSize(10);
@@ -186,30 +233,43 @@ export const generateQuotePDF = async (
     
     const tableX = margin;
     
-    // Table headers
+    // Table headers with professional styling
+    const headerBg = hexToRgb(companySettings.primary_color || '#000000');
+    doc.setFillColor(headerBg.r, headerBg.g, headerBg.b);
+    doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, 12, 'F');
+    
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, 10);
-    doc.text("Description", tableX + 2, yPosition + 7);
-    doc.text("Qty", tableX + colWidths.description + 2, yPosition + 7);
-    doc.text("Unit Price", tableX + colWidths.description + colWidths.quantity + 2, yPosition + 7);
-    doc.text("Total", tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 7);
+    doc.setTextColor(255, 255, 255);
+    doc.text("Description", tableX + 2, yPosition + 8);
+    doc.text("Qty", tableX + colWidths.description + 2, yPosition + 8);
+    doc.text("Unit Price", tableX + colWidths.description + colWidths.quantity + 2, yPosition + 8);
+    doc.text("Total", tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 8);
+    doc.setTextColor(0, 0, 0);
     
-    yPosition += 10;
+    yPosition += 12;
 
-    // Table rows
+    // Table rows with alternating colors
     doc.setFont("helvetica", "normal");
-    quoteData.quote_items.forEach((item) => {
-      const rowHeight = 8;
+    quoteData.quote_items.forEach((item, index) => {
+      const rowHeight = 10;
       
-      // Draw row background
+      // Alternating row colors
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, rowHeight, 'F');
+      }
+      
+      // Row border
+      doc.setDrawColor(220, 220, 220);
       doc.rect(tableX, yPosition, colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.total, rowHeight);
       
       // Add text
-      doc.text(item.description, tableX + 2, yPosition + 5);
-      doc.text(item.quantity.toString(), tableX + colWidths.description + 2, yPosition + 5);
-      doc.text(formatCurrency(item.unit_price), tableX + colWidths.description + colWidths.quantity + 2, yPosition + 5);
-      doc.text(formatCurrency(item.total_price), tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 5);
+      doc.setFontSize(9);
+      doc.text(item.description, tableX + 2, yPosition + 6);
+      doc.text(item.quantity.toString(), tableX + colWidths.description + 8, yPosition + 6, { align: 'center' });
+      doc.text(formatCurrency(item.unit_price), tableX + colWidths.description + colWidths.quantity + 2, yPosition + 6);
+      doc.text(formatCurrency(item.total_price), tableX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition + 6);
       
       yPosition += rowHeight;
     });
