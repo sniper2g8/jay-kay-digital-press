@@ -47,6 +47,8 @@ interface JobFormData {
   finishing_options: string[];
   width_mm?: number;
   height_mm?: number;
+  delivery_method: string;
+  delivery_address?: string;
 }
 
 interface JobSubmissionFormProps {
@@ -60,9 +62,14 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sendJobSubmittedNotification, sendAdminJobNotification } = useNotifications();
   const { trackJobCreated } = useAnalytics();
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>();
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<JobFormData>({
+    defaultValues: {
+      delivery_method: "pickup"
+    }
+  });
 
   const serviceId = watch("service_id");
+  const deliveryMethod = watch("delivery_method");
 
   useEffect(() => {
     fetchServices();
@@ -136,7 +143,8 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
           customer_uuid: customer.id,
           service_id: parseInt(formData.service_id),
           current_status: 1, // Pending status
-          delivery_method: "Pickup",
+          delivery_method: formData.delivery_method,
+          delivery_address: formData.delivery_address,
           width: formData.width_mm,
           length: formData.height_mm,
           title: formData.title,
@@ -424,6 +432,41 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
               )}
             </div>
           )}
+
+          {/* Delivery Options */}
+          <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+            <h3 className="font-semibold">Delivery Options</h3>
+            
+            <div>
+              <Label htmlFor="delivery_method">Delivery Method *</Label>
+              <Select onValueChange={(value) => setValue("delivery_method", value)} defaultValue="pickup">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select delivery method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pickup">Pickup from Store</SelectItem>
+                  <SelectItem value="delivery">Home Delivery</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {deliveryMethod === "delivery" && (
+              <div>
+                <Label htmlFor="delivery_address">Delivery Address *</Label>
+                <Textarea
+                  id="delivery_address"
+                  {...register("delivery_address", { 
+                    required: deliveryMethod === "delivery" ? "Delivery address is required" : false 
+                  })}
+                  placeholder="Enter your complete delivery address..."
+                  rows={3}
+                />
+                {errors.delivery_address && (
+                  <p className="text-sm text-destructive mt-1">{errors.delivery_address.message}</p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* File Upload */}
           <div>
