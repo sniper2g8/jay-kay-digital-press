@@ -31,6 +31,7 @@ import { InvoiceManagement } from './InvoiceManagement';
 import { UserManagement } from './UserManagement';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { CompanySettings } from './CompanySettings';
+import { NotificationTester } from './NotificationTester';
 import { CustomerStatements } from '@/components/admin/CustomerStatements';
 import { DeliveryManagement } from './DeliveryManagement';
 import { ServiceManagement } from '@/components/admin/ServiceManagement';
@@ -48,6 +49,7 @@ const navigationItems = [
   { id: "statements", label: "Customer Statements", icon: FileText },
   { id: "staff", label: "Staff & Users", icon: Shield },
   { id: "payroll", label: "Payroll Management", icon: DollarSign },
+  { id: "notifications", label: "Test Notifications", icon: Bell },
   { id: "logs", label: "Notification Logs", icon: Bell },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
@@ -124,6 +126,7 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
             {activeView === "staff" && <UserManagement />}
             {activeView === "payroll" && <PayrollManagement />}
             {activeView === "logs" && <NotificationLogs />}
+            {activeView === "notifications" && <NotificationTester />}
             {activeView === "analytics" && <AnalyticsDashboard />}
             {activeView === "settings" && <CompanySettings />}
           </div>

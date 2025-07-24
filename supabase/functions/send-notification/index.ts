@@ -25,27 +25,31 @@ const supabase = createClient(
 );
 
 const sendSMS = async (phone: string, message: string) => {
-  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
+  const plivoAuthId = Deno.env.get('PLIVO_AUTH_ID');
+  const plivoAuthToken = Deno.env.get('PLIVO_AUTH_TOKEN');
+  const plivoPhoneNumber = Deno.env.get('PLIVO_PHONE_NUMBER');
 
-  if (!accountSid || !authToken || !twilioPhone) {
-    throw new Error('Twilio credentials not configured');
+  if (!plivoAuthId || !plivoAuthToken || !plivoPhoneNumber) {
+    throw new Error('Plivo credentials not configured');
   }
 
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-  const auth = btoa(`${accountSid}:${authToken}`);
+  // Clean and format Sierra Leone phone number
+  const cleanPhone = phone.replace(/\D/g, '');
+  const formattedPhone = cleanPhone.startsWith('232') ? `+${cleanPhone}` : `+232${cleanPhone}`;
+
+  const url = `https://api.plivo.com/v1/Account/${plivoAuthId}/Message/`;
+  const auth = btoa(`${plivoAuthId}:${plivoAuthToken}`);
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
-    body: new URLSearchParams({
-      From: twilioPhone,
-      To: phone,
-      Body: message,
+    body: JSON.stringify({
+      src: plivoPhoneNumber,
+      dst: formattedPhone,
+      text: message,
     }),
   });
 
@@ -276,13 +280,13 @@ serve(async (req: Request) => {
           undefined,
           message,
           'sent',
-          smsResult.sid,
+          smsResult.message_uuid?.[0] || smsResult.api_id,
           undefined,
           job_id,
           delivery_schedule_id
         );
         
-        console.log('SMS sent successfully:', smsResult.sid);
+        console.log('SMS sent successfully via Plivo:', smsResult.message_uuid);
       } catch (error) {
         errors.push(`SMS failed: ${error.message}`);
         await logNotification(
