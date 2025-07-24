@@ -94,29 +94,28 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   }, [watchedServiceId, services]);
 
   const fetchCustomers = async () => {
-    const { data, error } = await supabase
-      .from("customers")
-      .select(`
-        id, 
-        name, 
-        email, 
-        customer_display_id,
-        profiles!inner(id)
-      `)
-      .order("name");
-    
-    if (error) {
-      console.error("Error fetching customers:", error);
-      return;
+    try {
+      // Get all customers with their auth_user_id
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("id, name, email, customer_display_id, auth_user_id")
+        .order("name");
+
+      if (customerError) {
+        console.error("Error fetching customers:", customerError);
+        return;
+      }
+
+      // Transform to include the auth_user_id as profile_id (since that's what the foreign key expects)
+      const customersWithProfiles = customerData?.map(customer => ({
+        ...customer,
+        profile_id: customer.auth_user_id // Use auth_user_id as the profile_id reference
+      })) || [];
+
+      setCustomers(customersWithProfiles);
+    } catch (err) {
+      console.error("Unexpected error fetching customers:", err);
     }
-    
-    // Transform the data to include profile_id
-    const transformedData = data?.map(customer => ({
-      ...customer,
-      profile_id: customer.profiles?.[0]?.id
-    })) || [];
-    
-    setCustomers(transformedData);
   };
 
   const fetchServices = async () => {
@@ -140,8 +139,8 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
     try {
       // Find the selected customer to get both IDs
       const selectedCustomer = customers.find(c => c.id === data.customer_id);
-      if (!selectedCustomer || !selectedCustomer.profile_id) {
-        throw new Error("Selected customer not found or missing profile");
+      if (!selectedCustomer) {
+        throw new Error("Selected customer not found");
       }
 
       // Get the first available workflow status
@@ -158,8 +157,8 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       const jobData = {
         title: data.title,
         description: data.description,
-        customer_id: selectedCustomer.profile_id, // This should reference profiles.id
-        customer_uuid: selectedCustomer.id, // This should reference customers.id
+        customer_id: selectedCustomer.profile_id, // This references profiles.id (auth_user_id)
+        customer_uuid: selectedCustomer.id, // This references customers.id
         service_id: parseInt(data.service_id),
         quantity: data.quantity,
         service_subtype: data.service_subtype || null,
