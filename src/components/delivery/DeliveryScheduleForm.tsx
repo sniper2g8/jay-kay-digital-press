@@ -40,7 +40,7 @@ export const DeliveryScheduleForm = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedJob, setSelectedJob] = useState('');
   const [selectedStaff, setSelectedStaff] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
@@ -93,7 +93,7 @@ export const DeliveryScheduleForm = () => {
         .from('jobs')
         .select('id, title, tracking_code, status, delivery_method, delivery_address')
         .eq('customer_uuid', customerId)
-        .in('status', ['In Progress', 'Ready for Delivery', 'Completed'])
+        .in('status', ['Ready for Delivery', 'Waiting for Collection'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
