@@ -173,9 +173,9 @@ export const InvoiceEditDialog = ({ isOpen, onClose, onInvoiceUpdated, invoice }
 
     try {
       const subtotal = calculateSubtotal();
-      const taxRate = 0.15; // 15% tax
-      const taxAmount = subtotal * taxRate;
-      const totalAmount = subtotal + taxAmount;
+      const taxRate = 0; // No tax applied
+      const taxAmount = 0;
+      const totalAmount = subtotal; // Total equals subtotal (no tax)
 
       // Update invoice
       const { error: invoiceError } = await supabase
@@ -376,13 +376,9 @@ export const InvoiceEditDialog = ({ isOpen, onClose, onInvoiceUpdated, invoice }
                 <span>Subtotal:</span>
                 <span>Le {calculateSubtotal().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Tax (15%):</span>
-                <span>Le {(calculateSubtotal() * 0.15).toFixed(2)}</span>
-              </div>
               <div className="flex justify-between font-bold">
                 <span>Total:</span>
-                <span>Le {(calculateSubtotal() * 1.15).toFixed(2)}</span>
+                <span>Le {calculateSubtotal().toFixed(2)}</span>
               </div>
             </div>
           </div>

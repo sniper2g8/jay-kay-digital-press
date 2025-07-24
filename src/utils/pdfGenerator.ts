@@ -325,17 +325,6 @@ export const generateInvoicePDF = async (
   doc.setTextColor(0, 0, 0);
   doc.text(formatCurrency(invoiceData.subtotal), totalsX + totalsWidth, totalsY, { align: 'right' });
 
-  // Tax (if applicable)
-  if (invoiceData.tax_amount > 0) {
-    totalsY += 8;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120, 120, 120);
-    doc.text('Tax:', totalsX, totalsY);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 0, 0);
-    doc.text(formatCurrency(invoiceData.tax_amount), totalsX + totalsWidth, totalsY, { align: 'right' });
-  }
-
   // Separator line
   totalsY += 6;
   doc.setDrawColor(200, 200, 200);
