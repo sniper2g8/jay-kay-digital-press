@@ -56,7 +56,7 @@ export const generateInvoicePDF = async (
     doc.roundedRect(x, y, w, h, r, r);
   };
 
-  // Helper function to add logo
+  // Helper function to add logo with high quality
   const addLogo = async (logoUrl: string, x: number, y: number, width: number, height: number) => {
     try {
       const response = await fetch(logoUrl);
@@ -67,13 +67,24 @@ export const generateInvoicePDF = async (
         reader.onload = () => {
           const img = new Image();
           img.onload = () => {
+            // Use higher resolution canvas for better quality
+            const scale = 3; // 3x resolution for crisp output
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = width;
-            canvas.height = height;
-            ctx?.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            doc.addImage(dataUrl, 'JPEG', x, y, width, height);
+            
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+            
+            // Enable image smoothing for better quality
+            if (ctx) {
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // Use PNG format with maximum quality for logos
+            const dataUrl = canvas.toDataURL('image/png', 1.0);
+            doc.addImage(dataUrl, 'PNG', x, y, width, height);
             resolve(true);
           };
           img.src = reader.result as string;
@@ -105,12 +116,12 @@ export const generateInvoicePDF = async (
 
   // Add company logo if available
   if (companySettings.logo_url) {
-    await addLogo(companySettings.logo_url, margin, yPosition, 40, 20);
-    // Company name next to logo
-    doc.setFontSize(20);
+    await addLogo(companySettings.logo_url, margin, yPosition, 50, 25);
+    // Company name next to logo - positioned better
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0, 0, 0);
-    doc.text(companySettings.company_name, margin + 45, yPosition + 15);
+    doc.text(companySettings.company_name, margin + 55, yPosition + 18);
   } else {
     // Header section - Company info (left) and INVOICE title (right)
     doc.setFontSize(24);
