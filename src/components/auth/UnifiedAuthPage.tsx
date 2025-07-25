@@ -54,8 +54,15 @@ export const UnifiedAuthPage = () => {
           return;
         }
 
-        if (formData.password.length < 6) {
-          toast.error('Password must be at least 6 characters');
+        // Enhanced password validation
+        if (formData.password.length < 8) {
+          toast.error('Password must be at least 8 characters');
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+          toast.error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
           setIsLoading(false);
           return;
         }
@@ -217,7 +224,7 @@ export const UnifiedAuthPage = () => {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder={isSignUp ? "Create a password (min. 6 characters)" : "Enter your password"}
+                    placeholder={isSignUp ? "Create a strong password (min. 8 characters)" : "Enter your password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     className="pl-10 pr-10"
