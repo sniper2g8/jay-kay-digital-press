@@ -461,9 +461,18 @@ export const Homepage = () => {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>+232 34 788711, +232 30 741062</li>
-                <li>jaykaydigitalpress@gmail.com</li>
-                <li>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</li>
+                <li className="flex items-center gap-2">
+                  <Phone className="h-6 w-6 min-w-[1.5rem] min-h-[1.5rem] text-red-500" />
+                  +232 34 788711, +232 30 741062
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail className="h-6 w-6 min-w-[1.5rem] min-h-[1.5rem] text-red-500" />
+                  jaykaydigitalpress@gmail.com
+                </li>
+                <li className="flex items-center gap-2">
+                  <MapPin className="h-6 w-6 min-w-[1.5rem] min-h-[1.5rem] text-red-500" />
+                  St. Edward School Avenue, By Caritas, Freetown, Sierra Leone
+                </li>
               </ul>
             </div>
           </div>

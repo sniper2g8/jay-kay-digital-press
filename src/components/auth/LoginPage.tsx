@@ -99,9 +99,7 @@ export const LoginPage = () => {
             Back to Homepage
           </Link>
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-              <CompanyLogo className="w-6 h-6" />
-            </div>
+            <CompanyLogo className="w-10 h-10 mr-3" />
             <div className="text-left">
               <h1 className="text-2xl font-bold text-foreground">
                 {settings?.company_name || 'Loading...'}
