@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LogoHeader } from "@/components/common/LogoHeader";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,9 @@ const AppContent = () => {
   return (
     <AuthProvider>
       <LogoHeader />
+      <div className="fixed top-4 right-4 z-50">
+        <OfflineIndicator />
+      </div>
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}

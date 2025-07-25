@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { OfflineSync } from '@/utils/offlineSync';
+import { useOffline } from '@/hooks/useOffline';
 
 export interface Job {
   id: number;
@@ -28,36 +30,66 @@ export const useJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { isOnline } = useOffline();
 
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          customers!jobs_customer_uuid_fkey(name),
-          services(name)
-        `)
-        .order('created_at', { ascending: false });
+      
+      if (isOnline) {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select(`
+            *,
+            customers!jobs_customer_uuid_fkey(name),
+            services(name)
+          `)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const formattedJobs = data?.map(job => ({
-        ...job,
-        customer_name: job.customers?.name,
-        service_name: job.services?.name,
-        status_name: job.status || 'Unknown'
-      })) || [];
+        const formattedJobs = data?.map(job => ({
+          ...job,
+          customer_name: job.customers?.name,
+          service_name: job.services?.name,
+          status_name: job.status || 'Unknown'
+        })) || [];
 
-      setJobs(formattedJobs);
+        setJobs(formattedJobs);
+        
+        // Sync to local storage
+        await OfflineSync.syncJobsToLocal();
+      } else {
+        // Load from local storage when offline
+        const localJobs = await OfflineSync.getJobsFromLocal();
+        setJobs(localJobs);
+        
+        toast({
+          title: "Offline Mode",
+          description: "Showing cached data. Some information may be outdated.",
+          variant: "default"
+        });
+      }
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch jobs",
-        variant: "destructive"
-      });
+      
+      // Try to load from local storage as fallback
+      try {
+        const localJobs = await OfflineSync.getJobsFromLocal();
+        setJobs(localJobs);
+        
+        toast({
+          title: "Connection Issue",
+          description: "Showing cached data. Check your connection.",
+          variant: "destructive"
+        });
+      } catch (localError) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch jobs",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }
