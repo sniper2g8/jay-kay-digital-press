@@ -180,17 +180,7 @@ export const DeliveryScheduleList = () => {
 
   const deleteDeliverySchedule = async (scheduleId: string) => {
     try {
-      // First, delete any notification logs that reference this delivery schedule
-      const { error: notificationError } = await supabase
-        .from('notifications_log')
-        .delete()
-        .eq('delivery_schedule_id', scheduleId);
-
-      if (notificationError) {
-        console.warn('Warning deleting notifications:', notificationError);
-      }
-
-      // Then delete the delivery schedule
+      // Delete the delivery schedule (CASCADE will handle related records)
       const { error } = await supabase
         .from('delivery_schedules')
         .delete()
