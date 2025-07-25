@@ -35,13 +35,14 @@ export default defineConfig(({ mode }) => ({
           ],
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-query': ['@tanstack/react-query'],
+          // PDF library gets its own chunk due to size
           'vendor-pdf': ['@react-pdf/renderer'],
           'vendor-charts': ['recharts'],
           'vendor-icons': ['lucide-react'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority'],
           
-          // App chunks
+          // App chunks - exclude PDF components from main chunks
           'admin': [
             '/src/components/admin/AdminDashboard',
             '/src/components/admin/JobManagement', 
@@ -58,11 +59,18 @@ export default defineConfig(({ mode }) => ({
             '/src/components/auth/AuthPage',
             '/src/components/auth/LoginPage', 
             '/src/components/auth/RegisterPage'
+          ],
+          // PDF components in separate chunk
+          'pdf-components': [
+            '/src/components/pdf/InvoicePDF',
+            '/src/components/pdf/QuotePDF',
+            '/src/utils/pdfGenerator',
+            '/src/utils/quotePdfGenerator'
           ]
         }
       }
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 1500, // Increased to accommodate PDF library
     target: 'esnext',
     minify: true
   }

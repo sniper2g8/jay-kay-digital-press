@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Receipt, Download, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 interface Invoice {
@@ -127,7 +126,8 @@ export const InvoiceView = ({ userId }: InvoiceViewProps) => {
         currency_symbol: settings.currency_symbol || 'Le'
       };
 
-      // Generate and download PDF
+      // Dynamically import PDF generator to reduce bundle size
+      const { generateInvoicePDF } = await import('@/utils/pdfGenerator');
       const pdfBlob = await generateInvoicePDF(invoiceData, companySettings);
       
       // Create download link
