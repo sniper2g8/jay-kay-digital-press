@@ -472,3 +472,5 @@ export const SimpleHomepage = () => {
     </div>
   );
 };
+
+export default SimpleHomepage;

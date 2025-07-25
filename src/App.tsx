@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { SimpleHomepage } from "@/pages/SimpleHomepage";
+import { Toaster } from "@/components/ui/toaster";
+import SimpleHomepage from "@/pages/SimpleHomepage";
 const UnifiedAuthPage = lazy(() => import("./components/auth/UnifiedAuthPage").then(module => ({ default: module.UnifiedAuthPage })));
 const LoginPage = lazy(() => import("./components/auth/LoginPage").then(module => ({ default: module.LoginPage })));
 const JobTrackingPage = lazy(() => import("./pages/JobTrackingPage").then(module => ({ default: module.JobTrackingPage })));
@@ -50,6 +51,7 @@ const App = () => {
             </Routes>
           </Suspense>
         </BrowserRouter>
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
