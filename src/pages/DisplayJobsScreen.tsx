@@ -20,6 +20,8 @@ interface Job {
 }
 
 export const DisplayJobsScreen = () => {
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { settings } = useCompanySettings();
@@ -117,93 +119,112 @@ export const DisplayJobsScreen = () => {
     return jobs.length;
   };
 
+  // Status summary counts
+  const statusSummary = [
+    { label: "Pending", value: jobs.filter(j => j.status.toLowerCase() === "pending").length, color: "bg-yellow-500", icon: <Clock className="h-5 w-5" /> },
+    { label: "Processing", value: jobs.filter(j => ["processing", "printing", "finishing"].includes(j.status.toLowerCase())).length, color: "bg-orange-500", icon: <Package className="h-5 w-5" /> },
+    { label: "Out for Delivery", value: jobs.filter(j => ["out for delivery", "waiting for collection"].includes(j.status.toLowerCase())).length, color: "bg-indigo-500", icon: <TruckIcon className="h-5 w-5" /> },
+    { label: "Completed", value: jobs.filter(j => j.status.toLowerCase() === "completed").length, color: "bg-green-500", icon: <CheckCircle className="h-5 w-5" /> },
+  ];
+
+  // Filter jobs by status if filter is set
+  const visibleJobs = statusFilter ? jobs.filter(j => {
+    switch (statusFilter) {
+      case "Pending": return j.status.toLowerCase() === "pending";
+      case "Processing": return ["processing", "printing", "finishing"].includes(j.status.toLowerCase());
+      case "Out for Delivery": return ["out for delivery", "waiting for collection"].includes(j.status.toLowerCase());
+      case "Completed": return j.status.toLowerCase() === "completed";
+      default: return true;
+    }
+  }) : jobs;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      {/* Header */}
+      {/* Header & Summary Bar */}
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-800 mb-2">
           {settings?.company_name || "Loading..."}
         </h1>
-        <p className="text-xl text-gray-600 mb-4">Live Job Progress Display</p>
+        <p className="text-xl text-gray-600 mb-2">Live Job Progress Display</p>
+        <p className="text-sm text-indigo-500 mb-4 font-semibold tracking-wide">Your trusted digital press partner</p>
         <div className="flex justify-center items-center gap-6 text-lg text-gray-700 mb-4">
-          <Calendar className="h-5 w-5" />
+          <Calendar className="h-5 w-5 text-indigo-500" />
           <span>{currentTime.toLocaleDateString()}</span>
-          <Clock className="h-5 w-5" />
+          <Clock className="h-5 w-5 text-indigo-500" />
           <span>{currentTime.toLocaleTimeString()}</span>
         </div>
-        <div className="bg-white/80 rounded-lg p-4 inline-block">
-          <p className="text-2xl font-bold text-primary">
+        <div className="backdrop-blur-md bg-white/40 rounded-2xl p-5 inline-block shadow-lg border border-white/20 mb-6">
+          <p className="text-2xl font-bold text-primary bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
             Total Active Jobs: {getTotalJobCount()}
           </p>
         </div>
+        {/* Status Summary Bar */}
+        <div className="flex flex-wrap justify-center gap-4 mb-2">
+          {statusSummary.map((stat) => (
+            <button
+              key={stat.label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold shadow-md transition-all duration-200 ${stat.color} bg-opacity-80 text-white hover:scale-105 hover:shadow-lg focus:outline-none ${statusFilter === stat.label ? 'ring-2 ring-indigo-400' : ''}`}
+              onClick={() => setStatusFilter(statusFilter === stat.label ? null : stat.label)}
+            >
+              {stat.icon}
+              <span>{stat.label}</span>
+              <span className="ml-2 px-2 py-1 rounded bg-white/20 text-xs font-bold">{stat.value}</span>
+            </button>
+          ))}
+        </div>
+        {statusFilter && (
+          <button className="mt-2 text-xs text-indigo-600 underline" onClick={() => setStatusFilter(null)}>
+            Clear Filter
+          </button>
+        )}
       </div>
 
-      {/* Job Status Groups */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {Object.entries(groupJobsByStatus()).map(([statusGroup, groupJobs]) => (
-          <Card key={statusGroup} className="shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl text-center text-gray-800">
-                {statusGroup} ({groupJobs.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {groupJobs.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No jobs in this category</p>
+      {/* Unified Job Grid - No Scrolling, All Jobs Visible */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 mt-8">
+        {visibleJobs.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-gray-500">
+            <Package className="h-16 w-16 mx-auto mb-4 opacity-50 text-indigo-400" />
+            <p className="text-lg">No jobs available</p>
+          </div>
+        ) : (
+          visibleJobs.map((job) => (
+            <Card key={job.id} className="backdrop-blur-md bg-white/60 shadow-xl rounded-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-200/20 hover:border-white/30">
+              <CardContent className="p-5 flex flex-col gap-2">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-800 mb-1">{job.title}</h3>
+                    <p className="text-gray-600 text-sm">{job.services.name} • Qty: {job.quantity}</p>
                   </div>
-                ) : (
-                  groupJobs.map((job) => (
-                    <Card key={job.id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-gray-800 mb-1">
-                              {job.title}
-                            </h3>
-                            <p className="text-gray-600 text-sm">
-                              {job.services.name} • Qty: {job.quantity}
-                            </p>
-                          </div>
-                          <Badge 
-                            variant="secondary" 
-                            className={`${getStatusColor(job.status)} text-white flex items-center gap-2 px-3 py-1`}
-                          >
-                            {getStatusIcon(job.status)}
-                            {job.status}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-gray-700">
-                              {new Date(job.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="font-mono text-gray-700">{job.tracking_code}</span>
-                          </div>
-                        </div>
-
-                        {job.estimated_completion && (
-                          <div className="mt-3 p-2 bg-blue-50 rounded">
-                            <p className="text-sm text-blue-700">
-                              <strong>Est. Completion:</strong> {new Date(job.estimated_completion).toLocaleDateString()}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
+                  <Badge 
+                    variant="secondary" 
+                    className={`${getStatusColor(job.status)} bg-opacity-90 backdrop-blur-sm text-white flex items-center gap-2 px-3 py-1 rounded-full shadow-sm cursor-pointer`} 
+                    onClick={() => setStatusFilter(job.status)}
+                  >
+                    {getStatusIcon(job.status)}
+                    {job.status}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-indigo-500" />
+                    <span className="text-gray-700">{new Date(job.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-indigo-500" />
+                    <span className="font-mono text-gray-700">{job.tracking_code}</span>
+                  </div>
+                </div>
+                {job.estimated_completion && (
+                  <div className="mt-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100/50">
+                    <p className="text-xs bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent font-medium">
+                      <strong>Est. Completion:</strong> {new Date(job.estimated_completion).toLocaleDateString()}
+                    </p>
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Footer */}
