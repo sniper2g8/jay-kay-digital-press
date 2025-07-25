@@ -44,6 +44,9 @@ export const JobTrackingPage = () => {
   useEffect(() => {
     if (trackingCode) {
       fetchJob();
+    } else {
+      // If no tracking code in URL, stop loading and show search interface
+      setLoading(false);
     }
   }, [trackingCode]);
 
@@ -164,6 +167,65 @@ export const JobTrackingPage = () => {
     );
   }
 
+  if (!job && !trackingCode) {
+    // Show search interface when no tracking code in URL
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-card">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold">{settings?.company_name || 'Loading...'}</h1>
+                <p className="text-sm text-muted-foreground">Job Tracking</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="text-center py-12">
+                <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">Track Your Job</h2>
+                <p className="text-muted-foreground mb-6">
+                  Enter your tracking code to see the progress of your printing job
+                </p>
+                <div className="max-w-md mx-auto">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const code = formData.get('tracking_code') as string;
+                    if (code.trim()) {
+                      navigate(`/track/${code.trim()}`);
+                    }
+                  }} className="space-y-4">
+                    <div>
+                      <input
+                        type="text"
+                        name="tracking_code"
+                        placeholder="Enter tracking code (e.g., JKDP-0001)"
+                        className="w-full px-4 py-3 border rounded-lg text-center font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoFocus
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">
+                      Track Job
+                    </Button>
+                  </form>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!job) {
     return (
       <div className="min-h-screen bg-background">
@@ -176,9 +238,9 @@ export const JobTrackingPage = () => {
                 <p className="text-muted-foreground mb-6">
                   We couldn't find a job with tracking code: {trackingCode}
                 </p>
-                <Button onClick={() => navigate("/")}>
+                <Button onClick={() => navigate("/track")}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Go Home
+                  Try Another Code
                 </Button>
               </CardContent>
             </Card>
