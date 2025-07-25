@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { 
   FileText, 
   Image, 
@@ -19,7 +20,7 @@ import {
   Mail,
   MapPin,
   Send,
-  Globe
+  WifiOff
 } from "lucide-react";
 
 // Hardcoded services data - no Supabase fetching needed
@@ -76,6 +77,7 @@ const COMPANY_STATS = [
 
 export const SimpleHomepage = () => {
   const navigate = useNavigate();
+  const isOnline = useOfflineStatus();
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -85,15 +87,26 @@ export const SimpleHomepage = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle contact form submission - could integrate with email service later
+    if (!isOnline) {
+      alert("Contact form requires internet connection. Please try again when you're online.");
+      return;
+    }
     // Contact form submitted successfully
     // Reset form
     setContactForm({ name: "", email: "", phone: "", message: "" });
-    // You could add a toast notification here
+    alert("Thank you for your message! We'll get back to you soon.");
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Offline Indicator */}
+      {!isOnline && (
+        <div className="bg-yellow-500 text-white px-4 py-2 text-center">
+          <WifiOff className="inline-block w-4 h-4 mr-2" />
+          You're offline. Some features may be limited.
+        </div>
+      )}
+      
       {/* Header */}
       <header className="bg-background border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

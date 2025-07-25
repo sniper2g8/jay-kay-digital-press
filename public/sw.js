@@ -1,9 +1,13 @@
-const CACHE_NAME = 'jay-kay-digital-v1';
+const CACHE_NAME = 'jay-kay-digital-v2';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/auth',
+  '/login',
+  '/track',
+  '/dashboard',
+  '/manifest.json',
+  '/lovable-uploads/206bc571-58ab-4338-87a3-922114137a36.png',
+  '/lovable-uploads/6547acd2-7a0c-4b2d-ad63-4957c2a7b57b.png'
 ];
 
 // Install event - cache resources

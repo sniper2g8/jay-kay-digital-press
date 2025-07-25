@@ -1,73 +1,135 @@
-# Welcome to your Lovable project
+# Jay Kay Digital Press
 
-## Project info
+A modern, offline-capable web application for professional printing services in Sierra Leone.
 
-**URL**: https://lovable.dev/projects/0fac3561-c8d6-48f4-ba31-c7ab3481bb93
+## Features
 
-## How can I edit this code?
+- 🎨 **Modern UI/UX** - Beautiful, responsive design with Tailwind CSS
+- 📱 **Progressive Web App** - Installable with offline capabilities
+- 🔒 **Secure Authentication** - Supabase-powered user management
+- 📊 **Admin Dashboard** - Complete job and customer management
+- 🗃️ **Database Integration** - PostgreSQL with Supabase
+- 🌐 **Offline Support** - Service worker for offline functionality
+- 📈 **Analytics** - Built-in analytics and reporting
+- 🖨️ **PDF Generation** - Professional invoices and quotes
+- 📧 **Notifications** - Email and SMS notification system
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend:** React 18, TypeScript, Tailwind CSS
+- **Backend:** Supabase (PostgreSQL, Auth, Storage)
+- **Build Tool:** Vite
+- **UI Components:** Shadcn/ui, Radix UI
+- **Charts:** Recharts
+- **PDF:** React PDF
+- **Icons:** Lucide React
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0fac3561-c8d6-48f4-ba31-c7ab3481bb93) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ 
+- npm or yarn
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd jay-kay-digital-press
+```
 
-Follow these steps:
+2. Install dependencies
+```bash
+npm install
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Start the development server
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Production Build
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# Build for production
+npm run build
 
-**Use GitHub Codespaces**
+# Preview production build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/          # Reusable UI components
+│   ├── admin/          # Admin dashboard components
+│   ├── auth/           # Authentication components
+│   ├── common/         # Shared components
+│   ├── customer/       # Customer portal components
+│   └── ui/             # Base UI components (shadcn/ui)
+├── contexts/           # React contexts
+├── hooks/              # Custom hooks
+├── integrations/       # Third-party integrations
+├── lib/               # Utility libraries
+├── pages/             # Page components
+├── utils/             # Utility functions
+└── assets/            # Static assets
+```
 
-This project is built with:
+## Features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### For Customers
+- Service browsing and quote requests
+- Job submission with file uploads
+- Order tracking
+- Invoice viewing and payment
+- Profile management
 
-## How can I deploy this project?
+### For Admin/Staff
+- Complete dashboard with analytics
+- Job management and workflow
+- Customer management
+- Invoice and quote generation
+- Service management
+- User and role management
+- Notification system
+
+## Offline Capabilities
+
+The app includes comprehensive offline support:
+
+- **Service Worker** - Caches critical resources
+- **Offline Indicator** - Shows connection status
+- **Local Storage** - Stores data for offline access
+- **Background Sync** - Syncs data when connection returns
+
+## Security
+
+- Row Level Security (RLS) policies
+- Input validation and sanitization
+- Secure authentication with Supabase
+- HTTPS enforcement
+- Security headers via .htaccess
+
+## Performance
+
+- Code splitting with React.lazy()
+- Image optimization
+- Compression enabled
+- Caching strategies
+- Lighthouse score optimized
+
+## Deployment
 
 Simply open [Lovable](https://lovable.dev/projects/0fac3561-c8d6-48f4-ba31-c7ab3481bb93) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+For custom domains, navigate to Project > Settings > Domains and click Connect Domain.
 
-Yes, you can!
+## Contact
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Jay Kay Digital Press
+- Email: jaykaydigitalpress@gmail.com
+- Phone: +232 34 788711, +232 30 741062
+- Address: St. Edward School Avenue, By Caritas, Freetown, Sierra Leone
