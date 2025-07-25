@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Upload, X, File, Image } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { FINISHING_OPTIONS } from "@/constants/services";
 
 interface Customer {
@@ -673,12 +674,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                             <span>Uploading...</span>
                             <span>{progress}%</span>
                           </div>
-                          <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                            <div 
-                              className="bg-primary h-1.5 rounded-full transition-all duration-300" 
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
+                          <Progress value={progress} className="h-2 mt-1" />
                         </div>
                       )}
                     </div>

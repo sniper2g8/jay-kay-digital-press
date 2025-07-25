@@ -346,9 +346,19 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
                       </Button>
                     </div>
 
-                    {isFileUploading && (
-                      <div className="mb-4">
-                        <Progress value={progress} className="h-2" />
+                    {Object.keys(uploadProgress).length > 0 && (
+                      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                        <div className="text-sm font-medium mb-2">Upload Progress</div>
+                        {Object.entries(uploadProgress).map(([fileKey, progress]) => {
+                          const fileName = fileKey.split('-')[0];
+                          return (
+                            <div key={fileKey} className="flex items-center gap-2 mb-2">
+                              <span className="text-sm truncate flex-1">{fileName}</span>
+                              <span className="text-sm">{progress}%</span>
+                              <Progress value={progress} className="w-24 h-2" />
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
