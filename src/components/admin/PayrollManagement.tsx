@@ -359,24 +359,89 @@ export const PayrollManagement = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("employees")
-        .update({
+      // Determine if this is an internal user or non-system staff
+      const isInternalUser = selectedEmployee.id.startsWith('internal_');
+      const isNonSystemStaff = selectedEmployee.id.startsWith('staff_');
+      
+      let actualUserId = selectedEmployee.id;
+      if (isInternalUser) {
+        actualUserId = selectedEmployee.id.replace('internal_', '');
+      } else if (isNonSystemStaff) {
+        actualUserId = selectedEmployee.id.replace('staff_', '');
+      }
+
+      // Check if employee record already exists
+      let existingEmployee = null;
+      if (isInternalUser) {
+        const { data } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("internal_user_id", actualUserId)
+          .maybeSingle();
+        existingEmployee = data;
+      } else if (isNonSystemStaff) {
+        const { data } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("non_system_staff_id", actualUserId)
+          .maybeSingle();
+        existingEmployee = data;
+      } else {
+        // Direct employee ID
+        const { data } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("id", selectedEmployee.id)
+          .maybeSingle();
+        existingEmployee = data;
+      }
+
+      if (existingEmployee) {
+        // Update existing employee record
+        const { error } = await supabase
+          .from("employees")
+          .update({
+            salary: editSalary.salary,
+            allowances: editSalary.allowances,
+            deductions: editSalary.deductions
+          })
+          .eq("id", existingEmployee.id);
+
+        if (error) throw error;
+      } else {
+        // Create new employee record
+        const employeeData: any = {
+          name: selectedEmployee.name,
+          email: selectedEmployee.email,
+          phone: selectedEmployee.phone,
           salary: editSalary.salary,
           allowances: editSalary.allowances,
-          deductions: editSalary.deductions
-        })
-        .eq("id", selectedEmployee.id);
+          deductions: editSalary.deductions,
+          is_active: true
+        };
 
-      if (error) throw error;
+        if (isInternalUser) {
+          employeeData.internal_user_id = actualUserId;
+          employeeData.role = 'SystemUser';
+        } else if (isNonSystemStaff) {
+          employeeData.non_system_staff_id = actualUserId;
+          employeeData.role = 'NonSystemStaff';
+        }
+
+        const { error } = await supabase
+          .from("employees")
+          .insert(employeeData);
+
+        if (error) throw error;
+      }
 
       toast.success("Salary updated successfully");
       setIsEditSalaryDialogOpen(false);
       setSelectedEmployee(null);
-      fetchEmployees();
+      fetchEmployees(); // Refresh the employee list
     } catch (error: any) {
       console.error("Error updating salary:", error);
-      toast.error("Failed to update salary");
+      toast.error(`Failed to update salary: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
