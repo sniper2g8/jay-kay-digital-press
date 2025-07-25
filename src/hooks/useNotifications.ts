@@ -58,45 +58,84 @@ export const useNotifications = () => {
   };
 
   const sendJobSubmittedNotification = async (customerId: string, jobId: number, jobTitle: string) => {
+    // Fetch job details to get tracking code
+    const { data: job } = await supabase
+      .from('jobs')
+      .select('tracking_code')
+      .eq('id', jobId)
+      .single();
+    
+    const trackingInfo = job?.tracking_code ? `\n\nJob Number: ${jobId}\nTracking ID: ${job.tracking_code}` : `\n\nJob Number: ${jobId}`;
+    
     return sendNotification({
       customer_id: customerId,
       job_id: jobId,
       event: 'job_submitted',
       subject: `Job Submitted Successfully - ${jobTitle}`,
-      message: `Your print job "${jobTitle}" has been submitted successfully. We'll notify you when it's ready for pickup or delivery.`,
+      message: `Your print job "${jobTitle}" has been submitted successfully. We'll notify you when it's ready for pickup or delivery.${trackingInfo}`,
     });
   };
 
   const sendStatusUpdateNotification = async (customerId: string, jobId: number, jobTitle: string, newStatus: string) => {
+    // Fetch job details to get tracking code
+    const { data: job } = await supabase
+      .from('jobs')
+      .select('tracking_code')
+      .eq('id', jobId)
+      .single();
+    
+    const trackingInfo = job?.tracking_code ? `\n\nJob Number: ${jobId}\nTracking ID: ${job.tracking_code}` : `\n\nJob Number: ${jobId}`;
+    
     return sendNotification({
       customer_id: customerId,
       job_id: jobId,
       event: 'status_updated',
       subject: `Job Status Update - ${jobTitle}`,
-      message: `Your print job "${jobTitle}" status has been updated to: ${newStatus}`,
+      message: `Your print job "${jobTitle}" status has been updated to: ${newStatus}${trackingInfo}`,
     });
   };
 
   const sendDeliveryNotification = async (customerId: string, deliveryScheduleId: string, jobTitle: string, status: 'scheduled' | 'completed') => {
     const isCompleted = status === 'completed';
+    
+    // Fetch job details to get tracking code from delivery schedule
+    const { data: delivery } = await supabase
+      .from('delivery_schedules')
+      .select('job_id, jobs(tracking_code)')
+      .eq('id', deliveryScheduleId)
+      .single();
+    
+    const jobId = delivery?.job_id;
+    const trackingCode = delivery?.jobs?.tracking_code;
+    const trackingInfo = trackingCode ? `\n\nJob Number: ${jobId}\nTracking ID: ${trackingCode}` : jobId ? `\n\nJob Number: ${jobId}` : '';
+    
     return sendNotification({
       customer_id: customerId,
       delivery_schedule_id: deliveryScheduleId,
       event: isCompleted ? 'delivery_completed' : 'delivery_scheduled',
       subject: `Delivery ${isCompleted ? 'Completed' : 'Scheduled'} - ${jobTitle}`,
       message: isCompleted 
-        ? `Your print job "${jobTitle}" has been delivered successfully.`
-        : `Your print job "${jobTitle}" has been scheduled for delivery.`,
+        ? `Your print job "${jobTitle}" has been delivered successfully.${trackingInfo}`
+        : `Your print job "${jobTitle}" has been scheduled for delivery.${trackingInfo}`,
     });
   };
 
   const sendAdminJobNotification = async (customerId: string, jobId: number, jobTitle: string, customerName: string) => {
+    // Fetch job details to get tracking code
+    const { data: job } = await supabase
+      .from('jobs')
+      .select('tracking_code')
+      .eq('id', jobId)
+      .single();
+    
+    const trackingInfo = job?.tracking_code ? `\n\nJob Number: ${jobId}\nTracking ID: ${job.tracking_code}` : `\n\nJob Number: ${jobId}`;
+    
     return sendNotification({
       customer_id: 'admin',
       job_id: jobId,
       event: 'admin_job_submitted',
       subject: `New Job Submitted - ${jobTitle}`,
-      message: `A new print job "${jobTitle}" has been submitted by ${customerName} (Customer ID: ${customerId}).`,
+      message: `A new print job "${jobTitle}" has been submitted by ${customerName} (Customer ID: ${customerId}).${trackingInfo}`,
     });
   };
 
