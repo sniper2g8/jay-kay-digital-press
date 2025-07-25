@@ -201,7 +201,7 @@ export const SimpleHomepage = () => {
                     <img 
                       src={service.image} 
                       alt={service.title}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-full h-48 object-cover rounded-lg"
                     />
                     {service.popular && (
                       <Badge className="absolute top-3 right-3 bg-red-600 text-white">Popular</Badge>
