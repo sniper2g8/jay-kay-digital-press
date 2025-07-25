@@ -20,16 +20,10 @@ interface Job {
   created_at: string;
   estimated_completion: string | null;
   delivery_method: string;
-  delivery_address: string | null;
   service_id: number;
   services: {
     name: string;
     service_type: string;
-  };
-  customers: {
-    name: string;
-    email: string;
-    phone: string;
   };
   job_files: Array<{
     id: number;
@@ -69,16 +63,10 @@ export const JobTrackingPage = () => {
           created_at,
           estimated_completion,
           delivery_method,
-          delivery_address,
           service_id,
           services (
             name,
             service_type
-          ),
-          customers (
-            name,
-            email,
-            phone
           ),
           job_files (
             id,
@@ -293,28 +281,24 @@ export const JobTrackingPage = () => {
                   </p>
                 </div>
 
-                {/* Customer Info */}
+                {/* Contact Information */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-muted-foreground">Customer Details</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Need Help?</Label>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{job.customers.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{job.customers.email}</span>
+                      <span className="text-sm">{settings?.email || 'Contact us for assistance'}</span>
                     </div>
-                    {job.customers.phone && (
+                    {settings?.phone && (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{job.customers.phone}</span>
+                        <span className="text-sm">{settings.phone}</span>
                       </div>
                     )}
-                    {job.delivery_address && (
+                    {settings?.address && (
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{job.delivery_address}</span>
+                        <span className="text-sm">{settings.address}</span>
                       </div>
                     )}
                   </div>

@@ -13,10 +13,6 @@ interface Job {
   created_at: string;
   estimated_completion: string | null;
   quantity: number;
-  customers: {
-    name: string;
-    customer_display_id: string;
-  };
   services: {
     name: string;
     service_type: string;
@@ -51,10 +47,6 @@ export const DisplayJobsScreen = () => {
           created_at,
           estimated_completion,
           quantity,
-          customers (
-            name,
-            customer_display_id
-          ),
           services (
             name,
             service_type
@@ -185,14 +177,6 @@ export const DisplayJobsScreen = () => {
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-500" />
-                            <span className="text-gray-700">{job.customers.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-gray-500" />
-                            <span className="text-gray-700">{job.customers.customer_display_id}</span>
-                          </div>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
                             <span className="text-gray-700">
