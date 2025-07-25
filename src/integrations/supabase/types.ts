@@ -1627,6 +1627,10 @@ export type Database = {
         Args: { employee_role: string }
         Returns: string
       }
+      get_current_user_role_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_internal_user_role: {
         Args: { user_id: string }
         Returns: string

@@ -20,6 +20,15 @@ export const PasswordChange = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!currentPassword) {
+      toast({
+        title: "Error",
+        description: "Current password is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (newPassword !== confirmPassword) {
       toast({
         title: "Error",
@@ -29,10 +38,10 @@ export const PasswordChange = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       toast({
         title: "Error",
-        description: "Password must be at least 6 characters long",
+        description: "Password must be at least 8 characters long",
         variant: "destructive",
       });
       return;
@@ -40,6 +49,32 @@ export const PasswordChange = () => {
 
     setLoading(true);
     try {
+      // First verify current password by attempting to sign in
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        toast({
+          title: "Error",
+          description: "Unable to verify current user",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword
+      });
+      
+      if (signInError) {
+        toast({
+          title: "Error",
+          description: "Current password is incorrect",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // If current password is verified, update to new password
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -113,7 +148,7 @@ export const PasswordChange = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
                 required
-                minLength={6}
+                minLength={8}
               />
               <Button
                 type="button"
@@ -141,7 +176,7 @@ export const PasswordChange = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
                 required
-                minLength={6}
+                minLength={8}
               />
               <Button
                 type="button"
