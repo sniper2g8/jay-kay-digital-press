@@ -6,6 +6,7 @@ const SimpleHomepage = lazy(() => import("./pages/SimpleHomepage").then(module =
 const AuthPage = lazy(() => import("./components/auth/AuthPage").then(module => ({ default: module.AuthPage })));
 const LoginPage = lazy(() => import("./components/auth/LoginPage").then(module => ({ default: module.LoginPage })));
 const JobTrackingPage = lazy(() => import("./pages/JobTrackingPage").then(module => ({ default: module.JobTrackingPage })));
+const DashboardPage = lazy(() => import("./pages/Index"));
 
 const App = () => {
   const queryClient = useMemo(() => new QueryClient({
@@ -32,6 +33,7 @@ const App = () => {
             <Route path="/" element={<SimpleHomepage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/track" element={<JobTrackingPage />} />
             <Route path="/track/:trackingCode" element={<JobTrackingPage />} />
             <Route path="*" element={
