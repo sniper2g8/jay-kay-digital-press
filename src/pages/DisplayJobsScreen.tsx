@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,8 @@ export const DisplayJobsScreen = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { settings } = useCompanySettings();
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobModalOpen, setJobModalOpen] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -139,9 +141,13 @@ export const DisplayJobsScreen = () => {
   }) : jobs;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8 relative">
+      {/* SVG Watermark */}
+      <svg className="absolute bottom-8 right-8 w-32 h-32 opacity-10 pointer-events-none z-0" viewBox="0 0 100 100">
+        <text x="50%" y="50%" textAnchor="middle" fill="#6366f1" fontSize="22" fontWeight="bold" dy=".3em">Jay Kay</text>
+      </svg>
       {/* Header & Summary Bar */}
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center relative z-10">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-800 mb-2">
           {settings?.company_name || "Loading..."}
         </h1>
@@ -188,7 +194,11 @@ export const DisplayJobsScreen = () => {
           </div>
         ) : (
           visibleJobs.map((job) => (
-            <Card key={job.id} className="backdrop-blur-md bg-white/60 shadow-xl rounded-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-200/20 hover:border-white/30">
+            <Card
+              key={job.id}
+              className="backdrop-blur-md bg-white/60 shadow-xl rounded-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-200/20 hover:border-indigo-400 hover:scale-105 cursor-pointer"
+              onClick={() => { setSelectedJob(job); setJobModalOpen(true); }}
+            >
               <CardContent className="p-5 flex flex-col gap-2">
                 <div className="flex justify-between items-center mb-2">
                   <div>
@@ -198,7 +208,7 @@ export const DisplayJobsScreen = () => {
                   <Badge 
                     variant="secondary" 
                     className={`${getStatusColor(job.status)} bg-opacity-90 backdrop-blur-sm text-white flex items-center gap-2 px-3 py-1 rounded-full shadow-sm cursor-pointer`} 
-                    onClick={() => setStatusFilter(job.status)}
+                    onClick={e => { e.stopPropagation(); setStatusFilter(job.status); }}
                   >
                     {getStatusIcon(job.status)}
                     {job.status}
@@ -226,6 +236,33 @@ export const DisplayJobsScreen = () => {
           ))
         )}
       </div>
+
+      {/* Job Details Modal */}
+      {jobModalOpen && selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-fadeIn">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl"
+              onClick={() => setJobModalOpen(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-indigo-700 text-center">Job Details</h2>
+            <div className="space-y-2">
+              <div className="font-bold text-lg">{selectedJob.title}</div>
+              <div className="text-gray-600">Service: {selectedJob.services.name} ({selectedJob.services.service_type})</div>
+              <div className="text-gray-600">Qty: {selectedJob.quantity}</div>
+              <div className="text-gray-600">Status: <span className={`px-2 py-1 rounded ${getStatusColor(selectedJob.status)} text-white`}>{selectedJob.status}</span></div>
+              <div className="text-gray-600">Created: {new Date(selectedJob.created_at).toLocaleDateString()}</div>
+              <div className="text-gray-600">Tracking Code: <span className="font-mono">{selectedJob.tracking_code}</span></div>
+              {selectedJob.estimated_completion && (
+                <div className="text-blue-700">Est. Completion: {new Date(selectedJob.estimated_completion).toLocaleDateString()}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="mt-8 text-center text-gray-600">
