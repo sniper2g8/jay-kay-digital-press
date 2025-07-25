@@ -9,6 +9,8 @@ const UnifiedAuthPage = lazy(() => import("./components/auth/UnifiedAuthPage").t
 const LoginPage = lazy(() => import("./components/auth/LoginPage").then(module => ({ default: module.LoginPage })));
 const JobTrackingPage = lazy(() => import("./pages/JobTrackingPage").then(module => ({ default: module.JobTrackingPage })));
 const DashboardPage = lazy(() => import("./pages/Index"));
+const WaitingArea = lazy(() => import("./pages/WaitingArea").then(module => ({ default: module.WaitingArea })));
+const DisplayJobsScreen = lazy(() => import("./pages/DisplayJobsScreen").then(module => ({ default: module.DisplayJobsScreen })));
 
 // Create QueryClient outside component to avoid dispatcher issues
 const queryClient = new QueryClient({
@@ -45,6 +47,8 @@ const App = () => {
               } />
               <Route path="/track" element={<JobTrackingPage />} />
               <Route path="/track/:trackingCode" element={<JobTrackingPage />} />
+              <Route path="/waiting-area" element={<WaitingArea />} />
+              <Route path="/display-jobs" element={<DisplayJobsScreen />} />
               <Route path="*" element={
                 <div className="min-h-screen flex items-center justify-center">
                   <h1 className="text-2xl">Page Not Found</h1>
