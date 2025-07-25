@@ -2,8 +2,7 @@ import { useMemo, Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Start with just the Homepage - we know this was part of the issue
-const Homepage = lazy(() => import("./pages/Homepage").then(module => ({ default: module.Homepage })));
+const SimpleHomepage = lazy(() => import("./pages/SimpleHomepage").then(module => ({ default: module.SimpleHomepage })));
 
 const App = () => {
   const queryClient = useMemo(() => new QueryClient({
@@ -27,7 +26,7 @@ const App = () => {
           </div>
         }>
           <Routes>
-            <Route path="/" element={<Homepage />} />
+            <Route path="/" element={<SimpleHomepage />} />
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center">
                 <h1 className="text-2xl">Page Not Found</h1>
