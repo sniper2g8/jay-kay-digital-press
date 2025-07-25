@@ -8,16 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Upload, X, Loader2, Plus, FileText } from "lucide-react";
+import { Upload, X, Loader2, Plus, FileText, AlertTriangle, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { 
   FINISHING_OPTIONS,
   type FinishingOption
 } from '@/constants/services';
+import { validateFileUpload, sanitizeInput } from "@/utils/inputValidation";
 
 interface Service {
   id: number;
@@ -96,19 +98,44 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && selectedService) {
       const newFiles = Array.from(e.target.files);
-      const newJobFiles = newFiles.map(file => ({
-        file,
-        title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for title
-        description: "",
-        quantity: 1,
-        service_subtype: "",
-        paper_type: "",
-        paper_weight: "",
-        finishing_options: [],
-        width_mm: undefined,
-        height_mm: undefined
-      }));
-      setJobFiles(prev => [...prev, ...newJobFiles]);
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+      
+      // Validate each file
+      newFiles.forEach(file => {
+        const validation = validateFileUpload(file);
+        if (validation.isValid) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(`${file.name}: ${validation.error}`);
+        }
+      });
+      
+      // Show errors for invalid files
+      if (invalidFiles.length > 0) {
+        toast.error(`File validation failed:\n${invalidFiles.join('\n')}`);
+      }
+      
+      // Add valid files only
+      if (validFiles.length > 0) {
+        const newJobFiles = validFiles.map(file => ({
+          file,
+          title: sanitizeInput(file.name.replace(/\.[^/.]+$/, "")), // Remove extension and sanitize title
+          description: "",
+          quantity: 1,
+          service_subtype: "",
+          paper_type: "",
+          paper_weight: "",
+          finishing_options: [],
+          width_mm: undefined,
+          height_mm: undefined
+        }));
+        setJobFiles(prev => [...prev, ...newJobFiles]);
+        
+        if (validFiles.length > 0) {
+          toast.success(`${validFiles.length} file(s) added successfully`);
+        }
+      }
     }
   };
 
@@ -117,8 +144,11 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   };
 
   const updateJobFile = (index: number, field: keyof JobFile, value: any) => {
+    // Sanitize string inputs
+    const sanitizedValue = typeof value === 'string' ? sanitizeInput(value) : value;
+    
     setJobFiles(prev => prev.map((jobFile, i) => 
-      i === index ? { ...jobFile, [field]: value } : jobFile
+      i === index ? { ...jobFile, [field]: sanitizedValue } : jobFile
     ));
   };
 
@@ -301,9 +331,13 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
                   <p className="text-sm text-muted-foreground">
                     Click to upload files or drag and drop
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PDF, PNG, JPG up to 50MB each
-                  </p>
+                   <p className="text-xs text-muted-foreground mt-1">
+                     PDF, Images, Word documents, Text files up to 50MB each
+                   </p>
+                   <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                     <Shield className="h-3 w-3" />
+                     Files are automatically scanned for security
+                   </p>
                 </div>
                 <input
                   type="file"

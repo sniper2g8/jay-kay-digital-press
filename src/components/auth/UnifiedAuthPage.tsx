@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Eye, EyeOff, ArrowLeft, User, Mail, Lock, Phone } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, User, Mail, Lock, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { validatePassword, validateEmail, sanitizeInput } from '@/utils/inputValidation';
 
 export const UnifiedAuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +26,8 @@ export const UnifiedAuthPage = () => {
     name: '',
     phone: ''
   });
+  
+  const [passwordValidation, setPasswordValidation] = useState({ isValid: false, errors: [] as string[] });
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -38,7 +42,15 @@ export const UnifiedAuthPage = () => {
   }, [navigate, location]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Sanitize input
+    const sanitizedValue = sanitizeInput(value);
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
+    
+    // Validate password in real-time for signup
+    if (field === 'password' && isSignUp) {
+      const validation = validatePassword(sanitizedValue);
+      setPasswordValidation(validation);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,21 +60,23 @@ export const UnifiedAuthPage = () => {
     try {
       if (isSignUp) {
         // Sign up flow
+        
+        // Validate email format
+        if (!validateEmail(formData.email)) {
+          toast.error('Please enter a valid email address');
+          setIsLoading(false);
+          return;
+        }
+        
         if (formData.password !== formData.confirmPassword) {
           toast.error('Passwords do not match');
           setIsLoading(false);
           return;
         }
 
-        // Enhanced password validation
-        if (formData.password.length < 8) {
-          toast.error('Password must be at least 8 characters');
-          setIsLoading(false);
-          return;
-        }
-        
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-          toast.error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+        // Use comprehensive password validation
+        if (!passwordValidation.isValid) {
+          toast.error('Password does not meet security requirements');
           setIsLoading(false);
           return;
         }
@@ -238,6 +252,35 @@ export const UnifiedAuthPage = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                
+                {/* Password strength indicator for signup */}
+                {isSignUp && formData.password && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {passwordValidation.isValid ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      )}
+                      <span className={`text-sm ${passwordValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
+                        {passwordValidation.isValid ? 'Password meets requirements' : 'Password requirements not met'}
+                      </span>
+                    </div>
+                    
+                    {passwordValidation.errors.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          <ul className="list-disc list-inside space-y-1">
+                            {passwordValidation.errors.map((error, index) => (
+                              <li key={index} className="text-sm">{error}</li>
+                            ))}
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password field - only for signup */}

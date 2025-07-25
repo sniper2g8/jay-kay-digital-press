@@ -1675,6 +1675,22 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      log_security_event: {
+        Args: { event_type: string; event_details?: Json }
+        Returns: undefined
+      }
+      sanitize_input: {
+        Args: { input_text: string }
+        Returns: string
+      }
+      validate_file_upload: {
+        Args: { file_name: string; file_size: number; mime_type: string }
+        Returns: boolean
+      }
+      validate_password_strength: {
+        Args: { password: string }
+        Returns: boolean
+      }
     }
     Enums: {
       employee_role: "Admin" | "SystemUser" | "NonSystemStaff"

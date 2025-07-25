@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Key, Eye, EyeOff } from "lucide-react";
+import { Key, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import { validatePassword } from "@/utils/inputValidation";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const PasswordChange = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -15,7 +17,15 @@ export const PasswordChange = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({ isValid: false, errors: [] as string[] });
   const { toast } = useToast();
+
+  // Validate password in real-time
+  const handleNewPasswordChange = (value: string) => {
+    setNewPassword(value);
+    const validation = validatePassword(value);
+    setPasswordValidation(validation);
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +48,11 @@ export const PasswordChange = () => {
       return;
     }
 
-    if (newPassword.length < 8) {
+    // Use comprehensive password validation
+    if (!passwordValidation.isValid) {
       toast({
         title: "Error",
-        description: "Password must be at least 8 characters long",
+        description: "Please fix password requirements before continuing",
         variant: "destructive",
       });
       return;
@@ -49,7 +60,7 @@ export const PasswordChange = () => {
 
     setLoading(true);
     try {
-      // First verify current password by attempting to sign in
+      // More secure password verification - use a separate session
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) {
         toast({
@@ -57,10 +68,19 @@ export const PasswordChange = () => {
           description: "Unable to verify current user",
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
       
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Create a temporary client to verify current password
+      // This prevents disrupting the current session
+      const { createClient } = await import('@supabase/supabase-js');
+      const tempClient = createClient(
+        'https://zmsfjbvmlsyxrzqvxofx.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptc2ZqYnZtbHN5eHJ6cXZ4b2Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NzI5NTAsImV4cCI6MjA2ODM0ODk1MH0.QkacSXazZckz94CAJSv8iz55S_NHUDSL6YpOifzLLiw'
+      );
+      
+      const { error: signInError } = await tempClient.auth.signInWithPassword({
         email: user.email,
         password: currentPassword
       });
@@ -71,6 +91,7 @@ export const PasswordChange = () => {
           description: "Current password is incorrect",
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
       
@@ -86,10 +107,11 @@ export const PasswordChange = () => {
         description: "Password updated successfully",
       });
 
-      // Clear form
+      // Clear form and validation
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordValidation({ isValid: false, errors: [] });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -145,10 +167,11 @@ export const PasswordChange = () => {
                 id="newPassword"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => handleNewPasswordChange(e.target.value)}
                 placeholder="Enter new password"
                 required
                 minLength={8}
+                className={!passwordValidation.isValid && newPassword ? "border-destructive" : ""}
               />
               <Button
                 type="button"
@@ -164,6 +187,35 @@ export const PasswordChange = () => {
                 )}
               </Button>
             </div>
+            
+            {/* Password strength indicator */}
+            {newPassword && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {passwordValidation.isValid ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  )}
+                  <span className={`text-sm ${passwordValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
+                    {passwordValidation.isValid ? 'Password meets requirements' : 'Password requirements not met'}
+                  </span>
+                </div>
+                
+                {passwordValidation.errors.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <ul className="list-disc list-inside space-y-1">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className="text-sm">{error}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

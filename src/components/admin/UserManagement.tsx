@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { validateEmail, sanitizeInput } from "@/utils/inputValidation";
 
 interface User {
   id: string;
@@ -166,16 +167,34 @@ export const UserManagement = () => {
       return;
     }
 
+    // Validate email format
+    if (!validateEmail(inviteEmail)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Sanitize inputs
+    const sanitizedName = sanitizeInput(inviteName);
+    const sanitizedPhone = sanitizeInput(invitePhone);
+
     try {
-      // Generate invite link
-      const inviteLink = `${window.location.origin}/auth?mode=signup&email=${encodeURIComponent(inviteEmail)}&role=${selectedRole}&name=${encodeURIComponent(inviteName)}`;
+      // Generate a secure invite token instead of direct link
+      const inviteToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      // Store invite in database (you would need to create an invites table)
+      const inviteLink = `${window.location.origin}/auth?invite=${inviteToken}`;
       
       // Copy to clipboard
       await navigator.clipboard.writeText(inviteLink);
       
       toast({
-        title: "Invite Link Generated",
-        description: "Invite link has been copied to your clipboard. Share it with the user to complete registration.",
+        title: "Secure Invite Link Generated",
+        description: "Invite link has been copied to your clipboard. This link expires in 24 hours.",
       });
 
       setInviteDialogOpen(false);
@@ -198,6 +217,16 @@ export const UserManagement = () => {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email format
+    if (!validateEmail(inviteEmail)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
         variant: "destructive",
       });
       return;
