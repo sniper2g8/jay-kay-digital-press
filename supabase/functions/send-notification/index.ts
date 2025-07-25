@@ -122,21 +122,40 @@ const logNotification = async (
   jobId?: number,
   deliveryScheduleId?: string
 ) => {
-  await supabase.from('notifications_log').insert({
-    customer_id: customerId,
-    notification_type: type,
-    notification_event: event,
-    recipient_email: recipientEmail,
-    recipient_phone: recipientPhone,
-    subject: subject,
-    message: message,
-    status: status || 'sent',
-    external_id: externalId,
-    error_message: errorMessage,
-    job_id: jobId,
-    delivery_schedule_id: deliveryScheduleId,
-    sent_at: new Date().toISOString(),
-  });
+  try {
+    console.log('Attempting to log notification:', {
+      customerId,
+      type,
+      event,
+      recipientEmail,
+      recipientPhone,
+      status: status || 'sent'
+    });
+    
+    const { data, error } = await supabase.from('notifications_log').insert({
+      customer_id: customerId,
+      notification_type: type,
+      notification_event: event,
+      recipient_email: recipientEmail,
+      recipient_phone: recipientPhone,
+      subject: subject,
+      message: message,
+      status: status || 'sent',
+      external_id: externalId,
+      error_message: errorMessage,
+      job_id: jobId,
+      delivery_schedule_id: deliveryScheduleId,
+      sent_at: new Date().toISOString(),
+    });
+    
+    if (error) {
+      console.error('Error inserting notification log:', error);
+    } else {
+      console.log('Notification log created successfully:', data);
+    }
+  } catch (error) {
+    console.error('Exception in logNotification:', error);
+  }
 };
 
 serve(async (req: Request) => {

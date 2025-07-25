@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -138,6 +139,14 @@ export const NotificationLogs = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Notification Logs</h2>
         <div className="flex items-center gap-4">
+          <Button 
+            onClick={fetchLogs} 
+            variant="outline" 
+            size="sm"
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             <Select value={typeFilter} onValueChange={setTypeFilter}>
