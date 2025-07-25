@@ -280,7 +280,7 @@ export const UserManagement = () => {
         }
       }
 
-      // Allow direct creation of customers and staff
+      // Allow direct creation of all user types by admins
       if (selectedRole === "Customer") {
         const { error } = await supabase
           .from("customers")
@@ -312,12 +312,23 @@ export const UserManagement = () => {
           description: "Staff member has been added successfully",
         });
       } else {
+        // For Admin and System User roles, create directly in internal_users table
+        // Note: These users won't have authentication until they're invited separately
+        const { error } = await supabase
+          .from("internal_users")
+          .insert({
+            name: sanitizeInput(inviteName),
+            email: inviteEmail || `${selectedRole.toLowerCase()}_${Date.now()}@internal.local`,
+            phone: sanitizeInput(invitePhone) || null,
+            role_id: roleData.id,
+            auth_user_id: null, // No authentication setup yet
+          });
+        if (error) throw error;
+
         toast({
-          title: "Info",
-          description: "Other internal users should be created using the 'Invite User' function for proper authentication setup.",
-          variant: "destructive",
+          title: "Success",
+          description: `${selectedRole} user has been added successfully. Use 'Invite User' to set up authentication.`,
         });
-        return;
       }
 
       setAddUserDialogOpen(false);
