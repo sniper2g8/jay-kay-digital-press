@@ -10,15 +10,17 @@ const LoginPage = lazy(() => import("./components/auth/LoginPage").then(module =
 const JobTrackingPage = lazy(() => import("./pages/JobTrackingPage").then(module => ({ default: module.JobTrackingPage })));
 const DashboardPage = lazy(() => import("./pages/Index"));
 
-const App = () => {
-  const queryClient = useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        refetchOnWindowFocus: false,
-      },
+// Create QueryClient outside component to avoid dispatcher issues
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
     },
-  }), []);
+  },
+});
+
+const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
