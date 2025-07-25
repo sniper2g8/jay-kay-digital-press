@@ -108,7 +108,7 @@ export const PayrollManagement = () => {
 
       if (error) throw error;
 
-      console.log("Raw employees data:", employeesData);
+      // Raw employees data received
 
       // Get unique internal user IDs and non-system staff IDs
       const internalUserIds = employeesData?.filter(emp => emp.internal_user_id).map(emp => emp.internal_user_id) || [];
@@ -182,7 +182,7 @@ export const PayrollManagement = () => {
         };
       });
 
-      console.log("Formatted employees:", formattedEmployees);
+      // Formatted employees data
       setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);

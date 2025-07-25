@@ -18,10 +18,9 @@ export const useOffline = () => {
         // Trigger background sync
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then((registration) => {
-            // @ts-ignore - Background sync is experimental
+            // Background sync is experimental but supported in modern browsers
             if ('sync' in registration) {
-              // @ts-ignore
-              registration.sync.register('background-sync');
+              (registration as any).sync.register('background-sync');
             }
           });
         }

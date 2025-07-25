@@ -40,7 +40,7 @@ export const NotificationLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      console.log('Fetching notification logs...');
+      // Fetching notification logs...
       
       const { data, error } = await supabase
         .from("notifications_log")
@@ -65,7 +65,7 @@ export const NotificationLogs = () => {
         .order("created_at", { ascending: false })
         .limit(100);
 
-      console.log('Notification logs response:', { data, error });
+      // Notification logs response received
 
       if (error) {
         console.error('Error fetching notification logs:', error);
@@ -75,7 +75,7 @@ export const NotificationLogs = () => {
           variant: "destructive",
         });
       } else {
-        console.log(`Loaded ${data?.length || 0} notification logs`);
+        // Notification logs loaded successfully
         setLogs(data || []);
       }
     } catch (error) {

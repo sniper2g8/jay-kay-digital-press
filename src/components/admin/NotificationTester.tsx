@@ -19,9 +19,9 @@ interface TestResult {
 
 export const NotificationTester = () => {
   const [testData, setTestData] = useState({
-    customerPhone: '+232 76 123 456',
-    customerEmail: 'test@example.com',
-    customerName: 'Test Customer',
+    customerPhone: '+232 76 XXXXXX',
+    customerEmail: 'customer@example.com',
+    customerName: 'Customer Name',
     subject: 'Test Notification from Jay Kay Digital Press',
     message: 'This is a test notification to verify our notification system is working correctly.',
     notificationType: 'both' as 'email' | 'sms' | 'both'
@@ -39,12 +39,12 @@ export const NotificationTester = () => {
       const { data, error } = await supabase.functions.invoke('send-notification', {
         body: {
           type: testData.notificationType,
-          customer_id: 'test-customer',
+          customer_id: 'demo-customer',
           event: 'test_notification',
           subject: testData.subject,
           message: testData.message,
           custom_data: {
-            test_mode: true,
+            demo_mode: true,
             recipient_email: testData.customerEmail,
             recipient_phone: testData.customerPhone,
             recipient_name: testData.customerName
@@ -169,7 +169,7 @@ export const NotificationTester = () => {
                 type="email"
                 value={testData.customerEmail}
                 onChange={(e) => setTestData(prev => ({ ...prev, customerEmail: e.target.value }))}
-                placeholder="test@example.com"
+                placeholder="customer@example.com"
               />
             </div>
 
@@ -179,7 +179,7 @@ export const NotificationTester = () => {
                 id="customerPhone"
                 value={testData.customerPhone}
                 onChange={(e) => setTestData(prev => ({ ...prev, customerPhone: e.target.value }))}
-                placeholder="+232 76 123 456"
+                placeholder="+232 76 XXXXXX"
               />
             </div>
           </div>
@@ -190,7 +190,7 @@ export const NotificationTester = () => {
               id="subject"
               value={testData.subject}
               onChange={(e) => setTestData(prev => ({ ...prev, subject: e.target.value }))}
-              placeholder="Test notification subject"
+              placeholder="Demo notification subject"
             />
           </div>
 
@@ -200,7 +200,7 @@ export const NotificationTester = () => {
               id="message"
               value={testData.message}
               onChange={(e) => setTestData(prev => ({ ...prev, message: e.target.value }))}
-              placeholder="Enter your test message content"
+              placeholder="Enter your demo message content"
               rows={4}
             />
           </div>
