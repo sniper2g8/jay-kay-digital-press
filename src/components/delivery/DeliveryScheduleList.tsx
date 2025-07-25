@@ -180,11 +180,15 @@ export const DeliveryScheduleList = () => {
 
   const deleteDeliverySchedule = async (scheduleId: string) => {
     try {
-      // First, update any notification logs to remove the reference
-      await supabase
+      // First, delete any notification logs that reference this delivery schedule
+      const { error: notificationError } = await supabase
         .from('notifications_log')
-        .update({ delivery_schedule_id: null })
+        .delete()
         .eq('delivery_schedule_id', scheduleId);
+
+      if (notificationError) {
+        console.warn('Warning deleting notifications:', notificationError);
+      }
 
       // Then delete the delivery schedule
       const { error } = await supabase
