@@ -233,17 +233,20 @@ export const UserManagement = () => {
   };
 
   const handleAddUser = async () => {
-    if (!inviteEmail || !selectedRole || !inviteName) {
+    // For staff users, email is optional, for others it's required
+    const isEmailRequired = selectedRole !== "Staff";
+    
+    if (!selectedRole || !inviteName || (isEmailRequired && !inviteEmail)) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: `Please fill in all required fields${isEmailRequired ? " (including email)" : ""}`,
         variant: "destructive",
       });
       return;
     }
 
-    // Validate email format
-    if (!validateEmail(inviteEmail)) {
+    // Validate email format only if email is provided
+    if (inviteEmail && !validateEmail(inviteEmail)) {
       toast({
         title: "Error",
         description: "Please enter a valid email address",
@@ -258,25 +261,26 @@ export const UserManagement = () => {
         throw new Error("Invalid role selected");
       }
 
-      // Check if email already exists
-      const { data: existingCustomer } = await supabase
-        .from("customers")
-        .select("email")
-        .eq("email", inviteEmail)
-        .maybeSingle();
+      // Check if email already exists (only if email is provided)
+      if (inviteEmail) {
+        const { data: existingCustomer } = await supabase
+          .from("customers")
+          .select("email")
+          .eq("email", inviteEmail)
+          .maybeSingle();
 
-      const { data: existingInternal } = await supabase
-        .from("internal_users")
-        .select("email")
-        .eq("email", inviteEmail)
-        .maybeSingle();
+        const { data: existingInternal } = await supabase
+          .from("internal_users")
+          .select("email")
+          .eq("email", inviteEmail)
+          .maybeSingle();
 
-      if (existingCustomer || existingInternal) {
-        throw new Error("A user with this email already exists");
+        if (existingCustomer || existingInternal) {
+          throw new Error("A user with this email already exists");
+        }
       }
 
-      // For now, only allow direct creation of customers
-      // Internal users should use the invite system for proper auth setup
+      // Allow direct creation of customers and staff
       if (selectedRole === "Customer") {
         const { error } = await supabase
           .from("customers")
@@ -291,10 +295,26 @@ export const UserManagement = () => {
           title: "Success",
           description: "Customer has been added successfully",
         });
+      } else if (selectedRole === "Staff") {
+        // Create staff user in non_system_staff table (for staff without authentication)
+        const { error } = await supabase
+          .from("non_system_staff")
+          .insert({
+            name: sanitizeInput(inviteName),
+            email: inviteEmail || null, // Email is optional for staff
+            phone: sanitizeInput(invitePhone) || null,
+            position: "Staff",
+          });
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Staff member has been added successfully",
+        });
       } else {
         toast({
           title: "Info",
-          description: "Internal users should be created using the 'Invite User' function for proper authentication setup.",
+          description: "Other internal users should be created using the 'Invite User' function for proper authentication setup.",
           variant: "destructive",
         });
         return;
@@ -588,13 +608,15 @@ export const UserManagement = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="add-email">Email</Label>
+                  <Label htmlFor="add-email">
+                    Email {selectedRole === "Staff" ? "(Optional)" : "*"}
+                  </Label>
                   <Input
                     id="add-email"
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Enter email address"
+                    placeholder={selectedRole === "Staff" ? "Enter email address (optional)" : "Enter email address"}
                   />
                 </div>
                 <div>
