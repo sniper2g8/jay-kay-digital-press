@@ -47,8 +47,15 @@ export const OverviewDashboard = () => {
 
   const fetchOverviewData = async () => {
     try {
-      // Fetch jobs data
-      const { data: jobs, error: jobsError } = await supabase
+      // Fetch all jobs for accurate counts
+      const { data: allJobs, error: allJobsError } = await supabase
+        .from("jobs")
+        .select("id, status");
+
+      if (allJobsError) throw allJobsError;
+
+      // Fetch recent jobs for display
+      const { data: recentJobs, error: recentJobsError } = await supabase
         .from("jobs")
         .select(`
           id,
@@ -60,16 +67,23 @@ export const OverviewDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (jobsError) throw jobsError;
+      if (recentJobsError) throw recentJobsError;
 
-      // Fetch customers data
-      const { data: customers, error: customersError } = await supabase
+      // Fetch all customers for accurate count
+      const { data: allCustomers, error: allCustomersError } = await supabase
+        .from("customers")
+        .select("id");
+
+      if (allCustomersError) throw allCustomersError;
+
+      // Fetch recent customers for display
+      const { data: recentCustomers, error: recentCustomersError } = await supabase
         .from("customers")
         .select("id, name, email, created_at")
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (customersError) throw customersError;
+      if (recentCustomersError) throw recentCustomersError;
 
       // Fetch invoices data
       const { data: invoices, error: invoicesError } = await supabase
@@ -78,10 +92,10 @@ export const OverviewDashboard = () => {
 
       if (invoicesError) throw invoicesError;
 
-      // Calculate stats
-      const totalJobs = jobs?.length || 0;
-      const activeJobs = jobs?.filter(j => j.status !== 'Completed').length || 0;
-      const totalCustomers = customers?.length || 0;
+      // Calculate accurate stats
+      const totalJobs = allJobs?.length || 0;
+      const activeJobs = allJobs?.filter(j => j.status !== 'Completed').length || 0;
+      const totalCustomers = allCustomers?.length || 0;
       const totalInvoices = invoices?.length || 0;
       const totalRevenue = invoices?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
       const pendingInvoices = invoices?.filter(inv => inv.status === 'sent').length || 0;
@@ -95,8 +109,8 @@ export const OverviewDashboard = () => {
         totalRevenue,
         pendingInvoices,
         overdue,
-        recentJobs: jobs || [],
-        recentCustomers: customers || []
+        recentJobs: recentJobs || [],
+        recentCustomers: recentCustomers || []
       });
 
     } catch (error) {
@@ -306,10 +320,13 @@ export const OverviewDashboard = () => {
                 <TrendingUp className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium text-center">Showcase Screen</span>
               </a>
-              <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+              <button
+                onClick={() => window.location.href = '/admin?tab=analytics'}
+                className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              >
                 <FileText className="h-8 w-8 text-primary mb-2" />
-                <span className="text-sm font-medium">Analytics Dashboard</span>
-              </div>
+                <span className="text-sm font-medium text-center">Analytics Dashboard</span>
+              </button>
             </div>
           </CardContent>
         </Card>
