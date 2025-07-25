@@ -12,6 +12,7 @@ import { JobEditDialog } from "./JobEditDialog";
 import { JobCreationDialog } from "./JobCreationDialog";
 import { JobViewDialog } from "./JobViewDialog";
 import { Eye, Edit, Trash2, Package, Filter, Plus, Paperclip, Download } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface Job {
   id: number;
@@ -165,8 +166,17 @@ export const JobManagement = () => {
     }
   };
 
-  const deleteJob = async (jobId: number) => {
-    if (!confirm("Are you sure you want to delete this job?")) return;
+  const [deleteJobDialog, setDeleteJobDialog] = useState<{ open: boolean; jobId?: number }>({ open: false });
+
+  const handleDeleteJob = (jobId: number) => {
+    setDeleteJobDialog({ open: true, jobId });
+  };
+
+  const confirmDeleteJob = async () => {
+    const { jobId } = deleteJobDialog;
+    if (!jobId) return;
+    
+    setDeleteJobDialog({ open: false });
 
     try {
       // Starting deletion of job
@@ -561,7 +571,7 @@ export const JobManagement = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => deleteJob(job.id)}
+                          onClick={() => handleDeleteJob(job.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -598,6 +608,16 @@ export const JobManagement = () => {
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         onJobCreated={fetchJobs}
+      />
+
+      <ConfirmationDialog
+        open={deleteJobDialog.open}
+        onOpenChange={(open) => setDeleteJobDialog({ open })}
+        title="Delete Job"
+        description="Are you sure you want to delete this job? This action cannot be undone and will remove all associated data."
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={confirmDeleteJob}
       />
     </div>
   );

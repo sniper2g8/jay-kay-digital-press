@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Settings, Eye, EyeOff } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   SERVICE_TYPES, 
@@ -151,8 +152,17 @@ export const ServiceManagement = () => {
     }
   };
 
-  const deleteService = async (serviceId: number) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
+  const [deleteServiceDialog, setDeleteServiceDialog] = useState<{ open: boolean; serviceId?: number }>({ open: false });
+
+  const handleDeleteService = (serviceId: number) => {
+    setDeleteServiceDialog({ open: true, serviceId });
+  };
+
+  const confirmDeleteService = async () => {
+    const { serviceId } = deleteServiceDialog;
+    if (!serviceId) return;
+    
+    setDeleteServiceDialog({ open: false });
 
     const { error } = await supabase
       .from("services")
@@ -473,7 +483,7 @@ export const ServiceManagement = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => deleteService(service.id)}
+                          onClick={() => handleDeleteService(service.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -486,6 +496,16 @@ export const ServiceManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        open={deleteServiceDialog.open}
+        onOpenChange={(open) => setDeleteServiceDialog({ open })}
+        title="Delete Service"
+        description="Are you sure you want to delete this service? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={confirmDeleteService}
+      />
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Upload, Monitor, Plus, Trash2, Image } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface Slide {
   id: number;
@@ -123,8 +124,17 @@ export const DisplayScreenManagement = () => {
     setUploading(false);
   };
 
-  const deleteSlide = async (slideId: number, filePath: string) => {
-    if (!confirm("Are you sure you want to delete this slide?")) return;
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; slideId?: number; filePath?: string }>({ open: false });
+
+  const handleDeleteSlide = (slideId: number, filePath: string) => {
+    setDeleteDialog({ open: true, slideId, filePath });
+  };
+
+  const confirmDeleteSlide = async () => {
+    const { slideId, filePath } = deleteDialog;
+    if (!slideId || !filePath) return;
+    
+    setDeleteDialog({ open: false });
 
     try {
       // Extract filename from the public URL
@@ -280,7 +290,7 @@ export const DisplayScreenManagement = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteSlide(slide.id, slide.file_path)}
+                        onClick={() => handleDeleteSlide(slide.id, slide.file_path)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -320,6 +330,16 @@ export const DisplayScreenManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open })}
+        title="Delete Slide"
+        description="Are you sure you want to delete this slide? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={confirmDeleteSlide}
+      />
     </div>
   );
 };
