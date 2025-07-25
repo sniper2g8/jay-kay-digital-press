@@ -136,8 +136,16 @@ export const SimpleHomepage = () => {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 min-h-[70vh] flex items-center">
-        <div className="relative container mx-auto px-4 text-center text-white">
+      <section id="home" className="relative min-h-[70vh] flex items-center overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/lovable-uploads/6547acd2-7a0c-4b2d-ad63-4957c2a7b57b.png')` }}
+        />
+        {/* Dark Overlay for text readability */}
+        <div className="absolute inset-0 bg-black/60" />
+        
+        <div className="relative container mx-auto px-4 text-center text-white z-10">
           <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
             Professional <span className="text-red-500">Printing</span>
             <br />
