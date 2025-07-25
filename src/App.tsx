@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from "react";
+import { useEffect, Suspense, lazy, useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +28,14 @@ const DisplayShowcaseScreen = lazy(() => import("./pages/DisplayShowcaseScreen")
 
 
 const App = () => {
-  const queryClient = new QueryClient();
+  const queryClient = useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }), []);
   
   return (
     <QueryClientProvider client={queryClient}>
