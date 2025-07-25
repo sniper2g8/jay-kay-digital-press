@@ -18,7 +18,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Send
+  Send,
+  Globe
 } from "lucide-react";
 
 // Hardcoded services data - no Supabase fetching needed
@@ -97,6 +98,11 @@ export const SimpleHomepage = () => {
       <header className="bg-background border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <img 
+              src="/lovable-uploads/206bc571-58ab-4338-87a3-922114137a36.png" 
+              alt="Jay Kay Digital Press Logo" 
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="text-xl font-bold text-foreground">JAY KAY DIGITAL PRESS</h1>
               <p className="text-sm text-muted-foreground">Professional Printing Services</p>
@@ -104,10 +110,15 @@ export const SimpleHomepage = () => {
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Home</a>
+            <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
             <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Track Order</a>
+            <button 
+              onClick={() => navigate("/track")} 
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              Track Order
+            </button>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -125,7 +136,7 @@ export const SimpleHomepage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 min-h-[70vh] flex items-center">
+      <section id="home" className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 min-h-[70vh] flex items-center">
         <div className="relative container mx-auto px-4 text-center text-white">
           <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
             Professional <span className="text-red-500">Printing</span>
@@ -380,8 +391,17 @@ export const SimpleHomepage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">JAY KAY DIGITAL PRESS</h3>
-              <p className="text-gray-400 mb-4">Professional Printing Services</p>
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src="/lovable-uploads/206bc571-58ab-4338-87a3-922114137a36.png" 
+                  alt="Jay Kay Digital Press Logo" 
+                  className="h-12 w-12 object-contain"
+                />
+                <div>
+                  <h3 className="text-2xl font-bold">JAY KAY DIGITAL PRESS</h3>
+                  <p className="text-gray-400">Professional Printing Services</p>
+                </div>
+              </div>
               <p className="text-gray-400">
                 Transform your ideas into stunning printed materials with our premium quality services and fast turnaround times.
               </p>
@@ -390,22 +410,48 @@ export const SimpleHomepage = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Business Cards</li>
-                <li>Flyers & Brochures</li>
-                <li>Banners & Signage</li>
-                <li>Posters</li>
-                <li>Booklets</li>
-                <li>Labels & Stickers</li>
+                <li><a href="#services" className="hover:text-white transition-colors">Business Cards</a></li>
+                <li><a href="#services" className="hover:text-white transition-colors">Flyers & Brochures</a></li>
+                <li><a href="#services" className="hover:text-white transition-colors">Banners & Signage</a></li>
+                <li><a href="#services" className="hover:text-white transition-colors">Posters</a></li>
+                <li><a href="#services" className="hover:text-white transition-colors">Booklets</a></li>
+                <li><a href="#services" className="hover:text-white transition-colors">Labels & Stickers</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-lg font-semibold mb-4">Contact</h4>
-              <div className="space-y-2 text-gray-400">
-                <p>+232 34 788711</p>
-                <p>+232 30 741062</p>
-                <p>jaykaydigitalpress@gmail.com</p>
-                <p>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-400">
+                  <Phone className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  <div>
+                    <p>+232 34 788711</p>
+                    <p>+232 30 741062</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-gray-400">
+                  <Mail className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  <p>jaykaydigitalpress@gmail.com</p>
+                </div>
+                <div className="flex items-start gap-3 text-gray-400">
+                  <MapPin className="h-4 w-4 text-red-500 flex-shrink-0 mt-1" />
+                  <p>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</p>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h5 className="text-sm font-semibold mb-3 text-white">Quick Links</h5>
+                <div className="space-y-2 text-sm">
+                  <a href="#home" className="block text-gray-400 hover:text-white transition-colors">Home</a>
+                  <a href="#services" className="block text-gray-400 hover:text-white transition-colors">Services</a>
+                  <a href="#contact" className="block text-gray-400 hover:text-white transition-colors">Contact</a>
+                  <button 
+                    onClick={() => navigate("/track")} 
+                    className="block text-gray-400 hover:text-white transition-colors text-left"
+                  >
+                    Track Order
+                  </button>
+                </div>
               </div>
             </div>
           </div>
