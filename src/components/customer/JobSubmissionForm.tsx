@@ -299,59 +299,63 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
   };
 
   const onSubmit = async (formData: JobFormData) => {
-    // Comprehensive form validation
-    if (jobFiles.length === 0) {
-      toast.error("Please upload at least one file");
-      return;
-    }
-
-    if (jobFiles.length > 20) {
-      toast.error("Maximum 20 files allowed per submission");
-      return;
-    }
-
-    // Validate each job file
-    for (let i = 0; i < jobFiles.length; i++) {
-      const jobFile = jobFiles[i];
-      
-      if (!jobFile.title || jobFile.title.trim().length < 2) {
-        toast.error(`Job ${i + 1}: Title must be at least 2 characters`);
-        return;
-      }
-      
-      if (jobFile.quantity < 1 || jobFile.quantity > 10000) {
-        toast.error(`Job ${i + 1}: Quantity must be between 1 and 10,000`);
-        return;
-      }
-      
-      if (selectedService?.requires_dimensions) {
-        if (!jobFile.width_mm || !jobFile.height_mm) {
-          toast.error(`Job ${i + 1}: Dimensions are required for this service`);
-          return;
-        }
-        if (jobFile.width_mm <= 0 || jobFile.height_mm <= 0) {
-          toast.error(`Job ${i + 1}: Dimensions must be greater than 0`);
-          return;
-        }
-      }
-    }
-
-    // Validate delivery information
-    const sanitizedDeliveryMethod = sanitizeInput(formData.delivery_method);
-    if (!sanitizedDeliveryMethod) {
-      toast.error("Please select a delivery method");
-      return;
-    }
-
-    if (sanitizedDeliveryMethod === 'delivery' && !formData.delivery_address?.trim()) {
-      toast.error("Delivery address is required for delivery option");
-      return;
-    }
-
-    setIsSubmitting(true);
-
     try {
+      // Comprehensive form validation
+      if (jobFiles.length === 0) {
+        toast.error("Please upload at least one file");
+        return;
+      }
+
+      if (jobFiles.length > 20) {
+        toast.error("Maximum 20 files allowed per submission");
+        return;
+      }
+
+      // Validate each job file
+      for (let i = 0; i < jobFiles.length; i++) {
+        const jobFile = jobFiles[i];
+        
+        if (!jobFile.title || jobFile.title.trim().length < 2) {
+          toast.error(`Job ${i + 1}: Title must be at least 2 characters`);
+          return;
+        }
+        
+        if (jobFile.quantity < 1 || jobFile.quantity > 10000) {
+          toast.error(`Job ${i + 1}: Quantity must be between 1 and 10,000`);
+          return;
+        }
+        
+        if (selectedService?.requires_dimensions) {
+          if (!jobFile.width_mm || !jobFile.height_mm) {
+            toast.error(`Job ${i + 1}: Dimensions are required for this service`);
+            return;
+          }
+          if (jobFile.width_mm <= 0 || jobFile.height_mm <= 0) {
+            toast.error(`Job ${i + 1}: Dimensions must be greater than 0`);
+            return;
+          }
+        }
+      }
+
+      // Validate delivery information
+      const sanitizedDeliveryMethod = sanitizeInput(formData.delivery_method);
+      if (!sanitizedDeliveryMethod) {
+        toast.error("Please select a delivery method");
+        return;
+      }
+
+      if (sanitizedDeliveryMethod === 'delivery' && !formData.delivery_address?.trim()) {
+        toast.error("Delivery address is required for delivery option");
+        return;
+      }
+
+      setIsSubmitting(true);
+
       const results = await uploadFiles();
+      
+      if (results.length === 0) {
+        throw new Error("No jobs were created successfully");
+      }
       
       toast.success(`${results.length} job(s) submitted successfully!`);
 
@@ -361,6 +365,7 @@ export const JobSubmissionForm = ({ onSuccess }: JobSubmissionFormProps) => {
       onSuccess?.();
 
     } catch (error: any) {
+      console.error("Job submission error:", error);
       const userMessage = handleError(error, 'job-submission');
       toast.error(userMessage);
     } finally {

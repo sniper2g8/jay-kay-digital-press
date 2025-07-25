@@ -269,69 +269,87 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   };
 
   const onSubmit = async (data: JobFormData) => {
-    // Comprehensive input validation
-    const sanitizedTitle = sanitizeInput(data.title);
-    const sanitizedDescription = sanitizeInput(data.description || '');
-    
-    if (!sanitizedTitle || sanitizedTitle.length < 2) {
-      toast({
-        title: "Validation Error",
-        description: "Job title must be at least 2 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (sanitizedTitle.length > 100) {
-      toast({
-        title: "Validation Error",
-        description: "Job title must be less than 100 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (sanitizedDescription.length > 1000) {
-      toast({
-        title: "Validation Error",
-        description: "Description must be less than 1000 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate numeric inputs
-    const quantityValidation = validateNumericInput(data.quantity, 'Quantity', 1, 10000);
-    if (quantityValidation) {
-      toast({
-        title: "Validation Error",
-        description: quantityValidation,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (data.width && data.width <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Width must be greater than 0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (data.length && data.length <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Length must be greater than 0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
     try {
+      // Comprehensive input validation
+      const sanitizedTitle = sanitizeInput(data.title);
+      const sanitizedDescription = sanitizeInput(data.description || '');
+      
+      if (!sanitizedTitle || sanitizedTitle.length < 2) {
+        toast({
+          title: "Validation Error",
+          description: "Job title must be at least 2 characters long",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data.customer_id) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a customer",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data.service_id) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a service",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (sanitizedTitle.length > 100) {
+        toast({
+          title: "Validation Error",
+          description: "Job title must be less than 100 characters",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (sanitizedDescription.length > 1000) {
+        toast({
+          title: "Validation Error",
+          description: "Description must be less than 1000 characters",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate numeric inputs
+      const quantityValidation = validateNumericInput(data.quantity, 'Quantity', 1, 10000);
+      if (quantityValidation) {
+        toast({
+          title: "Validation Error",
+          description: quantityValidation,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.width && data.width <= 0) {
+        toast({
+          title: "Validation Error",
+          description: "Width must be greater than 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.length && data.length <= 0) {
+        toast({
+          title: "Validation Error",
+          description: "Length must be greater than 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+      
       // Find the selected customer to get both IDs
       const selectedCustomer = customers.find(c => c.id === data.customer_id);
       if (!selectedCustomer) {
@@ -414,6 +432,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             
           if (fileRecordError) {
             console.error('Error creating file record:', fileRecordError);
+            // Don't throw here as the main job was created successfully
           }
         }
       }
@@ -423,6 +442,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         await sendJobSubmittedNotification(selectedCustomer.id, newJob.id, sanitizedTitle);
       } catch (notificationError) {
         console.warn('Failed to send notification:', notificationError);
+        // Don't throw here as the job was created successfully
       }
 
       toast({

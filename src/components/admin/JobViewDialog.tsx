@@ -408,7 +408,40 @@ export const JobViewDialog = ({ jobId, isOpen, onClose }: JobViewDialogProps) =>
                     {job.finishing_options && (
                       <div>
                         <strong>Finishing:</strong>
-                        <p>{JSON.stringify(job.finishing_options)}</p>
+                        <div className="mt-1">
+                          {(() => {
+                            try {
+                              const finishingArray = Array.isArray(job.finishing_options) 
+                                ? job.finishing_options 
+                                : JSON.parse(job.finishing_options);
+                              
+                              if (finishingArray.length === 0) {
+                                return <p className="text-muted-foreground text-sm">No finishing options selected</p>;
+                              }
+                              
+                              return finishingArray.map((finishId: string, index: number) => {
+                                // Import FINISHING_OPTIONS from constants
+                                const finishOption = [
+                                  { id: 'lamination', name: 'Lamination', category: 'protection', price: 5.00 },
+                                  { id: 'binding', name: 'Binding', category: 'assembly', price: 3.00 },
+                                  { id: 'cutting', name: 'Professional Cutting', category: 'finishing', price: 2.00 },
+                                  { id: 'folding', name: 'Folding', category: 'finishing', price: 1.50 },
+                                  { id: 'perforation', name: 'Perforation', category: 'finishing', price: 2.50 },
+                                  { id: 'embossing', name: 'Embossing', category: 'enhancement', price: 8.00 },
+                                  { id: 'uv_coating', name: 'UV Coating', category: 'protection', price: 6.00 }
+                                ].find(f => f.id === finishId);
+                                
+                                return (
+                                  <Badge key={index} variant="secondary" className="mr-1 mb-1">
+                                    {finishOption?.name || finishId}
+                                  </Badge>
+                                );
+                              });
+                            } catch (e) {
+                              return <p className="text-muted-foreground text-sm">No finishing options selected</p>;
+                            }
+                          })()}
+                        </div>
                       </div>
                     )}
                   </div>
