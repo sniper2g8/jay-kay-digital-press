@@ -14,6 +14,7 @@ import { NotificationPreferences } from "./NotificationPreferences";
 import { CustomerProfile } from "./CustomerProfile";
 import { OrderHistory } from "./OrderHistory";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CompanyLogo } from "@/components/common/LogoHeader";
 
 interface CustomerDashboardProps {
   user: User;
@@ -39,9 +40,12 @@ export const CustomerDashboard = ({ user }: CustomerDashboardProps) => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-2">
+            <CompanyLogo className="h-10 w-auto" />
+            <h1 className="text-xl sm:text-2xl font-bold">Customer Dashboard</h1>
+          </div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">{settings?.company_name || 'Loading...'}</h1>
               <p className="text-muted-foreground text-sm">Customer Portal</p>
             </div>
             <div className="flex items-center gap-4">

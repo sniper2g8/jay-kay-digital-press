@@ -13,6 +13,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from "lucide-react";
+import { CompanyLogo } from "@/components/common/LogoHeader";
 
 interface OverviewStats {
   totalJobs: number;
@@ -122,186 +123,197 @@ export const OverviewDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Jobs</p>
-                <p className="text-2xl font-bold">{stats.totalJobs}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stats.activeJobs} active
-                </p>
-              </div>
-              <Package className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-2">
+            <CompanyLogo className="h-10 w-auto" />
+            <h1 className="text-xl sm:text-2xl font-bold">Overview Dashboard</h1>
+          </div>
+        </div>
+      </header>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Customers</p>
-                <p className="text-2xl font-bold">{stats.totalCustomers}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total registered
-                </p>
+      <div className="space-y-6">
+        {/* Main Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Jobs</p>
+                  <p className="text-2xl font-bold">{stats.totalJobs}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats.activeJobs} active
+                  </p>
+                </div>
+                <Package className="h-8 w-8 text-primary" />
               </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Revenue</p>
-                <p className="text-2xl font-bold">Le {stats.totalRevenue.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stats.totalInvoices} invoices
-                </p>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Customers</p>
+                  <p className="text-2xl font-bold">{stats.totalCustomers}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total registered
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-primary" />
               </div>
-              <DollarSign className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.pendingInvoices}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stats.overdue} overdue
-                </p>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Revenue</p>
+                  <p className="text-2xl font-bold">Le {stats.totalRevenue.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats.totalInvoices} invoices
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-primary" />
               </div>
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Jobs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Recent Jobs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats.recentJobs.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No jobs yet</p>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold text-orange-600">{stats.pendingInvoices}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats.overdue} overdue
+                  </p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-600" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {stats.recentJobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      <div>
-                        <p className="font-medium">{job.title || `Job #${job.id}`}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {job.customers?.name || 'Unknown Customer'}
-                        </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Jobs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Recent Jobs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats.recentJobs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No jobs yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {stats.recentJobs.map((job) => (
+                    <div key={job.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div>
+                          <p className="font-medium">{job.title || `Job #${job.id}`}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {job.customers?.name || 'Unknown Customer'}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={job.status === 'Completed' ? 'default' : 'secondary'}>
+                        {job.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent Customers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Recent Customers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats.recentCustomers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No customers yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {stats.recentCustomers.map((customer) => (
+                    <div key={customer.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{customer.name}</p>
+                        <p className="text-sm text-muted-foreground">{customer.email}</p>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(customer.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <Badge variant={job.status === 'Completed' ? 'default' : 'secondary'}>
-                      {job.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Recent Customers */}
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Recent Customers
-            </CardTitle>
+            <CardTitle>Quick Actions & Display Links</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats.recentCustomers.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No customers yet</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <a
+                href="/waiting-area"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              >
+                <Clock className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm font-medium text-center">Waiting Area Display</span>
+              </a>
+              <a
+                href="/display-jobs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              >
+                <Package className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm font-medium text-center">Job Progress Display</span>
+              </a>
+              <a
+                href="/showcase"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              >
+                <TrendingUp className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm font-medium text-center">Showcase Screen</span>
+              </a>
+              <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <FileText className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm font-medium">Analytics Dashboard</span>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {stats.recentCustomers.map((customer) => (
-                  <div key={customer.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{customer.email}</p>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(customer.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions & Display Links</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a
-              href="/waiting-area"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-            >
-              <Clock className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium text-center">Waiting Area Display</span>
-            </a>
-            <a
-              href="/display-jobs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-            >
-              <Package className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium text-center">Job Progress Display</span>
-            </a>
-            <a
-              href="/showcase"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-            >
-              <TrendingUp className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium text-center">Showcase Screen</span>
-            </a>
-            <div className="flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-              <FileText className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium">Analytics Dashboard</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
