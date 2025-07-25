@@ -37,6 +37,7 @@ import { DeliveryManagement } from './DeliveryManagement';
 import { ServiceManagement } from '@/components/admin/ServiceManagement';
 import { PayrollManagement } from './PayrollManagement';
 import { NotificationLogs } from './NotificationLogs';
+import { CompanyLogo } from "@/components/common/LogoHeader";
 
 // Navigation Items
 const navigationItems = [
@@ -74,9 +75,12 @@ export const AdminDashboard = ({ user, userRole }: AdminDashboardProps) => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">{companySettings?.company_name || 'Loading...'}</h1>
-              <p className="text-muted-foreground text-sm">Admin Dashboard - {userRole}</p>
+            <div className="flex items-center gap-3 mb-2">
+              <CompanyLogo className="h-10 w-auto" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold">{companySettings?.company_name || 'Loading...'}</h1>
+                <p className="text-muted-foreground text-sm">Admin Dashboard - {userRole}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 border-l pl-2 ml-2">
