@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Plus, Mail, Shield, Trash2, UserPlus, Edit, RotateCcw, Key } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -254,17 +253,10 @@ export const UserManagement = () => {
     }
   };
 
-  const [deleteUserDialog, setDeleteUserDialog] = useState<{ open: boolean; userId?: string; userType?: 'customer' | 'internal' }>({ open: false });
-
-  const handleDeleteUser = (userId: string, userType: 'customer' | 'internal') => {
-    setDeleteUserDialog({ open: true, userId, userType });
-  };
-
-  const confirmDeleteUser = async () => {
-    const { userId, userType } = deleteUserDialog;
-    if (!userId || !userType) return;
-    
-    setDeleteUserDialog({ open: false });
+  const deleteUser = async (userId: string, userType: 'customer' | 'internal') => {
+    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+      return;
+    }
 
     try {
       if (userType === 'customer') {
@@ -369,17 +361,10 @@ export const UserManagement = () => {
     }
   };
 
-  const [resetPasswordDialog, setResetPasswordDialog] = useState<{ open: boolean; userEmail?: string }>({ open: false });
-
-  const handleResetPassword = (userEmail: string) => {
-    setResetPasswordDialog({ open: true, userEmail });
-  };
-
-  const confirmResetPassword = async () => {
-    const { userEmail } = resetPasswordDialog;
-    if (!userEmail) return;
-    
-    setResetPasswordDialog({ open: false });
+  const resetUserPassword = async (userEmail: string) => {
+    if (!confirm(`Are you sure you want to send a password reset email to ${userEmail}?`)) {
+      return;
+    }
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
@@ -614,7 +599,7 @@ export const UserManagement = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleResetPassword(user.email)}
+                          onClick={() => resetUserPassword(user.email)}
                           disabled={user.user_type === 'internal' && !user.email.includes('@')}
                         >
                           <Key className="h-4 w-4" />
@@ -622,7 +607,7 @@ export const UserManagement = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteUser(user.id, user.user_type)}
+                          onClick={() => deleteUser(user.id, user.user_type)}
                           disabled={user.role === 'Admin'}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -704,25 +689,6 @@ export const UserManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <ConfirmationDialog
-        open={deleteUserDialog.open}
-        onOpenChange={(open) => setDeleteUserDialog({ open })}
-        title="Delete User"
-        description="Are you sure you want to delete this user? This action cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-        onConfirm={confirmDeleteUser}
-      />
-
-      <ConfirmationDialog
-        open={resetPasswordDialog.open}
-        onOpenChange={(open) => setResetPasswordDialog({ open })}
-        title="Reset Password"
-        description={`Are you sure you want to send a password reset email to ${resetPasswordDialog.userEmail}?`}
-        confirmText="Send Reset Email"
-        onConfirm={confirmResetPassword}
-      />
     </div>
   );
 };

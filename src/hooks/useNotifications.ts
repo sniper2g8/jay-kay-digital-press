@@ -29,14 +29,14 @@ export const useNotifications = () => {
       if (error) throw error;
 
       if (result?.success) {
-        // Notification sent successfully
+        console.log('Notification sent:', result);
         toast({
           title: "Notification Sent",
           description: `Successfully sent ${result.email_sent ? 'email' : ''}${result.email_sent && result.sms_sent ? ' and ' : ''}${result.sms_sent ? 'SMS' : ''} notification`,
         });
         return result;
       } else {
-        // Notification partially failed
+        console.warn('Notification partially failed:', result);
         toast({
           title: "Notification Warning",
           description: result?.errors?.join(', ') || "Notification may not have been fully delivered",

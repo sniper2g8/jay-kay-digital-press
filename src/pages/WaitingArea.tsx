@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, AlertCircle, Package } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
-import { useToast } from "@/hooks/use-toast";
 
 interface Job {
   id: number;
@@ -26,12 +25,11 @@ export const WaitingArea = () => {
   const [completedJobs, setCompletedJobs] = useState<Job[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { settings } = useCompanySettings();
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        // Fetching active jobs
+        console.log('Fetching active jobs...');
         const { data: active, error: activeError } = await supabase
           .from('jobs')
           .select(`
@@ -51,7 +49,7 @@ export const WaitingArea = () => {
           .order('created_at', { ascending: true })
           .limit(10);
 
-        // Fetching completed jobs
+        console.log('Fetching completed jobs...');
         const { data: completed, error: completedError } = await supabase
           .from('jobs')
           .select(`
@@ -72,30 +70,20 @@ export const WaitingArea = () => {
           .limit(5);
 
         if (activeError) {
-          toast({
-            title: "Error",
-            description: "Failed to fetch active jobs",
-            variant: "destructive"
-          });
+          console.error('Error fetching active jobs:', activeError);
         } else {
+          console.log('Active jobs fetched:', active);
           setActiveJobs(active || []);
         }
 
         if (completedError) {
-          toast({
-            title: "Error", 
-            description: "Failed to fetch completed jobs",
-            variant: "destructive"
-          });
+          console.error('Error fetching completed jobs:', completedError);
         } else {
+          console.log('Completed jobs fetched:', completed);
           setCompletedJobs(completed || []);
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Unexpected error fetching jobs",
-          variant: "destructive"
-        });
+        console.error('Unexpected error fetching jobs:', error);
       }
     };
 

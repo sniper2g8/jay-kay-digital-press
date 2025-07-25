@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Package, Clock, CheckCircle, TruckIcon, X, Eye, Edit, Trash2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { JobEditDialog } from './JobEditDialog';
 import {
@@ -196,17 +195,10 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
     return cancellableStatuses.includes(status);
   };
 
-  const [cancelJobDialog, setCancelJobDialog] = useState<{ open: boolean; jobId?: number }>({ open: false });
-
-  const handleCancelJob = (jobId: number) => {
-    setCancelJobDialog({ open: true, jobId });
-  };
-
-  const confirmCancelJob = async () => {
-    const { jobId } = cancelJobDialog;
-    if (!jobId) return;
-    
-    setCancelJobDialog({ open: false });
+  const cancelJob = async (jobId: number) => {
+    if (!confirm('Are you sure you want to cancel this job?')) {
+      return;
+    }
 
     try {
       // Get the cancelled status ID from workflow_status
@@ -340,7 +332,7 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleCancelJob(job.id)}
+                  onClick={() => cancelJob(job.id)}
                   className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
                 >
                   <X className="h-4 w-4 mr-1" />
@@ -491,26 +483,26 @@ export const JobTracker = ({ userId }: JobTrackerProps) => {
         }}
       />
 
-      <ConfirmationDialog
-        open={cancelJobDialog.open}
-        onOpenChange={(open) => setCancelJobDialog({ open })}
-        title="Cancel Job"
-        description="Are you sure you want to cancel this job? This action cannot be undone."
-        confirmText="Cancel Job"
-        variant="destructive"
-        onConfirm={confirmCancelJob}
-      />
-
       {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        open={!!deletingJobId}
-        onOpenChange={() => setDeletingJobId(null)}
-        title="Delete Job"
-        description="Are you sure you want to delete this job? This action cannot be undone and will remove all associated data."
-        confirmText="Delete"
-        variant="destructive"
-        onConfirm={() => deletingJobId && deleteJob(deletingJobId)}
-      />
+      <AlertDialog open={!!deletingJobId} onOpenChange={() => setDeletingJobId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Job</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this job? This action cannot be undone and will remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingJobId && deleteJob(deletingJobId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Job
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -95,7 +95,11 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   useEffect(() => {
     if (watchedServiceId) {
       const service = services.find(s => s.id.toString() === watchedServiceId);
-      // Service selection changed - update state
+      console.log('Service selection changed:', {
+        serviceId: watchedServiceId,
+        foundService: service?.name,
+        subtypes: service?.available_subtypes
+      });
       setSelectedService(service || null);
     }
   }, [watchedServiceId, services]);
@@ -160,7 +164,10 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         : null
     }));
     
-    // Services transformed successfully
+    console.log('Transformed services with subtypes:', transformedServices.map(s => ({
+      name: s.name,
+      subtypes: s.available_subtypes
+    })));
     
     setServices(transformedServices);
   };
