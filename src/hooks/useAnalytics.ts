@@ -31,7 +31,7 @@ export const useAnalytics = () => {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Failed to track analytics event:', error);
+      // ...existing code...
     }
   };
 
@@ -93,7 +93,6 @@ export const useAnalytics = () => {
         total_revenue: totalRevenue,
       };
     } catch (error) {
-      console.error('Failed to get analytics metrics:', error);
       toast({
         title: "Analytics Error",
         description: "Failed to load analytics data",
@@ -152,7 +151,6 @@ export const useAnalytics = () => {
 
       return chartData.sort((a, b) => a.period.localeCompare(b.period));
     } catch (error) {
-      console.error('Failed to get revenue chart data:', error);
       return [];
     }
   };

@@ -104,7 +104,6 @@ export const NotificationTester = () => {
       }
 
     } catch (error: any) {
-      console.error('Test notification error:', error);
       setTestResults([{
         type: 'email',
         success: false,

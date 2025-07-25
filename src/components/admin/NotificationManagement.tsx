@@ -69,7 +69,6 @@ export const NotificationManagement = () => {
       if (error) throw error;
       setLogs(data || []);
     } catch (error) {
-      console.error('Error fetching notification logs:', error);
       toast({
         title: "Error",
         description: "Failed to fetch notification logs",

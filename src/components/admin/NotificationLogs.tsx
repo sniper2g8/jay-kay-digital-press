@@ -90,7 +90,6 @@ export const NotificationLogs = () => {
       // Notification logs response received
 
       if (error) {
-        console.error('Error fetching notification logs:', error);
         toast({
           title: "Error",
           description: `Failed to load notification logs: ${error.message}`,
@@ -101,7 +100,6 @@ export const NotificationLogs = () => {
         setLogs(data || []);
       }
     } catch (error) {
-      console.error('Unexpected error fetching logs:', error);
       toast({
         title: "Error",
         description: "Unexpected error loading notification logs",

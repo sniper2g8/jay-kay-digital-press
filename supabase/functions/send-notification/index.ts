@@ -149,12 +149,12 @@ const logNotification = async (
     });
     
     if (error) {
-      console.error('Error inserting notification log:', error);
+      // ...existing code...
     } else {
-      console.log('Notification log created successfully:', data);
+      // ...existing code...
     }
   } catch (error) {
-    console.error('Exception in logNotification:', error);
+    // ...existing code...
   }
 };
 
@@ -175,7 +175,7 @@ serve(async (req: Request) => {
       custom_data 
     }: NotificationRequest = await req.json();
 
-    console.log('Processing notification:', { type, customer_id, event });
+    // ...existing code...
 
     // Handle admin notifications differently
     if (customer_id === 'admin') {
@@ -186,7 +186,7 @@ serve(async (req: Request) => {
         .eq('role_id', 1); // Admin role ID
 
       if (adminError) {
-        console.error('Error fetching admin users:', adminError);
+      // ...existing code...
         return Response.json({ success: false, errors: ['Failed to fetch admin users'] }, { headers: corsHeaders });
       }
 

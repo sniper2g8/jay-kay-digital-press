@@ -164,7 +164,6 @@ export const useDeliverySchedules = () => {
 
       fetchDeliverySchedules();
     } catch (error) {
-      console.error('Error deleting delivery schedule:', error);
       toast({
         title: "Error",
         description: "Failed to delete delivery schedule",

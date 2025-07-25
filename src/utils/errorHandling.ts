@@ -32,10 +32,7 @@ export class SecurityLogger {
 
     this.logs.push(securityError);
     
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Security Event:', securityError);
-    }
+    // ...existing code...
 
     // In production, this would send to a security monitoring service
     if (securityError.severity === 'critical' || securityError.severity === 'high') {
@@ -44,9 +41,7 @@ export class SecurityLogger {
   }
 
   private sendToSecurityService(error: SecurityError): void {
-    // This would integrate with a real security monitoring service
-    // For now, we'll just log it
-    console.error('CRITICAL SECURITY EVENT:', error);
+    // ...existing code...
   }
 
   getRecentLogs(limit: number = 100): SecurityError[] {

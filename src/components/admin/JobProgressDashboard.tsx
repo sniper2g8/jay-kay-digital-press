@@ -98,7 +98,7 @@ export const JobProgressDashboard = () => {
 
       setStats({ total, pending, inProgress, completed, overdue });
     } catch (error) {
-      console.error('Error fetching job progress:', error);
+      // ...existing code...
     } finally {
       setLoading(false);
     }

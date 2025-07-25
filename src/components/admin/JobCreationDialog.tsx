@@ -455,7 +455,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       onJobCreated();
       onClose();
     } catch (error: any) {
-      console.error("Error creating job:", error);
       const userMessage = handleError(error, 'job-creation');
       toast({
         title: "Error",
