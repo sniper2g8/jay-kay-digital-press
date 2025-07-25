@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { Resend } from "npm:resend@2.0.0";
+import AfricasTalking from "npm:africastalking@0.7.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,41 +25,58 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 );
 
-const sendSMS = async (phone: string, message: string) => {
-  const plivoAuthId = Deno.env.get('PLIVO_AUTH_ID');
-  const plivoAuthToken = Deno.env.get('PLIVO_AUTH_TOKEN');
-  const plivoPhoneNumber = Deno.env.get('PLIVO_PHONE_NUMBER');
+// Initialize AfricasTalking
+const africasTalkingApiKey = Deno.env.get('AFRICAS_TALKING_API_KEY');
+const africasTalkingUsername = Deno.env.get('AFRICAS_TALKING_USERNAME');
 
-  if (!plivoAuthId || !plivoAuthToken || !plivoPhoneNumber) {
-    throw new Error('Plivo credentials not configured');
+let africasTalking: any = null;
+if (africasTalkingApiKey && africasTalkingUsername) {
+  africasTalking = AfricasTalking({
+    apiKey: africasTalkingApiKey,
+    username: africasTalkingUsername,
+  });
+}
+
+const sendSMS = async (phone: string, message: string) => {
+  if (!africasTalking) {
+    throw new Error('AfricasTalking credentials not configured');
   }
 
-  // Clean and format Sierra Leone phone number
+  // Clean and format Sierra Leone phone number for AfricasTalking
   const cleanPhone = phone.replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('232') ? `+${cleanPhone}` : `+232${cleanPhone}`;
 
-  const url = `https://api.plivo.com/v1/Account/${plivoAuthId}/Message/`;
-  const auth = btoa(`${plivoAuthId}:${plivoAuthToken}`);
+  console.log('Sending SMS via AfricasTalking to:', formattedPhone);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      src: plivoPhoneNumber,
-      dst: formattedPhone,
-      text: message,
-    }),
-  });
+  try {
+    const sms = africasTalking.SMS;
+    const result = await sms.send({
+      to: [formattedPhone],
+      message: message,
+      from: 'PrintShop', // Can be customized or use shortcode
+    });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`SMS failed: ${error}`);
+    console.log('AfricasTalking SMS result:', result);
+    
+    if (result.SMSMessageData && result.SMSMessageData.Recipients && result.SMSMessageData.Recipients.length > 0) {
+      const recipient = result.SMSMessageData.Recipients[0];
+      if (recipient.status === 'Success') {
+        return {
+          success: true,
+          messageId: recipient.messageId,
+          status: recipient.status,
+          cost: recipient.cost
+        };
+      } else {
+        throw new Error(`SMS failed: ${recipient.status}`);
+      }
+    } else {
+      throw new Error('Invalid response from AfricasTalking');
+    }
+  } catch (error) {
+    console.error('AfricasTalking SMS error:', error);
+    throw new Error(`SMS failed: ${error.message}`);
   }
-
-  return await response.json();
 };
 
 const sendEmail = async (email: string, subject: string, message: string) => {
@@ -280,13 +298,13 @@ serve(async (req: Request) => {
           undefined,
           message,
           'sent',
-          smsResult.message_uuid?.[0] || smsResult.api_id,
+          smsResult.messageId,
           undefined,
           job_id,
           delivery_schedule_id
         );
         
-        console.log('SMS sent successfully via Plivo:', smsResult.message_uuid);
+        console.log('SMS sent successfully via AfricasTalking:', smsResult.messageId);
       } catch (error) {
         errors.push(`SMS failed: ${error.message}`);
         await logNotification(
