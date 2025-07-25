@@ -5,7 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const SimpleHomepage = lazy(() => import("./pages/SimpleHomepage").then(module => ({ default: module.SimpleHomepage })));
-const AuthPage = lazy(() => import("./components/auth/AuthPage").then(module => ({ default: module.AuthPage })));
+const UnifiedAuthPage = lazy(() => import("./components/auth/UnifiedAuthPage").then(module => ({ default: module.UnifiedAuthPage })));
 const LoginPage = lazy(() => import("./components/auth/LoginPage").then(module => ({ default: module.LoginPage })));
 const JobTrackingPage = lazy(() => import("./pages/JobTrackingPage").then(module => ({ default: module.JobTrackingPage })));
 const DashboardPage = lazy(() => import("./pages/Index"));
@@ -34,7 +34,7 @@ const App = () => {
           }>
             <Routes>
               <Route path="/" element={<SimpleHomepage />} />
-              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth" element={<UnifiedAuthPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
