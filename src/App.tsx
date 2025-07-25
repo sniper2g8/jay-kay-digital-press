@@ -1,6 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Start with just the Homepage - we know this was part of the issue
+const Homepage = lazy(() => import("./pages/Homepage").then(module => ({ default: module.Homepage })));
 
 const App = () => {
   const queryClient = useMemo(() => new QueryClient({
@@ -15,28 +18,23 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                  JAY KAY DIGITAL PRESS
-                </h1>
-                <p className="text-xl text-gray-600 mb-8">
-                  Application Loading Successfully
-                </p>
-                <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block">
-                  ✅ React is working properly
-                </div>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
+              <p className="text-gray-600">Please wait while we load your content</p>
+            </div>
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={<Homepage />} />
+            <Route path="*" element={
+              <div className="min-h-screen flex items-center justify-center">
+                <h1 className="text-2xl">Page Not Found</h1>
               </div>
-            </div>
-          } />
-          <Route path="*" element={
-            <div className="min-h-screen flex items-center justify-center">
-              <h1 className="text-2xl">Page Not Found</h1>
-            </div>
-          } />
-        </Routes>
+            } />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   );
