@@ -28,7 +28,6 @@ const HARDCODED_SERVICES = [
     description: "Make lasting first impressions with premium business cards featuring elegant designs and professional finishes",
     features: ["Premium cardstock options", "Elegant finishes available", "Same-day turnaround", "Professional designs"],
     icon: FileText,
-    basePrice: "15.00",
     popular: true
   },
   {
@@ -36,7 +35,6 @@ const HARDCODED_SERVICES = [
     description: "Captivate your audience with eye-catching marketing materials that showcase your brand and drive engagement",
     features: ["Full-color vibrant printing", "Multiple paper grades", "Custom sizes & folds", "Marketing optimization"],
     icon: Image,
-    basePrice: "12.00",
     popular: true
   },
   {
@@ -44,7 +42,6 @@ const HARDCODED_SERVICES = [
     description: "Command attention with durable outdoor banners and indoor signage solutions for maximum brand visibility",
     features: ["Weather-resistant materials", "Custom dimensions", "Indoor/outdoor options", "High-resolution graphics"],
     icon: Calendar,
-    basePrice: "35.00",
     popular: true
   },
   {
@@ -52,7 +49,6 @@ const HARDCODED_SERVICES = [
     description: "Transform spaces with stunning large format prints perfect for events, presentations, and advertising displays",
     features: ["Large format capabilities", "Museum-quality prints", "Multiple substrate options", "Exhibition ready"],
     icon: Star,
-    basePrice: "30.00",
     popular: true
   },
   {
@@ -60,7 +56,6 @@ const HARDCODED_SERVICES = [
     description: "Present comprehensive information beautifully with professionally bound booklets and detailed product catalogs",
     features: ["Perfect binding options", "Saddle-stitch binding", "Full-color pages", "Custom page counts"],
     icon: Palette,
-    basePrice: "20.00",
     popular: true
   },
   {
@@ -68,7 +63,6 @@ const HARDCODED_SERVICES = [
     description: "Brand your products professionally with custom labels and promotional stickers in various shapes and sizes",
     features: ["Waterproof materials", "Custom die-cutting", "Adhesive options", "Bulk quantities"],
     icon: Award,
-    basePrice: "18.00",
     popular: false
   }
 ];
@@ -206,10 +200,6 @@ export const SimpleHomepage = () => {
                   <p className="text-muted-foreground mb-4 leading-relaxed text-center">
                     {service.description}
                   </p>
-                  <div className="text-center mb-4">
-                    <span className="text-2xl font-bold text-red-600">Le {service.basePrice}</span>
-                    <span className="text-sm text-muted-foreground ml-1">starting price</span>
-                  </div>
                   <ul className="space-y-2 mb-6">
                     {service.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center text-sm text-muted-foreground">
