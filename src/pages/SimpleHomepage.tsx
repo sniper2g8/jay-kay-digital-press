@@ -23,48 +23,55 @@ import {
   WifiOff
 } from "lucide-react";
 
+// Import service images
+import businessCardsImg from "@/assets/services/business-cards.jpg";
+import flyersBrochuresImg from "@/assets/services/flyers-brochures.jpg";
+import bannersSignageImg from "@/assets/services/banners-signage.jpg";
+import postersLargeFormatImg from "@/assets/services/posters-large-format.jpg";
+import bookletsCatalogsImg from "@/assets/services/booklets-catalogs.jpg";
+import labelsStickersImg from "@/assets/services/labels-stickers.jpg";
 // Hardcoded services data - no Supabase fetching needed
 const HARDCODED_SERVICES = [
   {
     title: "Business Cards",
     description: "Make lasting first impressions with premium business cards featuring elegant designs and professional finishes",
     features: ["Premium cardstock options", "Elegant finishes available", "Same-day turnaround", "Professional designs"],
-    image: "/src/assets/services/business-cards.jpg",
+    image: businessCardsImg,
     popular: true
   },
   {
     title: "Flyers & Brochures",
     description: "Captivate your audience with eye-catching marketing materials that showcase your brand and drive engagement",
     features: ["Full-color vibrant printing", "Multiple paper grades", "Custom sizes & folds", "Marketing optimization"],
-    image: "/src/assets/services/flyers-brochures.jpg",
+    image: flyersBrochuresImg,
     popular: true
   },
   {
     title: "Banners & Signage",
     description: "Command attention with durable outdoor banners and indoor signage solutions for maximum brand visibility",
     features: ["Weather-resistant materials", "Custom dimensions", "Indoor/outdoor options", "High-resolution graphics"],
-    image: "/src/assets/services/banners-signage.jpg",
+    image: bannersSignageImg,
     popular: true
   },
   {
     title: "Posters & Large Format",
     description: "Transform spaces with stunning large format prints perfect for events, presentations, and advertising displays",
     features: ["Large format capabilities", "Museum-quality prints", "Multiple substrate options", "Exhibition ready"],
-    image: "/src/assets/services/posters-large-format.jpg",
+    image: postersLargeFormatImg,
     popular: true
   },
   {
     title: "Booklets & Catalogs",
     description: "Present comprehensive information beautifully with professionally bound booklets and detailed product catalogs",
     features: ["Perfect binding options", "Saddle-stitch binding", "Full-color pages", "Custom page counts"],
-    image: "/src/assets/services/booklets-catalogs.jpg",
+    image: bookletsCatalogsImg,
     popular: true
   },
   {
     title: "Labels & Stickers",
     description: "Brand your products professionally with custom labels and promotional stickers in various shapes and sizes",
     features: ["Waterproof materials", "Custom die-cutting", "Adhesive options", "Bulk quantities"],
-    image: "/src/assets/services/labels-stickers.jpg",
+    image: labelsStickersImg,
     popular: false
   }
 ];
