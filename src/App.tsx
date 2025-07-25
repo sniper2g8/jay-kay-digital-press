@@ -26,7 +26,20 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword").then(module => 
 const DisplayJobsScreen = lazy(() => import("./pages/DisplayJobsScreen").then(module => ({ default: module.DisplayJobsScreen })));
 const DisplayShowcaseScreen = lazy(() => import("./pages/DisplayShowcaseScreen").then(module => ({ default: module.DisplayShowcaseScreen })));
 
-const queryClient = new QueryClient();
+
+const App = () => {
+  const queryClient = new QueryClient();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppContent />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 const AppContent = () => {
   const { settings, loading } = useCompanySettings();
@@ -96,15 +109,5 @@ const AppContent = () => {
     </AuthProvider>
   );
 };
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AppContent />
-    </TooltipProvider>
-  </QueryClientProvider>
-);
 
 export default App;
