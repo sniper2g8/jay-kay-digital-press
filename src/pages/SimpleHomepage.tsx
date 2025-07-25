@@ -28,42 +28,42 @@ const HARDCODED_SERVICES = [
     title: "Business Cards",
     description: "Make lasting first impressions with premium business cards featuring elegant designs and professional finishes",
     features: ["Premium cardstock options", "Elegant finishes available", "Same-day turnaround", "Professional designs"],
-    icon: FileText,
+    image: "/src/assets/services/business-cards.jpg",
     popular: true
   },
   {
     title: "Flyers & Brochures",
     description: "Captivate your audience with eye-catching marketing materials that showcase your brand and drive engagement",
     features: ["Full-color vibrant printing", "Multiple paper grades", "Custom sizes & folds", "Marketing optimization"],
-    icon: Image,
+    image: "/src/assets/services/flyers-brochures.jpg",
     popular: true
   },
   {
     title: "Banners & Signage",
     description: "Command attention with durable outdoor banners and indoor signage solutions for maximum brand visibility",
     features: ["Weather-resistant materials", "Custom dimensions", "Indoor/outdoor options", "High-resolution graphics"],
-    icon: Calendar,
+    image: "/src/assets/services/banners-signage.jpg",
     popular: true
   },
   {
     title: "Posters & Large Format",
     description: "Transform spaces with stunning large format prints perfect for events, presentations, and advertising displays",
     features: ["Large format capabilities", "Museum-quality prints", "Multiple substrate options", "Exhibition ready"],
-    icon: Star,
+    image: "/src/assets/services/posters-large-format.jpg",
     popular: true
   },
   {
     title: "Booklets & Catalogs",
     description: "Present comprehensive information beautifully with professionally bound booklets and detailed product catalogs",
     features: ["Perfect binding options", "Saddle-stitch binding", "Full-color pages", "Custom page counts"],
-    icon: Palette,
+    image: "/src/assets/services/booklets-catalogs.jpg",
     popular: true
   },
   {
     title: "Labels & Stickers",
     description: "Brand your products professionally with custom labels and promotional stickers in various shapes and sizes",
     features: ["Waterproof materials", "Custom die-cutting", "Adhesive options", "Bulk quantities"],
-    icon: Award,
+    image: "/src/assets/services/labels-stickers.jpg",
     popular: false
   }
 ];
@@ -198,9 +198,11 @@ export const SimpleHomepage = () => {
               <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-red-200">
                 <CardContent className="pt-6">
                   <div className="relative mb-4">
-                    <div className="w-full h-32 bg-gradient-to-r from-red-100 to-red-200 rounded-lg flex items-center justify-center">
-                      <service.icon className="h-16 w-16 text-red-600" />
-                    </div>
+                    <img 
+                      src={service.image} 
+                      alt={service.title}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
                     {service.popular && (
                       <Badge className="absolute top-3 right-3 bg-red-600 text-white">Popular</Badge>
                     )}
@@ -436,21 +438,6 @@ export const SimpleHomepage = () => {
                 <div className="flex items-start gap-3 text-gray-400">
                   <MapPin className="h-4 w-4 text-red-500 flex-shrink-0 mt-1" />
                   <p>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</p>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h5 className="text-sm font-semibold mb-3 text-white">Quick Links</h5>
-                <div className="space-y-2 text-sm">
-                  <a href="#home" className="block text-gray-400 hover:text-white transition-colors">Home</a>
-                  <a href="#services" className="block text-gray-400 hover:text-white transition-colors">Services</a>
-                  <a href="#contact" className="block text-gray-400 hover:text-white transition-colors">Contact</a>
-                  <button 
-                    onClick={() => navigate("/track")} 
-                    className="block text-gray-400 hover:text-white transition-colors text-left"
-                  >
-                    Track Order
-                  </button>
                 </div>
               </div>
             </div>
