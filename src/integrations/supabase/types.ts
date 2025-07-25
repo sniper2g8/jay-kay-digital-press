@@ -1524,6 +1524,53 @@ export type Database = {
           },
         ]
       }
+      user_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_token: string
+          invited_by: string | null
+          invited_email: string
+          invited_name: string
+          invited_phone: string | null
+          invited_role_id: number
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          invite_token: string
+          invited_by?: string | null
+          invited_email: string
+          invited_name: string
+          invited_phone?: string | null
+          invited_role_id: number
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string | null
+          invited_email?: string
+          invited_name?: string
+          invited_phone?: string | null
+          invited_role_id?: number
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invitations_invited_role_id_fkey"
+            columns: ["invited_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -1678,6 +1725,14 @@ export type Database = {
       log_security_event: {
         Args: { event_type: string; event_details?: Json }
         Returns: undefined
+      }
+      process_invitation_signup: {
+        Args: {
+          invite_token_param: string
+          user_auth_id: string
+          user_password: string
+        }
+        Returns: Json
       }
       sanitize_input: {
         Args: { input_text: string }
