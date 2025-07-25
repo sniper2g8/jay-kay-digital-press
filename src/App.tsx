@@ -35,25 +35,13 @@ const App = () => {
       },
     },
   }), []);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
-  );
-};
-
-const AppContent = () => {
-  return (
-    <TooltipProvider>
+      {/* Step by step rebuild - No TooltipProvider for now */}
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <LogoHeader />
-        <div className="fixed top-4 right-4 z-50">
-          <OfflineIndicator />
-        </div>
-        <BrowserRouter>
+      <BrowserRouter>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center">
             <LoadingSpinner />
@@ -109,8 +97,7 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </AuthProvider>
-    </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 
