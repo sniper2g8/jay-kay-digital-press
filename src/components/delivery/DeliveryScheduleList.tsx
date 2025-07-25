@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarDays, Truck, User, Package, Phone, Mail } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { CalendarDays, Truck, User, Package, Phone, Mail, Trash2 } from 'lucide-react';
 
 interface DeliverySchedule {
   id: string;
@@ -177,6 +178,31 @@ export const DeliveryScheduleList = () => {
     }
   };
 
+  const deleteDeliverySchedule = async (scheduleId: string) => {
+    try {
+      const { error } = await supabase
+        .from('delivery_schedules')
+        .delete()
+        .eq('id', scheduleId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Delivery schedule deleted successfully"
+      });
+
+      fetchDeliverySchedules();
+    } catch (error) {
+      console.error('Error deleting delivery schedule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete delivery schedule",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredSchedules = statusFilter === 'all' 
     ? deliverySchedules 
     : deliverySchedules.filter(schedule => schedule.delivery_status === statusFilter);
@@ -308,21 +334,48 @@ export const DeliveryScheduleList = () => {
                       {schedule.delivery_fee ? `Le ${schedule.delivery_fee.toFixed(2)}` : 'Free'}
                     </TableCell>
                     <TableCell>
-                      <Select 
-                        value={schedule.delivery_status} 
-                        onValueChange={(value) => updateDeliveryStatus(schedule.id, value)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-2">
+                        <Select 
+                          value={schedule.delivery_status} 
+                          onValueChange={(value) => updateDeliveryStatus(schedule.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statusOptions.map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Delivery Schedule</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this delivery schedule for "{schedule.jobs.title}"? 
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteDeliverySchedule(schedule.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
