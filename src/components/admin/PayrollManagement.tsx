@@ -101,88 +101,92 @@ export const PayrollManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      // First fetch all employees
-      const { data: employeesData, error } = await supabase
+      // Fetch all internal users (Admin, Staff, System Users)
+      const { data: internalUsers, error: internalError } = await supabase
+        .from("internal_users")
+        .select(`
+          id,
+          name,
+          email,
+          phone,
+          created_at,
+          roles (name)
+        `);
+
+      // Fetch all non-system staff
+      const { data: nonSystemStaff, error: staffError } = await supabase
+        .from("non_system_staff")
+        .select(`
+          id,
+          name,
+          email,
+          phone,
+          position,
+          created_at
+        `);
+
+      // Fetch existing employee records for salary information
+      const { data: employeeRecords, error: employeeError } = await supabase
         .from("employees")
         .select("*");
 
-      if (error) throw error;
+      if (internalError && internalError.code !== 'PGRST116') throw internalError;
+      if (staffError && staffError.code !== 'PGRST116') throw staffError;
+      if (employeeError && employeeError.code !== 'PGRST116') throw employeeError;
 
-      // Raw employees data received
-
-      // Get unique internal user IDs and non-system staff IDs
-      const internalUserIds = employeesData?.filter(emp => emp.internal_user_id).map(emp => emp.internal_user_id) || [];
-      const nonSystemStaffIds = employeesData?.filter(emp => emp.non_system_staff_id).map(emp => emp.non_system_staff_id) || [];
-
-      // Fetch internal users data
-      let internalUsersData: any[] = [];
-      if (internalUserIds.length > 0) {
-        const { data, error: internalError } = await supabase
-          .from("internal_users")
-          .select("id, name, email, phone, roles(name)")
-          .in("id", internalUserIds);
-        
-        if (!internalError) {
-          internalUsersData = data || [];
+      // Create maps for existing employee salary data
+      const employeeMap = new Map();
+      (employeeRecords || []).forEach(emp => {
+        if (emp.internal_user_id) {
+          employeeMap.set(`internal_${emp.internal_user_id}`, emp);
         }
-      }
-
-      // Fetch non-system staff data
-      let nonSystemStaffData: any[] = [];
-      if (nonSystemStaffIds.length > 0) {
-        const { data, error: staffError } = await supabase
-          .from("non_system_staff")
-          .select("id, name, email, phone, position")
-          .in("id", nonSystemStaffIds);
-        
-        if (!staffError) {
-          nonSystemStaffData = data || [];
+        if (emp.non_system_staff_id) {
+          employeeMap.set(`staff_${emp.non_system_staff_id}`, emp);
         }
-      }
-
-      // Create lookup maps
-      const internalUsersMap = new Map(internalUsersData.map(user => [user.id, user]));
-      const nonSystemStaffMap = new Map(nonSystemStaffData.map(staff => [staff.id, staff]));
-
-      const formattedEmployees = (employeesData || []).map(emp => {
-        let name, email, phone, role;
-        
-        if (emp.internal_user_id && internalUsersMap.has(emp.internal_user_id)) {
-          const internalUser = internalUsersMap.get(emp.internal_user_id);
-          name = internalUser.name;
-          email = internalUser.email;
-          phone = internalUser.phone;
-          role = internalUser.roles?.name || 'System User';
-        } else if (emp.non_system_staff_id && nonSystemStaffMap.has(emp.non_system_staff_id)) {
-          const staffUser = nonSystemStaffMap.get(emp.non_system_staff_id);
-          name = staffUser.name;
-          email = staffUser.email;
-          phone = staffUser.phone;
-          role = staffUser.position || 'Non-System Staff';
-        } else {
-          // Fallback to employee table data
-          name = emp.name || 'Unknown Employee';
-          email = emp.email || '';
-          phone = emp.phone || '';
-          role = emp.role || 'Staff';
-        }
-
-        return {
-          id: emp.id,
-          employee_number: emp.employee_number || 'Not assigned',
-          name: name,
-          email: email,
-          phone: phone,
-          role: role,
-          salary: Number(emp.salary || 0),
-          allowances: Number(emp.allowances || 0),
-          deductions: Number(emp.deductions || 0),
-          hire_date: emp.hire_date || emp.created_at,
-          is_active: emp.is_active !== false
-        };
       });
 
-      // Formatted employees data
+      const formattedEmployees: Employee[] = [];
+
+      // Process internal users (Admin, Staff, System Users)
+      (internalUsers || []).forEach(user => {
+        const key = `internal_${user.id}`;
+        const existingEmployee = employeeMap.get(key);
+        
+        formattedEmployees.push({
+          id: existingEmployee?.id || `internal_${user.id}`,
+          employee_number: existingEmployee?.employee_number || `JKDP-${user.roles?.name?.toUpperCase() || 'USR'}-${String(formattedEmployees.length + 1).padStart(4, '0')}`,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          role: user.roles?.name || 'Internal User',
+          salary: Number(existingEmployee?.salary || 0),
+          allowances: Number(existingEmployee?.allowances || 0),
+          deductions: Number(existingEmployee?.deductions || 0),
+          hire_date: existingEmployee?.hire_date || user.created_at,
+          is_active: existingEmployee?.is_active !== false
+        });
+      });
+
+      // Process non-system staff
+      (nonSystemStaff || []).forEach(staff => {
+        const key = `staff_${staff.id}`;
+        const existingEmployee = employeeMap.get(key);
+        
+        formattedEmployees.push({
+          id: existingEmployee?.id || `staff_${staff.id}`,
+          employee_number: existingEmployee?.employee_number || `JKDP-STF-${String(formattedEmployees.length + 1).padStart(4, '0')}`,
+          name: staff.name,
+          email: staff.email || '',
+          phone: staff.phone || '',
+          role: staff.position || 'Non-System Staff',
+          salary: Number(existingEmployee?.salary || 0),
+          allowances: Number(existingEmployee?.allowances || 0),
+          deductions: Number(existingEmployee?.deductions || 0),
+          hire_date: existingEmployee?.hire_date || staff.created_at,
+          is_active: existingEmployee?.is_active !== false
+        });
+      });
+
       setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
