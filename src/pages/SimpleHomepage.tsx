@@ -412,12 +412,12 @@ export const SimpleHomepage = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#services" className="hover:text-white transition-colors">Business Cards</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Flyers & Brochures</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Banners & Signage</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Posters</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Booklets</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Labels & Stickers</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Business Cards</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Flyers & Brochures</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Banners & Signage</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Posters</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Booklets</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Labels & Stickers</a></li>
               </ul>
             </div>
             
