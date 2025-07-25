@@ -227,7 +227,7 @@ serve(async (req: Request) => {
     let errors: string[] = [];
 
     // Check if notifications are enabled for this event
-    const isJobEvent = ['job_submitted', 'status_updated'].includes(event);
+    const isJobEvent = ['job_submitted', 'status_updated', 'admin_job_submitted'].includes(event);
     const isDeliveryEvent = ['delivery_scheduled', 'delivery_completed', 'delivery_status_update'].includes(event);
     
     const emailEnabled = preferences?.email_notifications && 
