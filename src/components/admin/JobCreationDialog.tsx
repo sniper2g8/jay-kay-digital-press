@@ -61,6 +61,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const { toast } = useToast();
   const { sendJobSubmittedNotification } = useNotifications();
 
@@ -152,22 +153,45 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   const uploadFiles = async (jobId: string): Promise<string[]> => {
     const fileUrls: string[] = [];
 
-    for (const file of uploadedFiles) {
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const file = uploadedFiles[i];
+      const fileKey = `${file.name}-${i}`;
+      
+      // Initialize progress
+      setUploadProgress(prev => ({ ...prev, [fileKey]: 10 }));
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${jobId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      // Simulate progress during upload
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const currentProgress = prev[fileKey] || 10;
+          if (currentProgress < 90) {
+            return { ...prev, [fileKey]: currentProgress + 15 };
+          }
+          return prev;
+        });
+      }, 150);
 
       const { data, error } = await supabase.storage
         .from('job-uploads')
         .upload(fileName, file);
 
+      clearInterval(progressInterval);
+
       if (error) {
         console.error('Upload error:', error);
+        setUploadProgress(prev => ({ ...prev, [fileKey]: 0 }));
         throw new Error(`Failed to upload ${file.name}`);
       }
 
+      setUploadProgress(prev => ({ ...prev, [fileKey]: 100 }));
       fileUrls.push(data.path);
     }
 
+    // Clear progress after a short delay
+    setTimeout(() => setUploadProgress({}), 2000);
     return fileUrls;
   };
 
@@ -580,25 +604,47 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             {uploadedFiles.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Uploaded Files ({uploadedFiles.length})</p>
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center gap-2">
-                      {getFileIcon(file.name)}
-                      <span className="text-sm truncate">{file.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
+                {uploadedFiles.map((file, index) => {
+                  const fileKey = `${file.name}-${index}`;
+                  const progress = uploadProgress[fileKey];
+                  
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(file.name)}
+                          <span className="text-sm truncate">{file.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          disabled={progress !== undefined}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {progress !== undefined && (
+                        <div className="px-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>Uploading...</span>
+                            <span>{progress}%</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                            <div 
+                              className="bg-primary h-1.5 rounded-full transition-all duration-300" 
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

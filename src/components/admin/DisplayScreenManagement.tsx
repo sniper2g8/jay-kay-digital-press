@@ -23,6 +23,7 @@ export const DisplayScreenManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,12 +61,28 @@ export const DisplayScreenManagement = () => {
     }
 
     setUploading(true);
+    setUploadProgress(10);
+    
     try {
       // Upload file to storage
       const fileName = `slide-${Date.now()}-${file.name}`;
+      
+      // Simulate progress during upload
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev < 80) {
+            return prev + 15;
+          }
+          return prev;
+        });
+      }, 200);
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("slides")
         .upload(fileName, file);
+
+      clearInterval(progressInterval);
+      setUploadProgress(90);
 
       if (uploadError) throw uploadError;
 
@@ -84,6 +101,8 @@ export const DisplayScreenManagement = () => {
 
       if (insertError) throw insertError;
 
+      setUploadProgress(100);
+
       toast({
         title: "Success",
         description: "Slide uploaded successfully",
@@ -92,6 +111,7 @@ export const DisplayScreenManagement = () => {
       setIsDialogOpen(false);
       setTitle("");
       setFile(null);
+      setTimeout(() => setUploadProgress(0), 1000);
       fetchSlides();
     } catch (error: any) {
       toast({
@@ -187,6 +207,20 @@ export const DisplayScreenManagement = () => {
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
               </div>
+              {uploading && uploadProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Uploading...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               <Button onClick={uploadSlide} disabled={uploading || !file} className="w-full">
                 <Upload className="h-4 w-4 mr-2" />
                 {uploading ? "Uploading..." : "Upload Slide"}
