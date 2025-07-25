@@ -239,7 +239,12 @@ export const Homepage = () => {
                 <CardHeader className="pb-0 border-b-0" />
                 <CardContent className="pt-0">
                   <div className="relative mb-4">
-                    <img src={service.image} alt={service.title} className="w-full aspect-[18/6] object-cover" style={{ minHeight: '220px', maxHeight: '320px' }} />
+                    <img 
+                      src={service.image} 
+                      alt={service.title} 
+                      className="w-full aspect-[21/9] object-cover shadow-xl" 
+                      style={{ minHeight: '270px', maxHeight: '420px', borderRadius: '18px' }} 
+                    />
                     {service.popular && (
                       <Badge className="absolute top-3 right-3 bg-red-600 text-white">Popular</Badge>
                     )}
