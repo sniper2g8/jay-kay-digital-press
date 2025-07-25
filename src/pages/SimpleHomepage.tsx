@@ -86,7 +86,7 @@ export const SimpleHomepage = () => {
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle contact form submission - could integrate with email service later
-    console.log('Contact form submitted:', contactForm);
+    // Contact form submitted successfully
     // Reset form
     setContactForm({ name: "", email: "", phone: "", message: "" });
     // You could add a toast notification here
