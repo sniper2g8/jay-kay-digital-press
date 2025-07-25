@@ -182,19 +182,39 @@ export const UserManagement = () => {
     const sanitizedPhone = sanitizeInput(invitePhone);
 
     try {
-      // Generate a secure invite token instead of direct link
+      // Get role ID
+      const roleData = roles.find(r => r.name === selectedRole);
+      if (!roleData) {
+        throw new Error("Invalid role selected");
+      }
+
+      // Generate a secure invite token
       const inviteToken = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       
-      // Store invite in database (you would need to create an invites table)
+      // Store invite in database
+      const { error: inviteError } = await supabase
+        .from("user_invitations")
+        .insert({
+          invite_token: inviteToken,
+          invited_email: inviteEmail,
+          invited_name: sanitizedName,
+          invited_phone: sanitizedPhone || null,
+          invited_role_id: roleData.id,
+          invited_by: (await supabase.auth.getUser()).data.user?.id,
+          expires_at: expiresAt.toISOString()
+        });
+
+      if (inviteError) throw inviteError;
+      
       const inviteLink = `${window.location.origin}/auth?invite=${inviteToken}`;
       
       // Copy to clipboard
       await navigator.clipboard.writeText(inviteLink);
       
       toast({
-        title: "Secure Invite Link Generated",
-        description: "Invite link has been copied to your clipboard. This link expires in 24 hours.",
+        title: "Invitation Sent Successfully",
+        description: `Secure invite link has been copied to your clipboard. Valid for 24 hours.`,
       });
 
       setInviteDialogOpen(false);
@@ -202,11 +222,11 @@ export const UserManagement = () => {
       setSelectedRole("");
       setInviteName("");
       setInvitePhone("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating invite:", error);
       toast({
         title: "Error",
-        description: "Failed to generate invite link",
+        description: error.message || "Failed to generate invite link",
         variant: "destructive",
       });
     }
@@ -238,34 +258,47 @@ export const UserManagement = () => {
         throw new Error("Invalid role selected");
       }
 
-      // Create user directly in appropriate table
+      // Check if email already exists
+      const { data: existingCustomer } = await supabase
+        .from("customers")
+        .select("email")
+        .eq("email", inviteEmail)
+        .maybeSingle();
+
+      const { data: existingInternal } = await supabase
+        .from("internal_users")
+        .select("email")
+        .eq("email", inviteEmail)
+        .maybeSingle();
+
+      if (existingCustomer || existingInternal) {
+        throw new Error("A user with this email already exists");
+      }
+
+      // For now, only allow direct creation of customers
+      // Internal users should use the invite system for proper auth setup
       if (selectedRole === "Customer") {
         const { error } = await supabase
           .from("customers")
           .insert({
-            name: inviteName,
+            name: sanitizeInput(inviteName),
             email: inviteEmail,
-            phone: invitePhone,
+            phone: sanitizeInput(invitePhone) || null,
           });
         if (error) throw error;
-      } else {
-        // Create internal user - requires auth_user_id, using placeholder
-        const { error } = await supabase
-          .from("internal_users")
-          .insert({
-            name: inviteName,
-            email: inviteEmail,
-            phone: invitePhone,
-            role_id: roleData.id,
-            auth_user_id: '00000000-0000-0000-0000-000000000000', // Placeholder for direct creation
-          });
-        if (error) throw error;
-      }
 
-      toast({
-        title: "Success",
-        description: "User has been added successfully",
-      });
+        toast({
+          title: "Success",
+          description: "Customer has been added successfully",
+        });
+      } else {
+        toast({
+          title: "Info",
+          description: "Internal users should be created using the 'Invite User' function for proper authentication setup.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       setAddUserDialogOpen(false);
       setInviteEmail("");
@@ -273,11 +306,22 @@ export const UserManagement = () => {
       setInviteName("");
       setInvitePhone("");
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding user:", error);
+      
+      // Provide specific error messages
+      let errorMessage = "Failed to add user";
+      if (error.message?.includes("duplicate key")) {
+        errorMessage = "A user with this email already exists";
+      } else if (error.message?.includes("foreign key")) {
+        errorMessage = "Invalid role selected or database constraint violation";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to add user",
+        description: errorMessage,
         variant: "destructive",
       });
     }
