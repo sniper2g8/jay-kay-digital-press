@@ -15,7 +15,8 @@ export const SAV_TYPES = [
   'Birthday SAV', 
   'Corporate SAV',
   'Event SAV',
-  'Custom SAV'
+  'Custom SAV',
+  'Custom Size Paper'
 ] as const;
 
 export const BANNER_TYPES = [
@@ -100,7 +101,7 @@ export const DEFAULT_SERVICES = [
     service_type: SERVICE_TYPES.FLYER,
     base_price: 12.00,
     requires_dimensions: false,
-    available_subtypes: ['A4 Flyer', 'A5 Flyer', 'Custom Size'],
+    available_subtypes: ['A4 Flyer', 'A5 Flyer', 'Custom Size', 'Custom Size Paper'],
     available_paper_types: ['A4 Paper', 'A5 Paper', 'Cardstock'],
     available_paper_weights: ['80gsm', '100gsm', '120gsm', '150gsm'],
     available_finishes: ['folding', 'cutting', 'lamination']
@@ -111,7 +112,7 @@ export const DEFAULT_SERVICES = [
     service_type: SERVICE_TYPES.BROCHURE,
     base_price: 20.00,
     requires_dimensions: false,
-    available_subtypes: ['Tri-fold', 'Bi-fold', 'Z-fold', 'Custom'],
+    available_subtypes: ['Tri-fold', 'Bi-fold', 'Z-fold', 'Custom', 'Custom Size Paper'],
     available_paper_types: ['A4 Paper', 'Cardstock'],
     available_paper_weights: ['100gsm', '120gsm', '150gsm', '200gsm'],
     available_finishes: ['folding', 'binding', 'lamination']
@@ -122,7 +123,7 @@ export const DEFAULT_SERVICES = [
     service_type: SERVICE_TYPES.POSTER,
     base_price: 30.00,
     requires_dimensions: true,
-    available_subtypes: ['A3 Poster', 'A2 Poster', 'A1 Poster', 'Custom Size'],
+    available_subtypes: ['A3 Poster', 'A2 Poster', 'A1 Poster', 'Custom Size', 'Custom Size Paper'],
     available_paper_types: ['Photo Paper', 'Canvas', 'Cardstock'],
     available_paper_weights: ['150gsm', '200gsm', '250gsm'],
     available_finishes: ['lamination', 'cutting']

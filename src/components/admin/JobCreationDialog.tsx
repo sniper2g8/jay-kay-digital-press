@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Upload, X, File, Image } from "lucide-react";
+import { FINISHING_OPTIONS } from "@/constants/services";
 
 interface Customer {
   id: string;
@@ -28,6 +30,7 @@ interface Service {
   available_subtypes: Array<{name: string; description: string}> | null;
   available_paper_types: string[] | null;
   available_paper_weights: string[] | null;
+  available_finishes: string[] | null;
   base_price: number;
 }
 
@@ -155,6 +158,9 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         : null,
       available_paper_weights: Array.isArray(service.available_paper_weights)
         ? service.available_paper_weights as string[]
+        : null,
+      available_finishes: Array.isArray(service.available_finishes)
+        ? service.available_finishes as string[]
         : null
     }));
     
@@ -501,6 +507,30 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                   </Select>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Finishing Options */}
+          {selectedService?.available_finishes && selectedService.available_finishes.length > 0 && (
+            <div>
+              <Label>Finishing Options</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {selectedService.available_finishes.map((finishId: string) => {
+                  const finishOption = FINISHING_OPTIONS.find(f => f.id === finishId);
+                  if (!finishOption) return null;
+                  
+                  return (
+                    <label key={finishId} className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                      />
+                      <span>{finishOption.name}</span>
+                      <Badge variant="outline" className="text-xs">+Le {finishOption.price.toFixed(2)}</Badge>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           )}
 
