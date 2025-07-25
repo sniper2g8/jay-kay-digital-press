@@ -36,6 +36,27 @@ export const NotificationLogs = () => {
 
   useEffect(() => {
     fetchLogs();
+    
+    // Set up real-time subscription for new notification logs
+    const channel = supabase
+      .channel('notification-logs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications_log'
+        },
+        () => {
+          // Refresh logs when new notification is inserted
+          fetchLogs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchLogs = async () => {
