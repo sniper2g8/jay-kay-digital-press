@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LogoHeader } from "@/components/common/LogoHeader";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
@@ -39,25 +38,22 @@ const App = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AppContent />
-      </TooltipProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 };
 
 const AppContent = () => {
-  const { settings, loading } = useCompanySettings();
-
   return (
-    <AuthProvider>
-      <LogoHeader />
-      <div className="fixed top-4 right-4 z-50">
-        <OfflineIndicator />
-      </div>
-      <BrowserRouter>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
+        <LogoHeader />
+        <div className="fixed top-4 right-4 z-50">
+          <OfflineIndicator />
+        </div>
+        <BrowserRouter>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center">
             <LoadingSpinner />
@@ -114,6 +110,7 @@ const AppContent = () => {
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </TooltipProvider>
   );
 };
 
