@@ -1,19 +1,3 @@
-import { useState } from "react";
-  // Payroll modal state
-  const [payrollOpen, setPayrollOpen] = useState(false);
-  const [payrollForm, setPayrollForm] = useState({ name: "", amount: "", date: "" });
-
-  const handlePayrollChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPayrollForm({ ...payrollForm, [e.target.name]: e.target.value });
-  };
-
-  const handlePayrollSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Payroll Created:", payrollForm);
-    setPayrollOpen(false);
-    setPayrollForm({ name: "", amount: "", date: "" });
-    alert("Payroll created (demo only)");
-  };
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,72 +120,7 @@ export const DisplayJobsScreen = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Header */}
-      <div className="mb-8 text-center relative">
-        {/* Create Payroll Button */}
-        <div className="absolute right-8 top-0 z-20">
-          <button
-            className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg border border-indigo-300 hover:bg-indigo-700 transition"
-            onClick={() => setPayrollOpen(true)}
-          >
-            Create Payroll
-          </button>
-        </div>
-      {/* Payroll Modal */}
-      {payrollOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl"
-              onClick={() => setPayrollOpen(false)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h2 className="text-2xl font-bold mb-6 text-indigo-700 text-center">Create Payroll</h2>
-            <form onSubmit={handlePayrollSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={payrollForm.name}
-                  onChange={handlePayrollChange}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                <input
-                  type="number"
-                  name="amount"
-                  value={payrollForm.amount}
-                  onChange={handlePayrollChange}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={payrollForm.date}
-                  onChange={handlePayrollChange}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold shadow hover:bg-indigo-700 transition"
-              >
-                Submit Payroll
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           {settings?.company_name || "Loading..."}
         </h1>
