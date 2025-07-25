@@ -209,7 +209,7 @@ export const JobTrackingPage = () => {
                         type="text"
                         name="tracking_code"
                         placeholder="Enter tracking code (e.g., JKDP-0001)"
-                        className="w-full px-4 py-3 border border-border rounded-lg text-center font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-4 py-3 border rounded-lg text-center font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
                     </div>
