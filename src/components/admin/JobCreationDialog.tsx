@@ -92,6 +92,11 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   useEffect(() => {
     if (watchedServiceId) {
       const service = services.find(s => s.id.toString() === watchedServiceId);
+      console.log('Service selection changed:', {
+        serviceId: watchedServiceId,
+        foundService: service?.name,
+        subtypes: service?.available_subtypes
+      });
       setSelectedService(service || null);
     }
   }, [watchedServiceId, services]);
@@ -137,7 +142,13 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
     const transformedServices: Service[] = (data || []).map(service => ({
       ...service,
       available_subtypes: Array.isArray(service.available_subtypes) 
-        ? service.available_subtypes as Array<{name: string; description: string}>
+        ? service.available_subtypes.map((subtype: any) => {
+            // Handle both string format and object format
+            if (typeof subtype === 'string') {
+              return { name: subtype, description: subtype };
+            }
+            return subtype as {name: string; description: string};
+          })
         : null,
       available_paper_types: Array.isArray(service.available_paper_types)
         ? service.available_paper_types as string[]
@@ -146,6 +157,11 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         ? service.available_paper_weights as string[]
         : null
     }));
+    
+    console.log('Transformed services with subtypes:', transformedServices.map(s => ({
+      name: s.name,
+      subtypes: s.available_subtypes
+    })));
     
     setServices(transformedServices);
   };
