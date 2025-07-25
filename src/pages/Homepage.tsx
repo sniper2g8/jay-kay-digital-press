@@ -71,7 +71,7 @@ export const Homepage = () => {
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle contact form submission
-    console.log("Contact form submitted:", contactForm);
+    // Form data would normally be sent to backend
     // Reset form
     setContactForm({ name: "", email: "", phone: "", message: "" });
   };

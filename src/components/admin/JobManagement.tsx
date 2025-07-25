@@ -99,7 +99,7 @@ export const JobManagement = () => {
         });
         setJobs([]);
       } else {
-        console.log('Jobs fetched successfully:', data);
+        // Jobs fetched successfully
         // Add file count to each job
         const jobsWithFileCount = (data || []).map(job => ({
           ...job,
@@ -169,12 +169,11 @@ export const JobManagement = () => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      console.log(`Starting deletion of job ${jobId}`);
+      // Starting deletion of job
       
       // Delete all related records in the correct order to avoid foreign key constraints
       
       // 1. Delete notification logs first (they reference job_id)
-      console.log(`Deleting notification logs for job ${jobId}`);
       const { error: notificationError } = await supabase
         .from("notifications_log")
         .delete()
@@ -186,7 +185,6 @@ export const JobManagement = () => {
       }
 
       // 2. Delete customer feedback
-      console.log(`Deleting customer feedback for job ${jobId}`);
       const { error: feedbackError } = await supabase
         .from("customer_feedback")
         .delete()
@@ -198,7 +196,6 @@ export const JobManagement = () => {
       }
 
       // 3. Delete delivery schedules and their history
-      console.log(`Deleting delivery schedules for job ${jobId}`);
       const { data: deliverySchedules, error: deliverySelectError } = await supabase
         .from("delivery_schedules")
         .select("id")
@@ -211,7 +208,7 @@ export const JobManagement = () => {
 
       if (deliverySchedules && deliverySchedules.length > 0) {
         for (const schedule of deliverySchedules) {
-          console.log(`Deleting delivery history for schedule ${schedule.id}`);
+          // Delete delivery history for schedule
           const { error: historyError } = await supabase
             .from("delivery_history")
             .delete()
@@ -223,7 +220,7 @@ export const JobManagement = () => {
           }
         }
         
-        console.log(`Deleting delivery schedules for job ${jobId}`);
+        // Delete delivery schedules
         const { error: scheduleError } = await supabase
           .from("delivery_schedules")
           .delete()
@@ -236,7 +233,6 @@ export const JobManagement = () => {
       }
 
       // 4. Delete job files
-      console.log(`Deleting job files for job ${jobId}`);
       const { error: filesError } = await supabase
         .from("job_files")
         .delete()
@@ -248,7 +244,6 @@ export const JobManagement = () => {
       }
 
       // 5. Delete job finishing options
-      console.log(`Deleting job finishing options for job ${jobId}`);
       const { error: finishingError } = await supabase
         .from("job_finishing_options")
         .delete()
@@ -260,7 +255,6 @@ export const JobManagement = () => {
       }
 
       // 6. Delete job history
-      console.log(`Deleting job history for job ${jobId}`);
       const { error: historyError } = await supabase
         .from("job_history")
         .delete()
@@ -272,7 +266,6 @@ export const JobManagement = () => {
       }
 
       // 7. Update any quotes that reference this job
-      console.log(`Updating quotes referencing job ${jobId}`);
       const { error: quotesError } = await supabase
         .from("quotes")
         .update({ converted_to_job_id: null })
@@ -284,7 +277,6 @@ export const JobManagement = () => {
       }
 
       // 8. Delete any invoices for this job
-      console.log(`Deleting invoices for job ${jobId}`);
       const { data: invoices, error: invoiceSelectError } = await supabase
         .from("invoices")
         .select("id")
@@ -298,7 +290,6 @@ export const JobManagement = () => {
       if (invoices && invoices.length > 0) {
         for (const invoice of invoices) {
           // Delete invoice items first
-          console.log(`Deleting invoice items for invoice ${invoice.id}`);
           const { error: itemsError } = await supabase
             .from("invoice_items")
             .delete()
@@ -310,7 +301,6 @@ export const JobManagement = () => {
           }
           
           // Delete payments
-          console.log(`Deleting payments for invoice ${invoice.id}`);
           const { error: paymentsError } = await supabase
             .from("payments")
             .delete()
@@ -323,7 +313,6 @@ export const JobManagement = () => {
         }
         
         // Delete invoices
-        console.log(`Deleting invoices for job ${jobId}`);
         const { error: invoiceDeleteError } = await supabase
           .from("invoices")
           .delete()
@@ -336,7 +325,6 @@ export const JobManagement = () => {
       }
 
       // 9. Finally delete the job
-      console.log(`Deleting job ${jobId}`);
       const { error: jobError } = await supabase
         .from("jobs")
         .delete()
@@ -347,7 +335,7 @@ export const JobManagement = () => {
         throw jobError;
       }
 
-      console.log(`Successfully deleted job ${jobId}`);
+      // Successfully deleted job
       toast({
         title: "Success",
         description: "Job and all related data deleted successfully",
