@@ -17,6 +17,7 @@ import {
   TrendingUp,
   TrendingDown
 } from "lucide-react";
+import { generateStatementPDF } from "@/utils/statementPdfGenerator";
 
 interface StatementData {
   jobs: any[];
@@ -161,11 +162,53 @@ export const CustomerStatement = ({ userId }: CustomerStatementProps) => {
     }
   };
 
-  const downloadStatement = () => {
-    toast({
-      title: "Download started",
-      description: "Your statement is being prepared for download.",
-    });
+  const downloadStatement = async () => {
+    if (!statementData || !customer) return;
+
+    try {
+      // Load company settings
+      const { data: companySettings, error: settingsError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (settingsError) throw settingsError;
+
+      toast({
+        title: "Generating PDF",
+        description: "Your statement is being prepared for download...",
+      });
+
+      const pdfBlob = await generateStatementPDF(
+        statementData,
+        customer,
+        selectedPeriod,
+        companySettings
+      );
+
+      // Download the PDF
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `statement-${customer.customer_display_id}-${selectedPeriod}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download complete",
+        description: "Your statement has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error downloading statement:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to generate statement PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -304,41 +347,61 @@ export const CustomerStatement = ({ userId }: CustomerStatementProps) => {
 
       {/* Statement Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Jobs */}
+        {/* Jobs Summary */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Package className="h-5 w-5 mr-2" />
-              Jobs ({jobs.length})
+              Jobs Summary ({jobs.length})
             </CardTitle>
-            <CardDescription>Print jobs for the selected period</CardDescription>
+            <CardDescription>Job ID, Service type, Job Title, Qty, status, date and Amount</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {jobs.length > 0 ? (
-              jobs.slice(0, 5).map((job) => (
-                <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">JKDP-{job.id.toString().padStart(4, '0')}</p>
-                    <p className="text-sm text-muted-foreground">{job.services?.name}</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline">{job.workflow_status?.name || job.status}</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(job.created_at), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
+              <div className="space-y-3">
+                {/* Table Header */}
+                <div className="grid grid-cols-7 gap-2 p-3 bg-muted rounded-lg text-sm font-medium">
+                  <div>Job ID</div>
+                  <div>Service Type</div>
+                  <div>Job Title</div>
+                  <div>Qty</div>
+                  <div>Status</div>
+                  <div>Date</div>
+                  <div className="text-right">Amount</div>
                 </div>
-              ))
+                {/* Job Rows */}
+                {jobs.map((job) => (
+                  <div key={job.id} className="grid grid-cols-7 gap-2 p-3 border rounded-lg text-sm">
+                    <div className="font-medium">
+                      {job.tracking_code || `JKDP-${job.id.toString().padStart(4, '0')}`}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {job.services?.name || 'N/A'}
+                    </div>
+                    <div className="truncate" title={job.title || job.description}>
+                      {job.title || job.description || 'N/A'}
+                    </div>
+                    <div>{job.quantity || 1}</div>
+                    <div>
+                      <Badge variant="outline" className="text-xs">
+                        {job.workflow_status?.name || job.status}
+                      </Badge>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {format(new Date(job.created_at), 'MMM dd, yyyy')}
+                    </div>
+                    <div className="text-right font-medium">
+                      {job.final_price ? `Le ${job.final_price.toLocaleString()}` : 
+                       job.quoted_price ? `Le ${job.quoted_price.toLocaleString()}` : 'TBD'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No jobs in this period</p>
               </div>
-            )}
-            {jobs.length > 5 && (
-              <p className="text-sm text-muted-foreground text-center">
-                And {jobs.length - 5} more jobs...
-              </p>
             )}
           </CardContent>
         </Card>
