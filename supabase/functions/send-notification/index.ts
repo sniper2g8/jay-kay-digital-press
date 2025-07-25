@@ -46,7 +46,7 @@ const sendSMS = async (phone: string, message: string) => {
   const cleanPhone = phone.replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('232') ? `+${cleanPhone}` : `+232${cleanPhone}`;
 
-  console.log('Sending SMS via AfricasTalking to:', formattedPhone);
+  // ...existing code...
 
   try {
     const sms = africasTalking.SMS;
@@ -56,7 +56,7 @@ const sendSMS = async (phone: string, message: string) => {
       from: 'PrintShop', // Can be customized or use shortcode
     });
 
-    console.log('AfricasTalking SMS result:', result);
+    // ...existing code...
     
     if (result.SMSMessageData && result.SMSMessageData.Recipients && result.SMSMessageData.Recipients.length > 0) {
       const recipient = result.SMSMessageData.Recipients[0];
@@ -74,7 +74,6 @@ const sendSMS = async (phone: string, message: string) => {
       throw new Error('Invalid response from AfricasTalking');
     }
   } catch (error) {
-    console.error('AfricasTalking SMS error:', error);
     throw new Error(`SMS failed: ${error.message}`);
   }
 };
@@ -123,15 +122,6 @@ const logNotification = async (
   deliveryScheduleId?: string
 ) => {
   try {
-    console.log('Attempting to log notification:', {
-      customerId,
-      type,
-      event,
-      recipientEmail,
-      recipientPhone,
-      status: status || 'sent'
-    });
-    
     const { data, error } = await supabase.from('notifications_log').insert({
       customer_id: customerId,
       notification_type: type,
@@ -192,7 +182,7 @@ serve(async (req: Request) => {
 
       // Send notification to all admins
       const adminPromises = (adminUsers || []).map(async (admin) => {
-        const emailResult = await sendEmail(admin.email, subject, message);
+        const emailResult = await sendEmail(admin.email, subject || "Notification from Print Shop", message);
         await logNotification(
           'admin',
           'email',
@@ -282,7 +272,7 @@ serve(async (req: Request) => {
           delivery_schedule_id
         );
         
-        console.log('Email sent successfully:', emailResult.data?.id);
+        // ...existing code...
       } catch (error) {
         errors.push(`Email failed: ${error.message}`);
         await logNotification(
@@ -323,7 +313,7 @@ serve(async (req: Request) => {
           delivery_schedule_id
         );
         
-        console.log('SMS sent successfully via AfricasTalking:', smsResult.messageId);
+        // ...existing code...
       } catch (error) {
         errors.push(`SMS failed: ${error.message}`);
         await logNotification(
@@ -357,7 +347,6 @@ serve(async (req: Request) => {
     });
 
   } catch (error) {
-    console.error('Notification error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
