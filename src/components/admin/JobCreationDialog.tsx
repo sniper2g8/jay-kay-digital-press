@@ -10,9 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Upload, X, File, Image } from "lucide-react";
+import { Upload, X, File, Image, Shield, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { FINISHING_OPTIONS } from "@/constants/services";
+import { validateFileUpload, sanitizeInput, validateNumericInput } from "@/utils/inputValidation";
+import { handleError } from "@/utils/errorHandling";
 
 interface Customer {
   id: string;
@@ -214,7 +216,36 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...newFiles]);
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+      
+      // Validate each file
+      newFiles.forEach(file => {
+        const validation = validateFileUpload(file);
+        if (validation.isValid) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(`${file.name}: ${validation.error}`);
+        }
+      });
+      
+      // Show errors for invalid files
+      if (invalidFiles.length > 0) {
+        toast({
+          title: "File Upload Errors",
+          description: invalidFiles.join('\n'),
+          variant: "destructive",
+        });
+      }
+      
+      // Add only valid files
+      if (validFiles.length > 0) {
+        setUploadedFiles(prev => [...prev, ...validFiles]);
+        toast({
+          title: "Files Added",
+          description: `${validFiles.length} file(s) added successfully`,
+        });
+      }
     }
   };
 
@@ -238,6 +269,66 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
   };
 
   const onSubmit = async (data: JobFormData) => {
+    // Comprehensive input validation
+    const sanitizedTitle = sanitizeInput(data.title);
+    const sanitizedDescription = sanitizeInput(data.description || '');
+    
+    if (!sanitizedTitle || sanitizedTitle.length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Job title must be at least 2 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (sanitizedTitle.length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Job title must be less than 100 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (sanitizedDescription.length > 1000) {
+      toast({
+        title: "Validation Error",
+        description: "Description must be less than 1000 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate numeric inputs
+    const quantityValidation = validateNumericInput(data.quantity, 'Quantity', 1, 10000);
+    if (quantityValidation) {
+      toast({
+        title: "Validation Error",
+        description: quantityValidation,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.width && data.width <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Width must be greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.length && data.length <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Length must be greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -275,19 +366,19 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       }
 
       const jobData = {
-        title: data.title,
-        description: data.description,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         customer_id: selectedCustomer.profile_id, // This references profiles.id (auth_user_id)
         customer_uuid: selectedCustomer.id, // This references customers.id
         service_id: parseInt(data.service_id),
         quantity: data.quantity,
-        service_subtype: data.service_subtype || null,
-        paper_type: data.paper_type || null,
-        paper_weight: data.paper_weight || null,
+        service_subtype: data.service_subtype ? sanitizeInput(data.service_subtype) : null,
+        paper_type: data.paper_type ? sanitizeInput(data.paper_type) : null,
+        paper_weight: data.paper_weight ? sanitizeInput(data.paper_weight) : null,
         width: data.width || null,
         length: data.length || null,
-        delivery_method: data.delivery_method,
-        delivery_address: data.delivery_address || null,
+        delivery_method: sanitizeInput(data.delivery_method),
+        delivery_address: data.delivery_address ? sanitizeInput(data.delivery_address) : null,
         quoted_price: data.quoted_price || null,
         final_price: data.final_price || null,
         due_date: data.due_date ? new Date(data.due_date).toISOString() : null,
@@ -318,7 +409,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             .insert({
               job_id: newJob.id,
               file_path: filePath,
-              description: originalFile.name
+              description: sanitizeInput(originalFile.name)
             });
             
           if (fileRecordError) {
@@ -329,7 +420,7 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
 
       // Send notification to customer
       try {
-        await sendJobSubmittedNotification(selectedCustomer.id, newJob.id, data.title);
+        await sendJobSubmittedNotification(selectedCustomer.id, newJob.id, sanitizedTitle);
       } catch (notificationError) {
         console.warn('Failed to send notification:', notificationError);
       }
@@ -345,9 +436,10 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       onClose();
     } catch (error: any) {
       console.error("Error creating job:", error);
+      const userMessage = handleError(error, 'job-creation');
       toast({
         title: "Error",
-        description: error.message || "Failed to create job",
+        description: userMessage,
         variant: "destructive",
       });
     } finally {
@@ -368,8 +460,13 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
               <Label htmlFor="title">Job Title</Label>
               <Input
                 id="title"
-                {...register("title", { required: "Job title is required" })}
+                {...register("title", { 
+                  required: "Job title is required",
+                  minLength: { value: 2, message: "Title must be at least 2 characters" },
+                  maxLength: { value: 100, message: "Title must be less than 100 characters" }
+                })}
                 placeholder="Enter job title"
+                maxLength={100}
               />
               {errors.title && (
                 <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
@@ -400,9 +497,12 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              {...register("description")}
+              {...register("description", {
+                maxLength: { value: 1000, message: "Description must be less than 1000 characters" }
+              })}
               placeholder="Enter job description"
               rows={3}
+              maxLength={1000}
             />
           </div>
 
@@ -437,7 +537,12 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
                 id="quantity"
                 type="number"
                 min="1"
-                {...register("quantity", { required: "Quantity is required", min: 1 })}
+                max="10000"
+                {...register("quantity", { 
+                  required: "Quantity is required", 
+                  min: { value: 1, message: "Quantity must be at least 1" },
+                  max: { value: 10000, message: "Quantity must be less than 10,000" }
+                })}
               />
               {errors.quantity && (
                 <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>

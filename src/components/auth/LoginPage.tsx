@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { CompanyLogo } from "@/components/common/LogoHeader";
+import { validateEmail, sanitizeInput, rateLimit } from "@/utils/inputValidation";
+import { handleError, SessionManager, validateSecureContext } from "@/utils/errorHandling";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +17,8 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
   const { toast } = useToast();
   const { settings } = useCompanySettings();
   const navigate = useNavigate();
@@ -28,38 +32,122 @@ export const LoginPage = () => {
       }
     };
     checkUser();
-  }, [navigate]);
+
+    // Validate secure context
+    if (!validateSecureContext()) {
+      toast({
+        title: "Security Warning",
+        description: "This site should be accessed over HTTPS for security.",
+        variant: "destructive",
+      });
+    }
+  }, [navigate, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
+    
+    // Rate limiting check
+    const clientId = `${email || 'unknown'}-${Date.now()}`;
+    if (!rateLimit(clientId, 5, 15 * 60 * 1000)) {
+      setIsBlocked(true);
       toast({
-        title: "Sign In Error",
-        description: error.message,
+        title: "Too Many Attempts",
+        description: "Please wait 15 minutes before trying again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
-      });
-      navigate('/dashboard', { replace: true });
+      return;
     }
-    setLoading(false);
+
+    // Input validation
+    const sanitizedEmail = sanitizeInput(email);
+    if (!validateEmail(sanitizedEmail)) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      toast({
+        title: "Invalid Input",
+        description: "Password is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: sanitizedEmail,
+        password,
+      });
+
+      if (error) {
+        setLoginAttempts(prev => prev + 1);
+        
+        if (loginAttempts >= 4) {
+          setIsBlocked(true);
+        }
+
+        const userMessage = handleError(error, 'login');
+        toast({
+          title: "Sign In Failed",
+          description: userMessage,
+          variant: "destructive",
+        });
+      } else {
+        // Reset session timeout
+        SessionManager.resetTimeout(() => {
+          navigate('/login', { replace: true });
+          toast({
+            title: "Session Expired",
+            description: "Please sign in again for security.",
+            variant: "destructive",
+          });
+        });
+
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        
+        setLoginAttempts(0);
+        setIsBlocked(false);
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (error) {
+      const userMessage = handleError(error, 'login');
+      toast({
+        title: "Sign In Error",
+        description: userMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    const sanitizedEmail = sanitizeInput(email);
+    
+    if (!sanitizedEmail || !validateEmail(sanitizedEmail)) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address first.",
+        title: "Invalid Email",
+        description: "Please enter a valid email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Rate limiting for password reset
+    if (!rateLimit(`reset-${sanitizedEmail}`, 3, 60 * 60 * 1000)) {
+      toast({
+        title: "Too Many Requests",
+        description: "Please wait an hour before requesting another password reset.",
         variant: "destructive",
       });
       return;
@@ -68,7 +156,7 @@ export const LoginPage = () => {
     setResetLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
@@ -79,9 +167,10 @@ export const LoginPage = () => {
         description: "Check your email for password reset instructions.",
       });
     } catch (error: any) {
+      const userMessage = handleError(error, 'password-reset');
       toast({
         title: "Reset Failed",
-        description: error.message || "Failed to send reset email. Please try again.",
+        description: userMessage,
         variant: "destructive",
       });
     } finally {
@@ -118,6 +207,17 @@ export const LoginPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handleSignIn} className="space-y-4">
+              {isBlocked && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-destructive" />
+                    <span className="text-sm text-destructive font-medium">
+                      Account temporarily locked due to multiple failed attempts
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email Address
@@ -129,10 +229,11 @@ export const LoginPage = () => {
                     type="email"
                     placeholder="your@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(sanitizeInput(e.target.value))}
                     className="pl-10 h-11"
                     required
-                    disabled={loading}
+                    disabled={loading || isBlocked}
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -151,7 +252,8 @@ export const LoginPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 h-11"
                     required
-                    disabled={loading}
+                    disabled={loading || isBlocked}
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
@@ -170,8 +272,8 @@ export const LoginPage = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-11 text-base font-medium" disabled={loading}>
-                {loading ? 'Signing In...' : 'Sign In'}
+              <Button type="submit" className="w-full h-11 text-base font-medium" disabled={loading || isBlocked}>
+                {loading ? 'Signing In...' : isBlocked ? 'Account Locked' : 'Sign In'}
               </Button>
             </form>
 

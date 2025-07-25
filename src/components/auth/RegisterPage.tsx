@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, Phone, Shield, AlertTriangle } from "lucide-react";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { CompanyLogo } from "@/components/common/LogoHeader";
+import { validateEmail, validatePhone, validatePassword, sanitizeInput, rateLimit } from "@/utils/inputValidation";
+import { handleError, validateSecureContext } from "@/utils/errorHandling";
 
 export const RegisterPage = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ export const RegisterPage = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({ isValid: false, errors: [] as string[] });
   const { toast } = useToast();
   const { settings } = useCompanySettings();
   const navigate = useNavigate();
@@ -29,41 +32,123 @@ export const RegisterPage = () => {
       }
     };
     checkUser();
-  }, [navigate]);
+
+    // Validate secure context
+    if (!validateSecureContext()) {
+      toast({
+        title: "Security Warning",
+        description: "This site should be accessed over HTTPS for security.",
+        variant: "destructive",
+      });
+    }
+  }, [navigate, toast]);
+
+  // Real-time password validation
+  useEffect(() => {
+    if (password) {
+      setPasswordValidation(validatePassword(password));
+    } else {
+      setPasswordValidation({ isValid: false, errors: [] });
+    }
+  }, [password]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name,
-          phone,
-        }
-      }
-    });
-
-    if (error) {
+    // Rate limiting check
+    const clientId = `signup-${email || 'unknown'}-${Date.now()}`;
+    if (!rateLimit(clientId, 3, 60 * 60 * 1000)) {
       toast({
-        title: "Sign Up Error", 
-        description: error.message,
+        title: "Too Many Attempts",
+        description: "Please wait an hour before creating another account.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Account Created Successfully!",
-        description: "Please check your email to confirm your account before signing in.",
-      });
-      // Redirect to login page after successful registration
-      navigate('/login');
+      return;
     }
-    setLoading(false);
+
+    // Comprehensive input validation
+    const sanitizedName = sanitizeInput(name);
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedPhone = sanitizeInput(phone);
+
+    if (!sanitizedName || sanitizedName.length < 2) {
+      toast({
+        title: "Invalid Name",
+        description: "Please enter a valid name (at least 2 characters).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateEmail(sanitizedEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (sanitizedPhone && !validatePhone(sanitizedPhone)) {
+      toast({
+        title: "Invalid Phone",
+        description: "Please enter a valid phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!passwordValidation.isValid) {
+      toast({
+        title: "Weak Password",
+        description: passwordValidation.errors.join(' '),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: sanitizedName,
+            phone: sanitizedPhone,
+          }
+        }
+      });
+
+      if (error) {
+        const userMessage = handleError(error, 'registration');
+        toast({
+          title: "Registration Failed", 
+          description: userMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Account Created Successfully!",
+          description: "Please check your email to confirm your account before signing in.",
+        });
+        // Redirect to login page after successful registration
+        navigate('/login');
+      }
+    } catch (error) {
+      const userMessage = handleError(error, 'registration');
+      toast({
+        title: "Registration Error",
+        description: userMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,10 +191,12 @@ export const RegisterPage = () => {
                     type="text"
                     placeholder="John Doe"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(sanitizeInput(e.target.value))}
                     className="pl-10 h-11"
                     required
                     disabled={loading}
+                    autoComplete="name"
+                    maxLength={100}
                   />
                 </div>
               </div>
@@ -125,10 +212,12 @@ export const RegisterPage = () => {
                     type="email"
                     placeholder="your@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(sanitizeInput(e.target.value))}
                     className="pl-10 h-11"
                     required
                     disabled={loading}
+                    autoComplete="email"
+                    maxLength={254}
                   />
                 </div>
               </div>
@@ -144,9 +233,11 @@ export const RegisterPage = () => {
                     type="tel"
                     placeholder="+232 XX XXX XXX"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(sanitizeInput(e.target.value))}
                     className="pl-10 h-11"
                     disabled={loading}
+                    autoComplete="tel"
+                    maxLength={20}
                   />
                 </div>
               </div>
@@ -166,7 +257,9 @@ export const RegisterPage = () => {
                     className="pl-10 pr-10 h-11"
                     required
                     disabled={loading}
-                    minLength={6}
+                    autoComplete="new-password"
+                    minLength={12}
+                    maxLength={128}
                   />
                   <Button
                     type="button"
@@ -183,9 +276,31 @@ export const RegisterPage = () => {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Password must be at least 6 characters long
-                </p>
+                {/* Password strength indicator */}
+                {password && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {passwordValidation.isValid ? (
+                        <Shield className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      )}
+                      <span className={`text-xs font-medium ${passwordValidation.isValid ? 'text-green-500' : 'text-yellow-500'}`}>
+                        {passwordValidation.isValid ? 'Strong password' : 'Password requirements:'}
+                      </span>
+                    </div>
+                    {!passwordValidation.isValid && passwordValidation.errors.length > 0 && (
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className="flex items-center gap-1">
+                            <span className="w-1 h-1 bg-muted-foreground rounded-full"></span>
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Button type="submit" className="w-full h-11 text-base font-medium" disabled={loading}>
