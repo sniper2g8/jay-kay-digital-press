@@ -1,12 +1,8 @@
-import { useEffect, Suspense, lazy, useMemo } from "react";
+import { Suspense, lazy, useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LogoHeader } from "@/components/common/LogoHeader";
-import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
@@ -49,7 +45,7 @@ const App = () => {
         }>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Homepage />} />
+            <Route path="/" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Simple Test Page</h1><p>If you see this, the issue is with one of the lazy-loaded components</p></div>} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
