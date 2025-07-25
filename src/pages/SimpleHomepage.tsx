@@ -18,10 +18,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Send,
-  Globe
+  Send
 } from "lucide-react";
-import { CompanyLogo } from "@/components/common/LogoHeader";
 
 // Hardcoded services data - no Supabase fetching needed
 const HARDCODED_SERVICES = [
@@ -99,15 +97,17 @@ export const SimpleHomepage = () => {
       <header className="bg-background border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CompanyLogo className="h-10 w-auto" />
+            <div>
+              <h1 className="text-xl font-bold text-foreground">JAY KAY DIGITAL PRESS</h1>
+              <p className="text-sm text-muted-foreground">Professional Printing Services</p>
+            </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
             <a href="#" className="text-foreground hover:text-primary transition-colors">Home</a>
             <a href="#services" className="text-foreground hover:text-primary transition-colors">Services</a>
             <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
-            <a href="/track" className="text-foreground hover:text-primary transition-colors">Track Order</a>
-            <a href="/showcase" className="text-foreground hover:text-primary transition-colors">Portfolio</a>
+            <a href="#" className="text-foreground hover:text-primary transition-colors">Track Order</a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -380,9 +380,7 @@ export const SimpleHomepage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="mb-4">
-                <CompanyLogo className="h-12 w-auto filter brightness-0 invert" />
-              </div>
+              <h3 className="text-2xl font-bold mb-4">JAY KAY DIGITAL PRESS</h3>
               <p className="text-gray-400 mb-4">Professional Printing Services</p>
               <p className="text-gray-400">
                 Transform your ideas into stunning printed materials with our premium quality services and fast turnaround times.
@@ -392,41 +390,22 @@ export const SimpleHomepage = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#services" className="hover:text-white transition-colors">Business Cards</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Flyers & Brochures</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Banners & Signage</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Posters</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Booklets</a></li>
-                <li><a href="#services" className="hover:text-white transition-colors">Labels & Stickers</a></li>
+                <li>Business Cards</li>
+                <li>Flyers & Brochures</li>
+                <li>Banners & Signage</li>
+                <li>Posters</li>
+                <li>Booklets</li>
+                <li>Labels & Stickers</li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-lg font-semibold mb-4">Contact</h4>
-              <div className="space-y-3 text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-red-400" />
-                  <span>+232 34 788711, +232 30 741062</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-red-400" />
-                  <a href="mailto:jaykaydigitalpress@gmail.com" className="hover:text-white transition-colors">
-                    jaykaydigitalpress@gmail.com
-                  </a>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-red-400 mt-0.5" />
-                  <span>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</span>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h5 className="text-sm font-semibold mb-3">Quick Links</h5>
-                <div className="flex flex-col gap-2 text-sm text-gray-400">
-                  <a href="/track" className="hover:text-white transition-colors">Track Your Order</a>
-                  <a href="/showcase" className="hover:text-white transition-colors">Portfolio</a>
-                  <a href="#contact" className="hover:text-white transition-colors">Get Quote</a>
-                </div>
+              <div className="space-y-2 text-gray-400">
+                <p>+232 34 788711</p>
+                <p>+232 30 741062</p>
+                <p>jaykaydigitalpress@gmail.com</p>
+                <p>St. Edward School Avenue, By Caritas, Freetown, Sierra Leone</p>
               </div>
             </div>
           </div>
