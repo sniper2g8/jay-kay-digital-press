@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   FileText, 
   Download, 
@@ -15,7 +16,8 @@ import {
   Package,
   CreditCard,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Eye
 } from "lucide-react";
 import { generateStatementPDF } from "@/utils/statementPdfGenerator";
 
@@ -38,6 +40,7 @@ export const CustomerStatement = ({ userId }: CustomerStatementProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState("current_month");
   const [loading, setLoading] = useState(false);
   const [customer, setCustomer] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -261,10 +264,102 @@ export const CustomerStatement = ({ userId }: CustomerStatementProps) => {
               <SelectItem value="all_time">All Time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={downloadStatement}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Eye className="h-4 w-4 mr-2" />
+                View Statement
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Statement Preview</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
+                {/* Statement Preview Content */}
+                <div className="bg-white p-6 border rounded-lg">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-2xl font-bold">Customer Statement</h3>
+                      <p className="text-muted-foreground">
+                        Period: {selectedPeriod === "current_month" ? "Current Month" :
+                               selectedPeriod === "last_3_months" ? "Last 3 Months" :
+                               selectedPeriod === "last_6_months" ? "Last 6 Months" : "All Time"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Generated: {format(new Date(), 'MMM dd, yyyy')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">Customer: {customer?.name}</p>
+                      <p className="text-sm text-muted-foreground">ID: {customer?.customer_display_id}</p>
+                    </div>
+                  </div>
+
+                  {/* Summary Cards in Preview */}
+                  <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-50 p-4 rounded text-center">
+                      <p className="text-sm text-muted-foreground">Total Jobs</p>
+                      <p className="text-xl font-bold">{totalJobs}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded text-center">
+                      <p className="text-sm text-muted-foreground">Total Invoiced</p>
+                      <p className="text-xl font-bold">Le {totalInvoiced.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded text-center">
+                      <p className="text-sm text-muted-foreground">Total Paid</p>
+                      <p className="text-xl font-bold">Le {totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded text-center">
+                      <p className="text-sm text-muted-foreground">Outstanding Balance</p>
+                      <p className={`text-xl font-bold ${outstandingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        Le {outstandingBalance.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Jobs Table in Preview */}
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold mb-3">Jobs Summary</h4>
+                    <div className="border rounded">
+                      <div className="grid grid-cols-7 gap-2 p-3 bg-gray-100 font-medium text-sm">
+                        <div>Job ID</div>
+                        <div>Service Type</div>
+                        <div>Job Title</div>
+                        <div>Qty</div>
+                        <div>Status</div>
+                        <div>Date</div>
+                        <div className="text-right">Amount</div>
+                      </div>
+                      {jobs.map((job) => (
+                        <div key={job.id} className="grid grid-cols-7 gap-2 p-3 border-t text-sm">
+                          <div className="font-medium">
+                            {job.tracking_code || `JKDP-${job.id.toString().padStart(4, '0')}`}
+                          </div>
+                          <div>{job.services?.name || 'N/A'}</div>
+                          <div className="truncate">{job.title || job.description || 'N/A'}</div>
+                          <div>{job.quantity || 1}</div>
+                          <div>{job.workflow_status?.name || job.status}</div>
+                          <div>{format(new Date(job.created_at), 'MMM dd, yyyy')}</div>
+                          <div className="text-right">
+                            {job.final_price ? `Le ${job.final_price.toLocaleString()}` : 
+                             job.quoted_price ? `Le ${job.quoted_price.toLocaleString()}` : 'TBD'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={downloadStatement}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
