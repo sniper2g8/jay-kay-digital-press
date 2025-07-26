@@ -1,9 +1,13 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Supabase JSON type
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 interface AnalyticsEvent {
   event_type: string;
-  event_data?: any;
+  event_data?: Json;
   user_id?: string;
 }
 
@@ -25,7 +29,7 @@ export const useAnalytics = () => {
         .from('analytics_events')
         .insert({
           event_type: event.event_type,
-          event_data: event.event_data,
+          event_data: event.event_data === undefined ? null : event.event_data,
           user_id: event.user_id,
         });
 
@@ -37,8 +41,8 @@ export const useAnalytics = () => {
 
   const getMetrics = async (period: 'today' | 'week' | 'month' | 'year' = 'month'): Promise<AnalyticsMetrics | null> => {
     try {
-      let startDate = new Date();
-      let endDate = new Date();
+      const startDate = new Date();
+      const endDate = new Date();
 
       switch (period) {
         case 'today':
@@ -104,7 +108,7 @@ export const useAnalytics = () => {
 
   const getRevenueChart = async (period: 'week' | 'month' | 'year' = 'month') => {
     try {
-      let startDate = new Date();
+      const startDate = new Date();
       let groupBy = '';
       
       switch (period) {
@@ -129,15 +133,16 @@ export const useAnalytics = () => {
         .not('final_price', 'is', null);
 
       // Group data by period
-      const chartData = data?.reduce((acc: any[], job) => {
+      type ChartDataPoint = { period: string; revenue: number };
+      const chartData: ChartDataPoint[] = data?.reduce((acc: ChartDataPoint[], job) => {
         const date = new Date(job.created_at);
-        const key = groupBy === 'day' 
+        const key = groupBy === 'day'
           ? date.toISOString().split('T')[0]
           : `${date.getFullYear()}-${date.getMonth() + 1}`;
-        
+
         const existing = acc.find(item => item.period === key);
         const jobRevenue = Number(job.final_price) || 0;
-        
+
         if (existing) {
           existing.revenue += jobRevenue;
         } else {
