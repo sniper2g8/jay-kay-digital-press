@@ -9,9 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Eye, DollarSign, Users, Calendar } from "lucide-react";
+import { Plus, Eye, DollarSign, Users, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Payroll {
   id: string;
@@ -56,7 +59,7 @@ export const PayrollManagement = () => {
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [payrollPayments, setPayrollPayments] = useState<PayrollPayment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [newPayrollMonth, setNewPayrollMonth] = useState("");
+  const [newPayrollMonth, setNewPayrollMonth] = useState<Date>();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
@@ -222,10 +225,13 @@ export const PayrollManagement = () => {
         sum + (emp.salary + emp.allowances - emp.deductions), 0
       );
 
+      // Format the date to the first day of the selected month
+      const monthString = format(newPayrollMonth, "yyyy-MM-01");
+
       const { data: payroll, error: payrollError } = await supabase
         .from("payrolls")
         .insert({
-          month: newPayrollMonth + "-01", // Convert YYYY-MM to YYYY-MM-DD
+          month: monthString,
           total_amount: totalAmount,
           status: "draft"
         })
@@ -252,7 +258,7 @@ export const PayrollManagement = () => {
 
       toast.success("Payroll created successfully");
       setIsCreateDialogOpen(false);
-      setNewPayrollMonth("");
+      setNewPayrollMonth(undefined);
       fetchPayrolls();
     } catch (error) {
       console.error("Error creating payroll:", error);
@@ -488,14 +494,30 @@ export const PayrollManagement = () => {
             <div className="space-y-4 py-4">
               <div>
                 <Label htmlFor="month">Payroll Month</Label>
-                <Input
-                  id="month"
-                  type="month"
-                  value={newPayrollMonth}
-                  onChange={(e) => setNewPayrollMonth(e.target.value)}
-                  min="2024-01"
-                  max="2030-12"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !newPayrollMonth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newPayrollMonth ? format(newPayrollMonth, "MMMM yyyy") : "Select month"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newPayrollMonth}
+                      onSelect={setNewPayrollMonth}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      disabled={(date) => date < new Date("2024-01-01") || date > new Date("2030-12-31")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
