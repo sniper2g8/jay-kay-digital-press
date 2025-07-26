@@ -143,13 +143,26 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
     // Transform the data to match our Service interface
     const transformedServices: Service[] = (data || []).map(service => ({
       ...service,
-      available_subtypes: Array.isArray(service.available_subtypes) 
-        ? service.available_subtypes.map((subtype: any) => {
-            // Handle both string format and object format
+      available_subtypes: Array.isArray(service.available_subtypes)
+        ? service.available_subtypes.map((subtype) => {
             if (typeof subtype === 'string') {
               return { name: subtype, description: subtype };
+            } else if (
+              typeof subtype === 'object' &&
+              subtype !== null &&
+              'name' in subtype &&
+              'description' in subtype &&
+              typeof (subtype as { name: unknown }).name === 'string' &&
+              typeof (subtype as { description: unknown }).description === 'string'
+            ) {
+              return {
+                name: (subtype as { name: string }).name,
+                description: (subtype as { description: string }).description
+              };
+            } else {
+              // Invalid subtype format
+              return { name: 'Unknown', description: 'Unknown subtype' };
             }
-            return subtype as {name: string; description: string};
           })
         : null,
       available_paper_types: Array.isArray(service.available_paper_types)
@@ -273,7 +286,8 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       // Comprehensive input validation
       const sanitizedTitle = sanitizeInput(data.title);
       const sanitizedDescription = sanitizeInput(data.description || '');
-      
+
+      // Required field checks
       if (!sanitizedTitle || sanitizedTitle.length < 2) {
         toast({
           title: "Validation Error",
@@ -282,7 +296,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
       if (!data.customer_id) {
         toast({
           title: "Validation Error",
@@ -291,7 +304,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
       if (!data.service_id) {
         toast({
           title: "Validation Error",
@@ -300,7 +312,48 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
+      if (selectedService?.available_subtypes && selectedService.available_subtypes.length > 0 && !data.service_subtype) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a service subtype.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (selectedService?.available_paper_types && selectedService.available_paper_types.length > 0 && !data.paper_type) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a paper type.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (selectedService?.available_paper_weights && selectedService.available_paper_weights.length > 0 && !data.paper_weight) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a paper weight.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (selectedService?.requires_dimensions) {
+        if (!data.width || data.width <= 0) {
+          toast({
+            title: "Validation Error",
+            description: "Width must be greater than 0.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (!data.length || data.length <= 0) {
+          toast({
+            title: "Validation Error",
+            description: "Length must be greater than 0.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       if (sanitizedTitle.length > 100) {
         toast({
           title: "Validation Error",
@@ -309,7 +362,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
       if (sanitizedDescription.length > 1000) {
         toast({
           title: "Validation Error",
@@ -318,7 +370,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
       // Validate numeric inputs
       const quantityValidation = validateNumericInput(data.quantity, 'Quantity', 1, 10000);
       if (quantityValidation) {
@@ -329,25 +380,6 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
         });
         return;
       }
-
-      if (data.width && data.width <= 0) {
-        toast({
-          title: "Validation Error",
-          description: "Width must be greater than 0",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data.length && data.length <= 0) {
-        toast({
-          title: "Validation Error",
-          description: "Length must be greater than 0",
-          variant: "destructive",
-        });
-        return;
-      }
-
       setIsSubmitting(true);
       
       // Find the selected customer to get both IDs
@@ -454,8 +486,20 @@ export const JobCreationDialog = ({ isOpen, onClose, onJobCreated }: JobCreation
       setUploadedFiles([]);
       onJobCreated();
       onClose();
-    } catch (error: any) {
-      const userMessage = handleError(error, 'job-creation');
+    } catch (error) {
+      let userMessage: string;
+      if (error instanceof Error) {
+        userMessage = handleError(error, 'job-creation');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as Record<string, unknown>).message === 'string'
+      ) {
+        userMessage = handleError(new Error(String((error as { message: unknown }).message)), 'job-creation');
+      } else {
+        userMessage = 'An unknown error occurred during job creation.';
+      }
       toast({
         title: "Error",
         description: userMessage,
