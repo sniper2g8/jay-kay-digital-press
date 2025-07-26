@@ -9,10 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import DatePicker from "react-datepicker";
-import { DatePickerProps } from "react-datepicker";
-const ReactDatePicker = DatePicker as unknown as React.FC<DatePickerProps>;
-import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
 import { Plus, Eye, DollarSign, Users, Calendar as CalendarIcon, Calendar } from "lucide-react";
 import { format } from "date-fns";
@@ -541,16 +537,18 @@ export const PayrollManagement = () => {
               <div className="space-y-4 py-4">
                 <div>
                   <Label htmlFor="month">Payroll Month</Label>
-                  <ReactDatePicker
+                  <Input
                     id="month"
-                    selected={newPayrollMonth}
-                    onChange={(date: Date) => setNewPayrollMonth(date)}
-                    dateFormat="MMMM yyyy"
-                    showMonthYearPicker
-                    minDate={new Date("2024-01-01")}
-                    maxDate={new Date("2030-12-31")}
-                    placeholderText="Select month"
+                    type="month"
+                    value={newPayrollMonth ? `${newPayrollMonth.getFullYear()}-${String(newPayrollMonth.getMonth() + 1).padStart(2, '0')}` : ''}
+                    min="2024-01"
+                    max="2030-12"
+                    onChange={e => {
+                      const [year, month] = e.target.value.split('-');
+                      setNewPayrollMonth(new Date(Number(year), Number(month) - 1));
+                    }}
                     className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+                    placeholder="Select month"
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
