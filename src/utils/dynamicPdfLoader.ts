@@ -19,3 +19,13 @@ export const loadQuotePDF = async () => {
   const { QuotePDF } = await import('../components/pdf/QuotePDF');
   return QuotePDF;
 };
+
+export const loadStatementPdfGenerator = async () => {
+  const { generateStatementPDF } = await import('./statementPdfGenerator');
+  return { generateStatementPDF };
+};
+
+export const loadStatementPDF = async () => {
+  const { StatementPDF } = await import('../components/pdf/StatementPDF');
+  return StatementPDF;
+};
