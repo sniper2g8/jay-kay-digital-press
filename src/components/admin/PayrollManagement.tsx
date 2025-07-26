@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-// @ts-ignore
 import DatePicker from "react-datepicker";
-const ReactDatePicker = DatePicker as unknown as React.FC<any>;
+import { DatePickerProps } from "react-datepicker";
+const ReactDatePicker = DatePicker as unknown as React.FC<DatePickerProps>;
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
 import { Plus, Eye, DollarSign, Users, Calendar as CalendarIcon, Calendar } from "lucide-react";
@@ -28,13 +28,16 @@ interface Payroll {
   processed_by: string | null;
 }
 
+
+type EmployeeRole = "Admin" | "SystemUser" | "NonSystemStaff";
+
 interface Employee {
   id: string;
   employee_number: string;
   name: string;
   email: string;
   phone: string;
-  role: string;
+  role: EmployeeRole;
   salary: number;
   allowances: number;
   deductions: number;
@@ -155,17 +158,23 @@ export const PayrollManagement = () => {
       const formattedEmployees: Employee[] = [];
 
       // Process internal users (Admin, Staff, System Users)
+
       (internalUsers || []).forEach(user => {
         const key = `internal_${user.id}`;
         const existingEmployee = employeeMap.get(key);
-        
+        // Only allow valid EmployeeRole values
+        let role: EmployeeRole = "SystemUser";
+        if (user.roles?.name === "Admin") role = "Admin";
+        else if (user.roles?.name === "SystemUser") role = "SystemUser";
+        else if (user.roles?.name === "NonSystemStaff") role = "NonSystemStaff";
+
         formattedEmployees.push({
           id: existingEmployee?.id || `internal_${user.id}`,
-          employee_number: existingEmployee?.employee_number || `JKDP-${user.roles?.name?.toUpperCase() || 'USR'}-${String(formattedEmployees.length + 1).padStart(4, '0')}`,
+          employee_number: existingEmployee?.employee_number || `JKDP-${role.toUpperCase()}-${String(formattedEmployees.length + 1).padStart(4, '0')}`,
           name: user.name,
           email: user.email,
           phone: user.phone || '',
-          role: user.roles?.name || 'Internal User',
+          role,
           salary: Number(existingEmployee?.salary || 0),
           allowances: Number(existingEmployee?.allowances || 0),
           deductions: Number(existingEmployee?.deductions || 0),
@@ -175,17 +184,17 @@ export const PayrollManagement = () => {
       });
 
       // Process non-system staff
+
       (nonSystemStaff || []).forEach(staff => {
         const key = `staff_${staff.id}`;
         const existingEmployee = employeeMap.get(key);
-        
         formattedEmployees.push({
           id: existingEmployee?.id || `staff_${staff.id}`,
           employee_number: existingEmployee?.employee_number || `JKDP-STF-${String(formattedEmployees.length + 1).padStart(4, '0')}`,
           name: staff.name,
           email: staff.email || '',
           phone: staff.phone || '',
-          role: staff.position || 'Non-System Staff',
+          role: "NonSystemStaff",
           salary: Number(existingEmployee?.salary || 0),
           allowances: Number(existingEmployee?.allowances || 0),
           deductions: Number(existingEmployee?.deductions || 0),
@@ -336,15 +345,16 @@ export const PayrollManagement = () => {
         .from("employees")
         .insert({
           name: newStaff.name,
+          role: "NonSystemStaff",
           email: newStaff.email || null,
-          phone: newStaff.phone || null,
-          role: 'NonSystemStaff',
+          employee_number: `JKDP-STF-${Date.now()}`,
           non_system_staff_id: staffData.id,
           salary: parseFloat(newStaff.salary),
           allowances: parseFloat(newStaff.allowances) || 0,
           deductions: parseFloat(newStaff.deductions) || 0,
-          is_active: true
-        } as any);
+          is_active: true,
+          hire_date: new Date().toISOString()
+        });
 
       if (employeeError) throw employeeError;
 
@@ -360,9 +370,17 @@ export const PayrollManagement = () => {
         deductions: ''
       });
       fetchEmployees();
-    } catch (error: any) {
-      console.error("Error adding staff:", error);
-      toast.error("Failed to add staff member");
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error adding staff:", error);
+        toast.error(`Failed to add staff member: ${error.message}`);
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        // Some Supabase errors may be objects with a message property
+        toast.error(`Failed to add staff member: ${(error as { message: string }).message}`);
+      } else {
+        console.error("Error adding staff:", error);
+        toast.error("Failed to add staff member");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -433,29 +451,31 @@ export const PayrollManagement = () => {
 
         if (error) throw error;
       } else {
-        // Create new employee record
-        const employeeData: any = {
+        // Create new employee record with explicit type
+        // Insert new employee with required role
+        let role: EmployeeRole = "SystemUser";
+        if (isInternalUser) {
+          role = "SystemUser";
+        } else if (isNonSystemStaff) {
+          role = "NonSystemStaff";
+        }
+        const employeeData = {
           name: selectedEmployee.name,
-          email: selectedEmployee.email,
-          phone: selectedEmployee.phone,
+          email: selectedEmployee.email || null,
+          phone: selectedEmployee.phone || null,
+          employee_number: selectedEmployee.employee_number || `JKDP-EMP-${Date.now()}`,
           salary: editSalary.salary,
           allowances: editSalary.allowances,
           deductions: editSalary.deductions,
-          is_active: true
+          is_active: true,
+          hire_date: new Date().toISOString(),
+          role,
+          ...(isInternalUser ? { internal_user_id: actualUserId } : {}),
+          ...(isNonSystemStaff ? { non_system_staff_id: actualUserId } : {}),
         };
-
-        if (isInternalUser) {
-          employeeData.internal_user_id = actualUserId;
-          employeeData.role = 'SystemUser';
-        } else if (isNonSystemStaff) {
-          employeeData.non_system_staff_id = actualUserId;
-          employeeData.role = 'NonSystemStaff';
-        }
-
         const { error } = await supabase
           .from("employees")
           .insert(employeeData);
-
         if (error) throw error;
       }
 
@@ -463,9 +483,16 @@ export const PayrollManagement = () => {
       setIsEditSalaryDialogOpen(false);
       setSelectedEmployee(null);
       fetchEmployees(); // Refresh the employee list
-    } catch (error: any) {
-      console.error("Error updating salary:", error);
-      toast.error(`Failed to update salary: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error updating salary:", error);
+        toast.error(`Failed to update salary: ${error.message}`);
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        toast.error(`Failed to update salary: ${(error as { message: string }).message}`);
+      } else {
+        console.error("Error updating salary:", error);
+        toast.error("Failed to update salary");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -520,7 +547,6 @@ export const PayrollManagement = () => {
                     onChange={(date: Date) => setNewPayrollMonth(date)}
                     dateFormat="MMMM yyyy"
                     showMonthYearPicker
-                    showFullMonthYearPicker
                     minDate={new Date("2024-01-01")}
                     maxDate={new Date("2030-12-31")}
                     placeholderText="Select month"
@@ -782,7 +808,11 @@ export const PayrollManagement = () => {
                     {format(new Date(payroll.month), "MMMM yyyy")}
                   </TableCell>
                   <TableCell>Le {payroll.total_amount.toLocaleString()}</TableCell>
-                  <TableCell>{getStatusBadge(payroll.status)}</TableCell>
+                  <TableCell>
+                    <Badge variant={payroll.status === "processed" ? "default" : "secondary"}>
+                      {payroll.status.charAt(0).toUpperCase() + payroll.status.slice(1)}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{format(new Date(payroll.created_at), "MMM dd, yyyy")}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
@@ -926,3 +956,11 @@ export const PayrollManagement = () => {
     </div>
   );
 };
+
+function fetchPayrolls() {
+  throw new Error("Function not implemented.");
+}
+function setIsLoading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
