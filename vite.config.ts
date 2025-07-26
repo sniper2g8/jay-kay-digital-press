@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
+      external: ['react-datepicker', 'react-datepicker/dist/react-datepicker.css'],
       output: {
         manualChunks: {
           // Vendor chunks
