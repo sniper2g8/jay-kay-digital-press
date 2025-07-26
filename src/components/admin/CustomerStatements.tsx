@@ -232,7 +232,9 @@ export const CustomerStatements = () => {
               <thead>
                 <tr>
                   <th>Job ID</th>
-                  <th>Service</th>
+                  <th>Service Type</th>
+                  <th>Job Title</th>
+                  <th>Qty</th>
                   <th>Status</th>
                   <th>Date</th>
                   <th>Amount</th>
@@ -241,8 +243,10 @@ export const CustomerStatements = () => {
               <tbody>
                 ${statementData.jobs.map(job => `
                   <tr>
-                    <td>${job.tracking_code}</td>
+                    <td>${job.tracking_code || `JKDP-${job.id.toString().padStart(4, '0')}`}</td>
                     <td>${job.services?.name || 'N/A'}</td>
+                    <td>${job.title || job.description || 'N/A'}</td>
+                    <td>${job.quantity || 1}</td>
                     <td>${job.status}</td>
                     <td>${format(new Date(job.created_at), 'MMM dd, yyyy')}</td>
                     <td>Le ${(job.final_price || job.quoted_price || 0).toLocaleString()}</td>
@@ -434,19 +438,34 @@ export const CustomerStatements = () => {
               {/* Jobs */}
               {jobs.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3">Jobs ({jobs.length})</h3>
-                  <div className="space-y-2">
+                  <h3 className="font-semibold mb-3">Jobs Summary ({jobs.length})</h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-7 gap-2 p-3 bg-muted font-medium text-sm">
+                      <div>Job ID</div>
+                      <div>Service Type</div>
+                      <div>Job Title</div>
+                      <div>Qty</div>
+                      <div>Status</div>
+                      <div>Date</div>
+                      <div className="text-right">Amount</div>
+                    </div>
+                    {/* Table Rows */}
                     {jobs.map((job) => (
-                      <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">JKDP-{job.id.toString().padStart(4, '0')}</p>
-                          <p className="text-sm text-muted-foreground">{job.services?.name}</p>
+                      <div key={job.id} className="grid grid-cols-7 gap-2 p-3 border-t text-sm">
+                        <div className="font-medium">
+                          {job.tracking_code || `JKDP-${job.id.toString().padStart(4, '0')}`}
                         </div>
-                        <div className="text-right">
+                        <div>{job.services?.name || 'N/A'}</div>
+                        <div className="truncate">{job.title || job.description || 'N/A'}</div>
+                        <div>{job.quantity || 1}</div>
+                        <div>
                           <Badge variant="outline">{job.status}</Badge>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(job.created_at), 'MMM dd, yyyy')}
-                          </p>
+                        </div>
+                        <div>{format(new Date(job.created_at), 'MMM dd, yyyy')}</div>
+                        <div className="text-right font-medium">
+                          {job.final_price ? `Le ${job.final_price.toLocaleString()}` : 
+                           job.quoted_price ? `Le ${job.quoted_price.toLocaleString()}` : 'TBD'}
                         </div>
                       </div>
                     ))}
