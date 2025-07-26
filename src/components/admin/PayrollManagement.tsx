@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// @ts-ignore
+import DatePicker from "react-datepicker";
+const ReactDatePicker = DatePicker as unknown as React.FC<any>;
+import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
-import { Plus, Eye, DollarSign, Users, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Eye, DollarSign, Users, Calendar as CalendarIcon, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -89,15 +91,17 @@ export const PayrollManagement = () => {
 
   const fetchPayrolls = async () => {
     try {
+      // Order by month as a date to ensure correct ordering
       const { data, error } = await supabase
         .from("payrolls")
         .select("*")
         .order("month", { ascending: false });
 
+      // If month is stored as a string, sort in JS as a fallback
+      const sortedData = (data || []).sort((a, b) => new Date(b.month).getTime() - new Date(a.month).getTime());
+      setPayrolls(sortedData);
       if (error) throw error;
-      setPayrolls(data || []);
     } catch (error) {
-      console.error("Error fetching payrolls:", error);
       toast.error("Failed to fetch payrolls");
     }
   };
@@ -220,13 +224,27 @@ export const PayrollManagement = () => {
 
     setIsLoading(true);
     try {
-      // Calculate total amount from all active employees
-      const totalAmount = employees.reduce((sum, emp) => 
-        sum + (emp.salary + emp.allowances - emp.deductions), 0
-      );
-
       // Format the date to the first day of the selected month
       const monthString = format(newPayrollMonth, "yyyy-MM-01");
+
+      // Check if payroll for this month already exists
+      const { data: existingPayroll, error: checkError } = await supabase
+        .from("payrolls")
+        .select("id")
+        .eq("month", monthString)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      if (existingPayroll) {
+        toast.error("A payroll for this month already exists.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Calculate total amount from all active employees
+      const totalAmount = employees.reduce((sum, emp) =>
+        sum + (emp.salary + emp.allowances - emp.deductions), 0
+      );
 
       const { data: payroll, error: payrollError } = await supabase
         .from("payrolls")
@@ -477,58 +495,49 @@ export const PayrollManagement = () => {
           <h2 className="text-3xl font-bold tracking-tight">Payroll Management</h2>
           <p className="text-muted-foreground">Manage employee payrolls and payments</p>
         </div>
+        {/* Only render DialogTrigger inside Dialog. Show a plain button otherwise. */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
+          {!isCreateDialogOpen && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Payroll
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Payroll</DialogTitle>
-              <DialogDescription>
-                Create a new payroll for all active employees.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="month">Payroll Month</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !newPayrollMonth && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newPayrollMonth ? format(newPayrollMonth, "MMMM yyyy") : "Select month"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={newPayrollMonth}
-                      onSelect={setNewPayrollMonth}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                      disabled={(date) => date < new Date("2024-01-01") || date > new Date("2030-12-31")}
-                    />
-                  </PopoverContent>
-                </Popover>
+          )}
+          {isCreateDialogOpen && (
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Payroll</DialogTitle>
+                <DialogDescription>
+                  Create a new payroll for all active employees.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="month">Payroll Month</Label>
+                  <ReactDatePicker
+                    id="month"
+                    selected={newPayrollMonth}
+                    onChange={(date: Date) => setNewPayrollMonth(date)}
+                    dateFormat="MMMM yyyy"
+                    showMonthYearPicker
+                    showFullMonthYearPicker
+                    minDate={new Date("2024-01-01")}
+                    maxDate={new Date("2030-12-31")}
+                    placeholderText="Select month"
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={createPayroll} disabled={isLoading}>
+                    {isLoading ? "Creating..." : "Create Payroll"}
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPayroll} disabled={isLoading}>
-                  {isLoading ? "Creating..." : "Create Payroll"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
+            </DialogContent>
+          )}
         </Dialog>
         
         <Dialog open={isAddStaffDialogOpen} onOpenChange={setIsAddStaffDialogOpen}>
